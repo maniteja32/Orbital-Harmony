@@ -14,6 +14,10 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { PLANETS_BY_KEY, SUN_TEXTURE, MOON_TEXTURE } from '../data/planets.js';
 
 const DAYS_PER_YEAR = 365.25;
+// Single fixed viewing angle for the cinematic browse-screen camera path —
+// only the camera's DISTANCE ever changes during that sequence, never this
+// angle.
+const HERO_ELEVATION_DEG = 80;
 const textureLoader = new THREE.TextureLoader();
 const textureCache = new Map();
 
@@ -51,25 +55,144 @@ function makeOrbitRing(radiusDistance, colorHex) {
     points.push(new THREE.Vector3(Math.cos(a) * radiusDistance, 0, Math.sin(a) * radiusDistance));
   }
   const geometry = new THREE.BufferGeometry().setFromPoints(points);
-  const material = new THREE.LineBasicMaterial({ color: colorHex, transparent: true, opacity: 0.28 });
+  // Desaturate the planet's tint toward pale neutral, and keep opacity very
+  // low — thin, elegant reference lines (NASA-visualization style) that
+  // communicate motion without competing with the planets themselves.
+  const tint = new THREE.Color(colorHex).lerp(new THREE.Color(0xffffff), 0.55);
+  const material = new THREE.LineBasicMaterial({ color: tint, transparent: true, opacity: 0.14 });
   return new THREE.Line(geometry, material);
 }
 
-function buildStarfield() {
-  const count = 1400;
+// A small, soft circular sprite for star points — WITHOUT this, a plain
+// THREE.PointsMaterial with no map always rasterizes as a hard-edged
+// SQUARE, which reads as an artificial grid of little boxes rather than
+// glowing points of light. A tight radial gradient (bright core fading to
+// fully transparent) is the cheapest way to make every star read as a
+// soft, natural glow instead.
+let starSpriteCache = null;
+function makeStarSprite() {
+  if (starSpriteCache) return starSpriteCache;
+  const size = 32;
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  const gradient = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+  gradient.addColorStop(0, 'rgba(255,255,255,1)');
+  gradient.addColorStop(0.4, 'rgba(255,255,255,0.55)');
+  gradient.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, size, size);
+  starSpriteCache = new THREE.CanvasTexture(canvas);
+  return starSpriteCache;
+}
+
+function buildStarLayer(count, minR, maxR, size, opacity) {
   const positions = new Float32Array(count * 3);
+  const colors = new Float32Array(count * 3);
   for (let i = 0; i < count; i++) {
-    const r = 300 + Math.random() * 500;
+    const r = minR + Math.random() * (maxR - minR);
     const theta = Math.random() * Math.PI * 2;
     const phi = Math.acos(Math.random() * 2 - 1);
     positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
     positions[i * 3 + 1] = Math.abs(r * Math.cos(phi));
     positions[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta);
+    // Per-star brightness variation (0.45-1.0) via vertex color — reads as
+    // a natural scatter of stronger/weaker stars instead of one uniform
+    // dot size/brightness repeated identically everywhere.
+    const b = 0.45 + Math.random() * 0.55;
+    colors[i * 3] = b;
+    colors[i * 3 + 1] = b;
+    colors[i * 3 + 2] = b;
   }
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-  const material = new THREE.PointsMaterial({ color: 0xffffff, size: 0.7, transparent: true, opacity: 0.7, sizeAttenuation: true });
+  geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  const material = new THREE.PointsMaterial({
+    // Very slightly warm-white (never blue) — plain #ffffff read a touch
+    // cold/blue-ish once blended with the pitch-black background.
+    color: 0xfff6ea,
+    vertexColors: true,
+    map: makeStarSprite(),
+    size,
+    transparent: true,
+    opacity,
+    // Additive so overlapping/near-touching stars blend into a soft glow
+    // instead of a flat alpha-blended disc — reads as actual light rather
+    // than a painted dot.
+    blending: THREE.AdditiveBlending,
+    // OFF, not the default true: with sizeAttenuation on, a point's ON-
+    // SCREEN size scales with its distance from the camera exactly like a
+    // real 3D object would — but these shells sit 900-1700 world units out
+    // while the camera itself only ever sits ~100-300 units away, so the
+    // apparent size collapsed to a sub-pixel, invisible speck. Real stars
+    // are effectively at infinity and don't visibly shrink as the camera
+    // dollies a few hundred units, so a FIXED screen-space size (constant
+    // regardless of distance) is both the fix and the more physically
+    // honest choice here.
+    sizeAttenuation: false,
+    depthWrite: false,
+  });
   return new THREE.Points(geometry, material);
+}
+
+// Three depth layers (far/dim -> near/bright) read as a much denser, more
+// realistic field than one uniform layer of points. Each layer is later
+// given its own slow, independent rotation in tick() — a cheap stand-in
+// for parallax depth since the camera itself never pans, only zooms.
+function buildStarfield() {
+  // Shell radii are deliberately kept well beyond both the wide AND close
+  // hero camera distances (~200-500 units) so no star ever renders closer
+  // to the camera than the solar system itself — otherwise sizeAttenuation
+  // blows a "nearby" star up into a large, distracting square. Sizes are
+  // small fixed screen-space pixel counts now (see buildStarLayer) rather
+  // than world units, tuned for a natural, subtly glowing scatter instead
+  // of a dense/artificial-looking field.
+  const group = new THREE.Group();
+  const far = buildStarLayer(2400, 900, 1700, 2.2, 0.65);
+  const mid = buildStarLayer(1300, 650, 950, 3, 0.75);
+  const near = buildStarLayer(220, 480, 680, 3.8, 0.9);
+  far.userData.spin = 0.0015;
+  mid.userData.spin = 0.003;
+  near.userData.spin = 0.005;
+  group.add(far, mid, near);
+  return group;
+}
+
+// Unlit (the Sun is a light source, not something lit by scene lights) but
+// shaded with a simple view-dependent term for physical believability: a
+// gentle limb darkening across the disc (real photospheres read darker at
+// the edge than the center) plus a thin warm brightening right at the
+// silhouette edge (a cheap stand-in for the chromosphere/corona). Reads as
+// genuine solar surface detail instead of a flat, evenly-lit texture.
+function makeSunMaterial() {
+  return new THREE.ShaderMaterial({
+    uniforms: {
+      map: { value: loadTexture(SUN_TEXTURE) },
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      varying vec3 vNormalView;
+      void main() {
+        vUv = uv;
+        vNormalView = normalize(normalMatrix * normal);
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D map;
+      varying vec2 vUv;
+      varying vec3 vNormalView;
+      void main() {
+        vec3 base = texture2D(map, vUv).rgb;
+        float rim = clamp(1.0 - abs(vNormalView.z), 0.0, 1.0);
+        float limbDarken = 1.0 - 0.32 * pow(rim, 1.5);
+        vec3 color = base * limbDarken;
+        float edgeGlow = pow(rim, 7.0) * 0.55;
+        color += vec3(1.0, 0.74, 0.48) * edgeGlow;
+        gl_FragColor = vec4(color, 1.0);
+      }
+    `,
+  });
 }
 
 function buildPlanet(data) {
@@ -167,6 +290,10 @@ function buildPlanet(data) {
  * @param {boolean} [opts.tracePattern]
  * @param {boolean} [opts.showOrbitRings]
  * @param {boolean} [opts.cinematicIntro]
+ * @param {boolean} [opts.orthographic] - true top-down projection (no
+ *   perspective distortion/foreshortening at all) instead of the default
+ *   PerspectiveCamera. Only used by the Solar System browse screen so far;
+ *   the duo/pattern screens keep the perspective camera unchanged.
  * @param {number} [opts.speedDurationSec]
  * @param {number} [opts.totalSimYears]
  * @param {number} [opts.traceIntervalDays]
@@ -178,19 +305,40 @@ export function createSolarSystemEngine(canvas, opts) {
     tracePattern = false,
     showOrbitRings = true,
     cinematicIntro = false,
+    orthographic = false,
     speedDurationSec = 10,
     totalSimYears = 8,
     traceIntervalDays = 3,
   } = opts;
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x00000a);
+  // Pitch black — deliberately pure (0,0,0), not the earlier near-black
+  // 0x00000a, so there's no residual blue tint anywhere in the backdrop.
+  scene.background = new THREE.Color(0x000000);
 
   const parent = canvas.parentElement;
   const width = parent?.clientWidth || window.innerWidth;
   const height = parent?.clientHeight || window.innerHeight;
 
-  const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 2000);
+  // Orthographic = a true top-down projection with ZERO perspective
+  // foreshortening — every orbit ring renders as a mathematically perfect
+  // circle and a planet's on-screen size never changes just because the
+  // camera dollies closer/further, unlike a PerspectiveCamera. Vertical
+  // half-height is fixed; horizontal half-width simply follows the current
+  // aspect ratio (updated on resize, see resize() below) — same "fixed
+  // vertical extent, adaptive horizontal extent" convention the old
+  // PerspectiveCamera's fixed-FOV approach used.
+  const ORTHO_HALF_HEIGHT = 46;
+  const camera = orthographic
+    ? new THREE.OrthographicCamera(
+        (-ORTHO_HALF_HEIGHT * width) / height,
+        (ORTHO_HALF_HEIGHT * width) / height,
+        ORTHO_HALF_HEIGHT,
+        -ORTHO_HALF_HEIGHT,
+        0.1,
+        4000,
+      )
+    : new THREE.PerspectiveCamera(45, width / height, 0.1, 2000);
 
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -201,20 +349,25 @@ export function createSolarSystemEngine(canvas, opts) {
   const sunLight = new THREE.PointLight(0xfff2d8, 3.2, 0, 0.15);
   scene.add(sunLight);
 
-  scene.add(buildStarfield());
+  const starfield = buildStarfield();
+  scene.add(starfield);
 
-  const sunGeo = new THREE.SphereGeometry(4.2, 48, 48);
-  const sunMat = new THREE.MeshBasicMaterial({ map: loadTexture(SUN_TEXTURE) });
+  const sunGeo = new THREE.SphereGeometry(4.2, 64, 64);
+  const sunMat = makeSunMaterial();
   const sunMesh = new THREE.Mesh(sunGeo, sunMat);
   scene.add(sunMesh);
 
+  // Tight, realistic corona: a small bright core glow plus a softer, much
+  // fainter outer layer, both scaled close to the Sun's own radius (not the
+  // old huge diffuse halo) so it reads as a corona, not a glowing blob.
   const glow = new THREE.Sprite(new THREE.SpriteMaterial({
     map: makeGlowTexture(),
     transparent: true,
     depthWrite: false,
     blending: THREE.AdditiveBlending,
+    opacity: 0.5,
   }));
-  glow.scale.set(26, 26, 1);
+  glow.scale.set(9.5, 9.5, 1);
   scene.add(glow);
 
   // A second, larger, softer sprite layered behind the tight glow above —
@@ -225,9 +378,9 @@ export function createSolarSystemEngine(canvas, opts) {
     transparent: true,
     depthWrite: false,
     blending: THREE.AdditiveBlending,
-    opacity: 0.55,
+    opacity: 0.22,
   }));
-  outerGlow.scale.set(52, 52, 1);
+  outerGlow.scale.set(15, 15, 1);
   scene.add(outerGlow);
 
   const planets = planetKeys
@@ -243,6 +396,19 @@ export function createSolarSystemEngine(canvas, opts) {
   const maxDistance = Math.max(...planets.map((p) => p.data.distance), 20);
   const framingMargin = planets.length <= 2 ? 1.4 : 1.18;
 
+  // Now that the real planet set is known, size the orthographic frustum
+  // to actually fit it (the placeholder bounds passed to the constructor
+  // above were just a stand-in). Same "fixed vertical extent, adaptive
+  // horizontal extent" convention as the perspective path below.
+  if (camera.isOrthographicCamera) {
+    const half = (maxDistance * framingMargin) / Math.min(1, width / height);
+    camera.left = (-half * width) / height;
+    camera.right = (half * width) / height;
+    camera.top = half;
+    camera.bottom = -half;
+    camera.updateProjectionMatrix();
+  }
+
   // A fixed-vertical-FOV PerspectiveCamera shows a NARROWER horizontal slice
   // than vertical whenever aspect (width/height) < 1 — exactly the case for
   // every mobile-first portrait viewport (and this app's centered, capped
@@ -253,9 +419,16 @@ export function createSolarSystemEngine(canvas, opts) {
   // cut off. Fix: solve for the camera distance that fits `maxDistance`
   // within BOTH the vertical AND horizontal half-extents, i.e. divide by
   // whichever of (1, aspect) is smaller.
-  function distanceToFit(aspect) {
+  function distanceToFit(aspect, radius = maxDistance, margin = framingMargin) {
+    if (camera.isOrthographicCamera) {
+      // An orthographic camera's on-screen scale comes entirely from its
+      // frustum (set above), never from distance — this just returns a
+      // physically safe distance to place the camera along its viewing
+      // ray (near/far clipping, depth sorting), independent of framing.
+      return Math.max(radius * margin * 3, 200);
+    }
     const vFovRad = THREE.MathUtils.degToRad(camera.fov);
-    return (maxDistance * framingMargin) / (Math.tan(vFovRad / 2) * Math.min(1, aspect));
+    return (radius * margin) / (Math.tan(vFovRad / 2) * Math.min(1, aspect));
   }
 
   // Looking straight down the Y axis is a DEGENERATE case for a raw
@@ -280,38 +453,39 @@ export function createSolarSystemEngine(canvas, opts) {
   const dist = distanceToFit(width / height);
 
   // ---- Cinematic intro camera path (Solar System browse screen) -----------
-  // A scripted, oblique (never purely top-down) camera move: hold on a
-  // distant establishing shot of the whole system, then ease inward to a
-  // closer, Sun-dominant hero framing near Earth's orbit. Oblique angles
-  // throughout mean a plain lookAt() with the DEFAULT up vector is always
-  // safe here (never the degenerate straight-down case above), and — since
-  // OrbitControls is only attached once the scripted move finishes — the
+  // A scripted camera hold on a distant establishing shot of the whole
+  // system — deliberately NO zoom-in travel anymore (removed per request:
+  // the resting/settled framing should stay this same wide establishing
+  // shot, matching the loading screen's overview feel, rather than
+  // dollying in closer). A single oblique angle (never purely top-down)
+  // means a plain lookAt() with the DEFAULT up vector is always safe here
+  // (never the degenerate straight-down case above), and — since
+  // OrbitControls is only attached once the intro's hold finishes — the
   // camera.up/OrbitControls conflict noted above never applies either.
   function heroPosition(distance, elevationDeg) {
     const rad = THREE.MathUtils.degToRad(elevationDeg);
     return new THREE.Vector3(0, distance * Math.sin(rad), distance * Math.cos(rad));
   }
   const earthRefDistance = PLANETS_BY_KEY.earth?.distance ?? maxDistance * 0.35;
-  const heroWidePos = heroPosition(dist, 80);
-  const heroClosePos = heroPosition(earthRefDistance * 1.6, 32);
+  const heroWidePos = heroPosition(dist, HERO_ELEVATION_DEG);
+  // A small, CONSTANT look-at offset sits the Sun slightly above
+  // dead-center for a more considered mobile-portrait composition.
+  const introLookTarget = new THREE.Vector3(0, -earthRefDistance * 0.045, 0);
   const INTRO_HOLD_SEC = 1.6;
-  const INTRO_TRAVEL_SEC = 4.2;
   let introPhase = cinematicIntro ? 'hold' : 'done';
   let introElapsed = 0;
   let introCompleteCb = null;
 
-  function easeInOutCubic(t) {
-    return t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2;
-  }
-
   let controls = null;
-  function attachOrbitControls() {
+  function attachOrbitControls(target) {
     controls = new OrbitControls(camera, renderer.domElement);
-    controls.target.set(0, 0, 0);
+    controls.target.copy(target ?? new THREE.Vector3(0, 0, 0));
     controls.enableDamping = true;
     controls.dampingFactor = 0.06;
-    controls.minDistance = maxDistance * 0.4;
-    controls.maxDistance = maxDistance * 3.2;
+    // Zoom removed per request — the camera should stay at the same
+    // settled establishing-shot distance rather than letting the user
+    // scroll/pinch closer.
+    controls.enableZoom = false;
     controls.enablePan = false;
     // Calm/settled after a scripted cinematic move — no lingering ambient
     // auto-orbit fighting the composition the intro just settled into.
@@ -321,7 +495,7 @@ export function createSolarSystemEngine(canvas, opts) {
 
   if (cinematicIntro) {
     camera.position.copy(heroWidePos);
-    camera.lookAt(0, 0, 0);
+    camera.lookAt(introLookTarget);
     // OrbitControls (if this screen wants it) is attached once the scripted
     // move finishes — see tick() below.
   } else if (interactive) {
@@ -405,6 +579,9 @@ export function createSolarSystemEngine(canvas, opts) {
     }
 
     sunMesh.rotation.y += delta * 0.05;
+    starfield.children.forEach((layer) => {
+      layer.rotation.y += delta * layer.userData.spin;
+    });
 
     if (!completed) simDaysElapsed += delta * simDaysPerRealSecond;
     planets.forEach((planet) => {
@@ -428,23 +605,13 @@ export function createSolarSystemEngine(canvas, opts) {
       if (onCompleteCb) onCompleteCb();
     }
 
-    // ---- Cinematic intro camera move (hold, then ease inward) -------------
+    // ---- Cinematic intro camera hold (no zoom-in travel anymore) ----------
     if (introPhase !== 'done') {
       introElapsed += delta;
-      if (introPhase === 'hold') {
-        if (introElapsed >= INTRO_HOLD_SEC) {
-          introPhase = 'travel';
-          introElapsed = 0;
-        }
-      } else if (introPhase === 'travel') {
-        const t = Math.min(introElapsed / INTRO_TRAVEL_SEC, 1);
-        camera.position.lerpVectors(heroWidePos, heroClosePos, easeInOutCubic(t));
-        camera.lookAt(0, 0, 0);
-        if (t >= 1) {
-          introPhase = 'done';
-          if (interactive) attachOrbitControls();
-          if (introCompleteCb) introCompleteCb();
-        }
+      if (introPhase === 'hold' && introElapsed >= INTRO_HOLD_SEC) {
+        introPhase = 'done';
+        if (interactive) attachOrbitControls(introLookTarget);
+        if (introCompleteCb) introCompleteCb();
       }
     }
 
@@ -455,15 +622,26 @@ export function createSolarSystemEngine(canvas, opts) {
   function resize() {
     const w = parent?.clientWidth || window.innerWidth;
     const h = parent?.clientHeight || window.innerHeight;
-    camera.aspect = w / h;
-    // Only re-fit distance in non-interactive (duo/pattern) mode — in
-    // interactive "full" browse mode the user may have manually zoomed via
-    // OrbitControls, and forcibly resetting distance on every resize would
-    // fight that. The initial distanceToFit() call above already gives
-    // OrbitControls a correctly-framed starting point either way.
-    if (!controls) {
-      const dist = distanceToFit(w / h);
-      camera.position.setLength(dist);
+    if (camera.isOrthographicCamera) {
+      // No "distance" concept for framing here — just recompute the
+      // frustum bounds from the new aspect (fixed vertical half-height,
+      // adaptive horizontal half-width), same fit formula used at setup.
+      const half = (maxDistance * framingMargin) / Math.min(1, w / h);
+      camera.left = (-half * w) / h;
+      camera.right = (half * w) / h;
+      camera.top = half;
+      camera.bottom = -half;
+    } else {
+      camera.aspect = w / h;
+      // Only re-fit distance in non-interactive (duo/pattern) mode — in
+      // interactive "full" browse mode the user may have manually zoomed via
+      // OrbitControls, and forcibly resetting distance on every resize would
+      // fight that. The initial distanceToFit() call above already gives
+      // OrbitControls a correctly-framed starting point either way.
+      if (!controls) {
+        const dist = distanceToFit(w / h);
+        camera.position.setLength(dist);
+      }
     }
     camera.updateProjectionMatrix();
     renderer.setSize(w, h, false);

@@ -57,7 +57,10 @@ button {
   inset: 0;
   display: flex;
   justify-content: center;
-  background: radial-gradient(ellipse at 50% 0%, #0b0d1c 0%, #030308 65%);
+  /* Pitch black, no residual blue tint — this shows through briefly during
+     screen swaps (old screen unmounts, new one fades in), so any hint of
+     blue here read as a visible "blue flash" between screens. */
+  background: #000000;
 }
 
 .app-shell > .screen-transition {
@@ -478,136 +481,119 @@ button {
 }
 
 /* ============================================================================
-   Loading screen — pure CSS (no canvas/WebGL), so it animates instantly.
+   Loading screen — top-down orrery sequence (plain 2D canvas, no Three.js).
+   The canvas renders a small Sun + orbiting planet dots with fading
+   trails; the DOM overlay only carries the title/subtitle typography,
+   faded in/out via CSS so no JS-driven layout thrash is needed for text.
    ============================================================================ */
 .loading-screen {
   position: absolute;
   inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 34px;
-  background: radial-gradient(ellipse at center, #0a0c1a 0%, #030308 70%);
-  transition: opacity 0.5s ease;
+  overflow: hidden;
+  background: #000000;
+  transition: opacity 0.85s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .loading-screen.is-leaving {
   opacity: 0;
 }
 
-.loading-scene {
-  position: relative;
-  width: 260px;
-  height: 260px;
-}
-
-.loading-orbits {
+.loading-canvas {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
+  display: block;
+  opacity: 0;
+  transition: opacity 1.4s ease;
 }
 
-.loading-ring {
-  fill: none;
-  stroke: rgba(255, 255, 255, 0.22);
-  stroke-width: 1;
+.loading-canvas.is-ready {
+  opacity: 1;
 }
 
-.loading-ring--1 { stroke-dasharray: 346; stroke-dashoffset: 346; animation: drawRing 1.4s cubic-bezier(0.22, 1, 0.36, 1) 0.1s forwards; }
-.loading-ring--2 { stroke-dasharray: 566; stroke-dashoffset: 566; animation: drawRing 1.4s cubic-bezier(0.22, 1, 0.36, 1) 0.4s forwards; }
-.loading-ring--3 { stroke-dasharray: 786; stroke-dashoffset: 786; animation: drawRing 1.4s cubic-bezier(0.22, 1, 0.36, 1) 0.7s forwards; }
-
-@keyframes drawRing {
-  to { stroke-dashoffset: 0; }
-}
-
-.loading-sun {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 42px;
-  height: 42px;
-  margin: -21px 0 0 -21px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #fff2cf 0%, #ffb347 45%, #ff7a3d 100%);
-  box-shadow: 0 0 22px 6px rgba(255, 180, 80, 0.5), 0 0 64px 22px rgba(255, 140, 60, 0.3);
-  animation: sunPulse 2.4s ease-in-out infinite;
-}
-
-@keyframes sunPulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.08); }
-}
-
-.loading-orbit-wrap {
+.loading-vignette {
   position: absolute;
   inset: 0;
-  opacity: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% 46%, transparent 40%, rgba(3, 3, 8, 0.55) 82%, rgba(3, 3, 8, 0.94) 100%);
 }
 
-.loading-orbit-wrap--1 { animation: loadingSpin 5s linear infinite 1.5s, fadeIn 0.6s ease forwards 1.5s; }
-.loading-orbit-wrap--2 { animation: loadingSpin 7.5s linear infinite 1.8s, fadeIn 0.6s ease forwards 1.8s; }
-.loading-orbit-wrap--3 { animation: loadingSpin 10s linear infinite 2.1s, fadeIn 0.6s ease forwards 2.1s; }
-
-@keyframes loadingSpin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-@keyframes fadeIn {
-  to { opacity: 1; }
-}
-
-.loading-planet {
+.loading-ui {
   position: absolute;
-  left: 50%;
-  width: 7px;
-  height: 7px;
-  margin-left: -3.5px;
-  margin-top: -3.5px;
-  border-radius: 50%;
+  inset: 0;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-.loading-planet--1 { top: calc(50% - 55px); background: #c8792c; box-shadow: 0 0 6px 2px rgba(200, 121, 44, 0.6); }
-.loading-planet--2 { top: calc(50% - 90px); background: #3d8ee0; box-shadow: 0 0 6px 2px rgba(61, 142, 224, 0.6); }
-.loading-planet--3 { top: calc(50% - 125px); background: #c15a3e; box-shadow: 0 0 6px 2px rgba(193, 90, 62, 0.6); }
-
-.loading-text {
+.loading-title-wrap {
+  position: absolute;
+  top: 20%;
+  left: 0;
+  right: 0;
+  transform: translateY(0);
   display: flex;
-  align-items: baseline;
-  gap: 8px;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 1.4s ease, transform 1.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.loading-title-wrap.is-visible {
+  opacity: 1;
+}
+
+.loading-title-wrap.is-transitioning {
+  opacity: 0;
+  transform: translateY(-12px);
+  transition: opacity 0.9s ease, transform 0.9s ease;
 }
 
 .loading-title {
   font-family: var(--font-display);
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 0.16em;
+  font-size: 23px;
+  font-weight: 800;
+  letter-spacing: 0.3em;
   text-transform: uppercase;
+  color: var(--text-primary);
+  text-shadow: 0 0 34px rgba(234, 230, 255, 0.28);
 }
 
-.loading-dots {
-  display: flex;
-  gap: 4px;
+.loading-subtitle {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(10% + var(--safe-bottom));
+  text-align: center;
+  padding: 0 30px;
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  color: var(--text-tertiary);
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 1.4s ease 0.3s, transform 1.4s cubic-bezier(0.22, 1, 0.36, 1) 0.3s;
 }
 
-.loading-dots i {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--accent);
-  opacity: 0.25;
-  animation: dotPulse 1.2s ease-in-out infinite;
+.loading-subtitle.is-visible {
+  opacity: 1;
+  transform: translateY(0);
 }
 
-.loading-dots i:nth-child(2) { animation-delay: 0.2s; }
-.loading-dots i:nth-child(3) { animation-delay: 0.4s; }
+.loading-subtitle.is-transitioning {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.9s ease, transform 0.9s ease;
+}
 
-@keyframes dotPulse {
-  0%, 80%, 100% { opacity: 0.25; transform: scale(0.85); }
-  40% { opacity: 1; transform: scale(1); }
+@media (prefers-reduced-motion: reduce) {
+  .loading-canvas,
+  .loading-title-wrap,
+  .loading-subtitle,
+  .loading-screen {
+    transition-duration: 0.3s !important;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

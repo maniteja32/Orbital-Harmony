@@ -21,7 +21,8 @@ export default function SolarSystemScreen({ onNext }) {
         planetKeys={planetKeys}
         interactive
         cinematicIntro
-        showOrbitRings={false}
+        orthographic
+        showOrbitRings
         onIntroComplete={handleIntroComplete}
         className="screen__canvas"
       />
