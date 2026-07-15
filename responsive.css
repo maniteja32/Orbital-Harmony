@@ -1,0 +1,75 @@
+/* ============================================================================
+   Orbital Harmony — Responsive layout rules
+   Separated from style.css so mobile and desktop/web breakpoints live in one
+   dedicated place. Loaded AFTER style.css in index.html so these overrides
+   still win the cascade for the base rules they adjust (#app, .dashboard,
+   .panel--settings, etc.).
+   ============================================================================ */
+
+/* ----------------------------------------------------------------------------
+   WEB / DESKTOP (>= 1100px)
+   Both panels are permanently docked (no toggle), so on wide-enough screens
+   the 3D scene is always resized to sit beside them — never underneath —
+   leaving dedicated room for the Settings panel. It also gets the same
+   glass-card framing (border, radius, shadow) as the panel, so the canvas
+   reads as a proper bordered "viewport" card rather than a full-bleed
+   background the panel merely floats on top of — the two form one single,
+   enclosed product.
+   ---------------------------------------------------------------------------- */
+@media (min-width: 1100px) {
+  #app {
+    left: calc((100vw - var(--dashboard-reserved-width)) / 2);
+    width: min(100vw - var(--dashboard-reserved-width), 100vh - (var(--dashboard-edge) * 2));
+    height: min(100vw - var(--dashboard-reserved-width), 100vh - (var(--dashboard-edge) * 2));
+    aspect-ratio: 1 / 1;
+    border: 1px solid var(--panel-border);
+    border-radius: var(--panel-radius);
+    box-shadow: var(--panel-shadow);
+  }
+}
+
+/* ----------------------------------------------------------------------------
+   MOBILE / TABLET (<= 1099px)
+   Not enough width for the canvas + docked panel: dock the panel as a
+   scrollable strip along the bottom instead of overlaying the scene.
+   ---------------------------------------------------------------------------- */
+@media (max-width: 1099px) {
+  #app {
+    width: min(100vw, 100vh);
+    height: min(100vw, 100vh);
+  }
+
+  .dashboard {
+    top: auto;
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    height: 46vh;
+    flex-direction: row;
+    overflow-x: auto;
+  }
+
+  .panel--settings {
+    width: min(360px, 90vw);
+  }
+}
+
+/* ----------------------------------------------------------------------------
+   MOBILE (<= 640px)
+   Narrow phone widths: stack the dashboard as a single full-width column
+   instead of a horizontal strip.
+   ---------------------------------------------------------------------------- */
+@media (max-width: 640px) {
+  .dashboard {
+    flex-direction: column;
+    height: 70vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .panel--settings {
+    width: 100%;
+    height: auto;
+    max-height: none;
+  }
+}

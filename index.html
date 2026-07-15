@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Orbital Harmony — 3D Solar System</title>
+  <link rel="stylesheet" href="style.css?v=3">
+  <link rel="stylesheet" href="responsive.css?v=1">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;600;700&family=Orbitron:wght@700;800&display=swap" rel="stylesheet">
+
+  <!-- Import map: lets us import "three" and its addons directly as ES modules from a CDN -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <canvas id="app"></canvas>
+
+  <!-- Premium full-screen loader — pure HTML/CSS/JS, no Three.js dependency,
+       so it renders and animates instantly while the 3D engine (imported as
+       ES modules from a CDN) is still being fetched/initialized. -->
+  <div id="loading" class="loader">
+    <canvas id="loaderStars" class="loader__stars"></canvas>
+
+    <div class="loader__scene">
+      <svg class="loader__orbits" viewBox="0 0 280 280" aria-hidden="true">
+        <circle class="loader__ring loader__ring--1" cx="140" cy="140" r="55" />
+        <circle class="loader__ring loader__ring--2" cx="140" cy="140" r="90" />
+        <circle class="loader__ring loader__ring--3" cx="140" cy="140" r="125" />
+      </svg>
+
+      <div class="loader__sun"></div>
+
+      <div class="loader__orbit-wrap loader__orbit-wrap--1"><span class="loader__planet loader__planet--1"></span></div>
+      <div class="loader__orbit-wrap loader__orbit-wrap--2"><span class="loader__planet loader__planet--2"></span></div>
+      <div class="loader__orbit-wrap loader__orbit-wrap--3"><span class="loader__planet loader__planet--3"></span></div>
+      <div class="loader__orbit-wrap loader__orbit-wrap--ship"><span class="loader__ship"></span></div>
+    </div>
+
+    <div class="loader__text">
+      <span class="loader__title">Generating Orbital Harmony</span>
+      <span class="loader__dots"><i></i><i></i><i></i></span>
+    </div>
+  </div>
+
+  <script src="js/loader.js"></script>
+
+  <div id="dashboard" class="dashboard">
+    <!-- Settings panel: all interactive controls -->
+    <aside id="settingsPanel" class="panel panel--settings" aria-label="Orbital Harmony settings">
+      <header class="panel__header">
+        <div class="panel__title-group">
+          <span class="panel__eyebrow">Orbital Harmony</span>
+        </div>
+      </header>
+
+      <div class="panel__body">
+        <!-- CELESTIAL BODIES ------------------------------------------------->
+        <section class="panel__section">
+          <h2 class="panel__section-title">Celestial Bodies</h2>
+
+          <div class="field-row">
+            <label class="field">
+              <span class="field__label">Planet A</span>
+              <select id="planetA" class="select"></select>
+            </label>
+            <label class="field">
+              <span class="field__label">Planet B</span>
+              <select id="planetB" class="select"></select>
+            </label>
+          </div>
+        </section>
+
+        <!-- SIMULATION --------------------------------------------------------->
+        <section class="panel__section">
+          <h2 class="panel__section-title">Simulation</h2>
+
+          <label class="field field--slider">
+            <span class="field__label">Simulation Speed <span id="simulationSpeedValue" class="field__value">1.0×</span></span>
+            <input type="range" id="simulationSpeed" class="slider" min="0.1" max="5" step="0.1" value="1">
+          </label>
+
+          <label class="field field--slider">
+            <span class="field__label">Trace Interval <span id="traceIntervalValue" class="field__value">3.0 d</span></span>
+            <input type="range" id="traceInterval" class="slider" min="0.5" max="10" step="0.5" value="3">
+          </label>
+        </section>
+
+        <!-- VISUALIZATION -------------------------------------------------->
+        <section class="panel__section">
+          <h2 class="panel__section-title">Visualization</h2>
+
+          <label class="field">
+            <span class="field__label">Line Style</span>
+            <select id="lineStyle" class="select">
+              <option value="solid" selected>Solid</option>
+              <option value="dots">Dots</option>
+            </select>
+          </label>
+        </section>
+
+        <!-- ACTIONS ---------------------------------------------------------->
+        <section class="panel__section panel__section--actions">
+          <h2 class="panel__section-title">Actions</h2>
+
+          <button id="actionGenerate" class="btn btn--primary btn--full" title="Generate Pattern">
+            <svg class="btn__icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12 2.5l1.95 5.55 5.55 1.95-5.55 1.95L12 17.5l-1.95-5.55-5.55-1.95 5.55-1.95L12 2.5z"/>
+            </svg>
+            <span class="btn__label">Generate</span>
+          </button>
+
+          <div class="action-grid">
+            <button id="actionPauseResume" class="btn" title="Pause">
+              <svg class="btn__icon btn__icon--play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M8 5.5v13l11-6.5-11-6.5z"/>
+              </svg>
+              <svg class="btn__icon btn__icon--pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <rect x="6" y="5" width="4.5" height="14" rx="1.2"/>
+                <rect x="13.5" y="5" width="4.5" height="14" rx="1.2"/>
+              </svg>
+              <span class="btn__label">Pause</span>
+            </button>
+            <button id="actionClear" class="btn" title="Clear Pattern">
+              <svg class="btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M7.5 20 3.4 15.9c-.8-.8-.8-2.1 0-2.9l7.1-7.1c.8-.8 2.1-.8 2.9 0l4.6 4.6c.8.8.8 2.1 0 2.9L13.4 18"/>
+                <path d="M4 20h16"/>
+                <path d="m6.8 14.2 5 5"/>
+              </svg>
+              <span class="btn__label">Clear Pattern</span>
+            </button>
+          </div>
+        </section>
+      </div>
+    </aside>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+  <script type="module" src="js/ui.js"></script>
+</body>
+</html>

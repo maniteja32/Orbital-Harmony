@@ -1,0 +1,959 @@
+/* Fullscreen, edge-to-edge canvas with a deep-space feel */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #000005;
+  font-family: 'Exo 2', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+#app {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: block;
+  width: min(100vw, 100vh);
+  height: min(100vw, 100vh);
+  aspect-ratio: 1 / 1;
+  transition: width 0.3s ease, height 0.3s ease, left 0.3s ease;
+}
+
+/* Responsive layout rules (desktop docking, mobile stacking) live in
+   responsive.css, loaded after this file. */
+
+/* ============================================================================
+   Premium full-screen loader — dark space background, glowing pulsing sun,
+   self-drawing orbit rings (SVG stroke-dashoffset), slowly-orbiting
+   planets, a subtle starfield/particle canvas, and animated status text.
+   Pure HTML/CSS/JS (see js/loader.js) — no Three.js dependency, so it can
+   render and animate the instant the page loads.
+   ============================================================================ */
+#loading {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 36px;
+  background: radial-gradient(ellipse at center, #070914 0%, #000005 72%);
+  overflow: hidden;
+  transition: opacity 0.7s ease, visibility 0.7s ease;
+}
+
+#loading.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.loader__stars {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* ---- Orbiting scene -------------------------------------------------------- */
+.loader__scene {
+  position: relative;
+  width: 280px;
+  height: 280px;
+  flex-shrink: 0;
+}
+
+.loader__orbits {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.loader__ring {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.22);
+  stroke-width: 1;
+  stroke-linecap: round;
+}
+
+/* Each ring "draws itself" via an animated stroke-dashoffset, staggered so
+   the rings appear to build outward one after another. */
+.loader__ring--1 {
+  stroke-dasharray: 345.6;
+  stroke-dashoffset: 345.6;
+  animation: loaderDrawRing 1.4s cubic-bezier(0.22, 1, 0.36, 1) 0.15s forwards;
+}
+.loader__ring--2 {
+  stroke-dasharray: 565.5;
+  stroke-dashoffset: 565.5;
+  animation: loaderDrawRing 1.4s cubic-bezier(0.22, 1, 0.36, 1) 0.45s forwards;
+}
+.loader__ring--3 {
+  stroke-dasharray: 785.4;
+  stroke-dashoffset: 785.4;
+  animation: loaderDrawRing 1.4s cubic-bezier(0.22, 1, 0.36, 1) 0.75s forwards;
+}
+
+@keyframes loaderDrawRing {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.loader__sun {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 46px;
+  height: 46px;
+  margin: -23px 0 0 -23px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #fff2cf 0%, #ffb347 45%, #ff7a3d 100%);
+  box-shadow: 0 0 22px 6px rgba(255, 180, 80, 0.5), 0 0 64px 22px rgba(255, 140, 60, 0.3);
+  animation: loaderSunPulse 2.4s ease-in-out infinite;
+}
+
+@keyframes loaderSunPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 22px 6px rgba(255, 180, 80, 0.45), 0 0 64px 22px rgba(255, 140, 60, 0.28);
+  }
+  50% {
+    transform: scale(1.08);
+    box-shadow: 0 0 30px 10px rgba(255, 195, 110, 0.65), 0 0 84px 30px rgba(255, 140, 60, 0.42);
+  }
+}
+
+/* Each wrapper spans the whole scene and rotates around its own center; the
+   planet dot inside is offset to its ring's radius, so the rotation carries
+   it around in a circle. Two animations run at once: an infinite spin, and
+   a one-time fade-in timed to when that ring finishes drawing itself. */
+.loader__orbit-wrap {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+}
+
+.loader__orbit-wrap--1 {
+  animation: loaderSpin 5s linear infinite 1.55s, loaderFadeIn 0.6s ease forwards 1.55s;
+}
+.loader__orbit-wrap--2 {
+  animation: loaderSpin 7.5s linear infinite 1.85s, loaderFadeIn 0.6s ease forwards 1.85s;
+}
+.loader__orbit-wrap--3 {
+  animation: loaderSpin 10s linear infinite 2.15s, loaderFadeIn 0.6s ease forwards 2.15s;
+}
+/* The little spacecraft rides along the middle ring (same radius as
+   planet--2), a touch faster than its neighboring planet so it visibly
+   "overtakes" them — like a satellite/probe cutting across the system. */
+.loader__orbit-wrap--ship {
+  animation: loaderSpin 4.2s linear infinite 2s, loaderFadeIn 0.6s ease forwards 2s;
+}
+
+@keyframes loaderSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes loaderFadeIn {
+  to {
+    opacity: 1;
+  }
+}
+
+.loader__planet {
+  position: absolute;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  margin-left: -4px;
+  /* Without this, `top` only positions the dot's top EDGE at the ring's
+     radius, leaving its actual center 4px inside the ring line (i.e. off
+     to one side of the orbit instead of sitting centered on it). */
+  margin-top: -4px;
+  border-radius: 50%;
+}
+
+.loader__planet--1 {
+  top: calc(50% - 55px);
+  background: #c8792c;
+  box-shadow: 0 0 6px 2px rgba(200, 121, 44, 0.6);
+}
+.loader__planet--2 {
+  top: calc(50% - 90px);
+  background: #3d8ee0;
+  box-shadow: 0 0 6px 2px rgba(61, 142, 224, 0.6);
+}
+.loader__planet--3 {
+  top: calc(50% - 125px);
+  background: #c15a3e;
+  box-shadow: 0 0 6px 2px rgba(193, 90, 62, 0.6);
+}
+
+/* A small directional "probe" tracing the middle ring — drawn as a plain
+   CSS triangle (no image assets) pointing along its direction of travel.
+   Positioned at the 12-o'clock point of ring--2's radius with a starting
+   rotate(90deg) so its nose already faces tangentially (i.e. "east", the
+   direction of travel for a clockwise spin); since the parent
+   .loader__orbit-wrap keeps rotating that same local frame, the nose
+   keeps pointing forward automatically as it travels all the way around. */
+.loader__ship {
+  position: absolute;
+  top: calc(50% - 90px);
+  left: 50%;
+  width: 0;
+  height: 0;
+  margin-left: -5px;
+  margin-top: -4px;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  border-left: 9px solid var(--text-primary);
+  transform: rotate(90deg);
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.65));
+}
+
+/* Faint trailing tail behind the probe, opposite its direction of travel. */
+.loader__ship::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 100%;
+  width: 16px;
+  height: 1.5px;
+  transform: translateY(-50%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55));
+}
+
+/* ---- Status text ------------------------------------------------------------ */
+.loader__text {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-family: var(--font-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
+}
+
+.loader__title {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  opacity: 0.92;
+}
+
+.loader__dots {
+  display: flex;
+  gap: 4px;
+}
+
+.loader__dots i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent, #e4e4e7);
+  opacity: 0.25;
+  animation: loaderDotPulse 1.2s ease-in-out infinite;
+}
+
+.loader__dots i:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.loader__dots i:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes loaderDotPulse {
+  0%, 80%, 100% {
+    opacity: 0.25;
+    transform: scale(0.85);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loader__ring,
+  .loader__orbit-wrap,
+  .loader__sun,
+  .loader__dots i {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+/* ============================================================================
+   Orbital Harmony control panel
+   Style: dark, frosted glass, thin translucent borders — inspired by CRED /
+   Linear / premium scientific instrumentation. Elegant, unobtrusive, and
+   built entirely with CSS custom properties so the palette stays consistent.
+   ============================================================================ */
+
+:root {
+  /* ---- shadcn/ui color tokens (dark theme, "Zinc" preset) ----------------
+     Raw HSL triplets, consumed via hsl(var(--sh-x) / alpha%) below — this
+     is the same convention shadcn/ui itself uses (CSS variables holding
+     unitless H S% L%, referenced through hsl()), so the whole panel's
+     palette is genuinely sourced from shadcn's dark theme rather than
+     re-invented hex values. Zinc is shadcn's neutral/near-black preset
+     (hue ~240 at very low saturation) instead of the previous "Blue"
+     preset's navy-tinted surfaces — true dark/black rather than dark blue.
+     --sh-primary is also the neutral Zinc primary (near-white) rather than
+     a colored accent, so no part of the UI carries a blue tint. */
+  --sh-background: 240 10% 3.9%;
+  --sh-foreground: 0 0% 98%;
+  --sh-card: 240 10% 3.9%;
+  --sh-primary: 0 0% 98%;
+  --sh-primary-foreground: 240 5.9% 10%;
+  --sh-secondary: 240 3.7% 15.9%;
+  --sh-muted: 240 3.7% 15.9%;
+  --sh-muted-foreground: 240 5% 64.9%;
+  --sh-accent: 240 3.7% 15.9%;
+  --sh-destructive: 0 62.8% 30.6%;
+  --sh-destructive-foreground: 0 0% 98%;
+  --sh-border: 240 3.7% 15.9%;
+  --sh-ring: 240 4.9% 83.9%;
+
+  /* ---- App-level semantic tokens, derived from the shadcn palette above --
+     Every existing rule in this file already consumes these same names
+     (--panel-bg, --text-primary, --accent, etc.), so re-deriving their
+     values here re-themes the whole UI without touching anything else. */
+  --panel-bg: hsl(var(--neu-surface));
+  --panel-border: transparent;
+  --panel-shadow: var(--neu-raised), 0 24px 70px -24px rgba(0, 0, 0, 0.6);
+  --panel-radius: 20px;
+  --surface-bg: hsl(var(--neu-surface));
+  --surface-border: transparent;
+  --text-primary: hsl(var(--sh-foreground));
+  --text-secondary: hsl(var(--sh-muted-foreground));
+  --text-tertiary: hsl(var(--sh-muted-foreground) / 55%);
+  --accent: hsl(var(--sh-primary));
+  --accent-soft: hsl(var(--sh-primary) / 16%);
+  --accent-glow: hsl(var(--sh-ring) / 35%);
+  --destructive: hsl(var(--sh-destructive));
+  --destructive-foreground: hsl(var(--sh-destructive-foreground));
+
+  /* ---- Dark Neumorphic UI tokens ------------------------------------------
+     Soft-UI look: every surface shares one solid base color (--neu-surface)
+     and reads as either "raised" (pressed OUT of the surface — panel, cards,
+     buttons) or "inset" (pressed INTO the surface — inputs, sliders,
+     switches), purely via a paired dark/light shadow — no borders, no
+     glass blur. Neumorphism needs an *opaque* base (not translucent glass)
+     for the dual-shadow illusion to read correctly. */
+  --neu-surface: 228 14% 13%;
+  --neu-shadow-dark: rgba(0, 0, 0, 0.55);
+  --neu-shadow-light: rgba(255, 255, 255, 0.045);
+  --neu-raised: 7px 7px 16px var(--neu-shadow-dark), -6px -6px 14px var(--neu-shadow-light);
+  --neu-raised-sm: 4px 4px 9px var(--neu-shadow-dark), -3px -3px 8px var(--neu-shadow-light);
+  --neu-inset: inset 4px 4px 9px var(--neu-shadow-dark), inset -3px -3px 8px var(--neu-shadow-light);
+  --neu-inset-sm: inset 3px 3px 6px var(--neu-shadow-dark), inset -2px -2px 6px var(--neu-shadow-light);
+  /* A touch lighter than --neu-surface so each section card reads as a
+     distinct, subtly-elevated slab sitting on top of the panel, rather
+     than blending flush into it. Its raised shadow is intentionally
+     softer/smaller than --neu-raised-sm (used by interactive buttons) so
+     the elevation hierarchy stays calm: panel < card < button/input. */
+  --neu-card-bg: 228 14% 15.5%;
+  --neu-card-shadow: 4px 4px 11px rgba(0, 0, 0, 0.4), -3px -3px 9px rgba(255, 255, 255, 0.035);
+  /* Exo 2 is the global typeface for the whole app; Orbitron is reserved
+     exclusively for the "Orbital Harmony" brand wordmark (panel eyebrow +
+     loader title) for that spacecraft-console/observatory logo feel. */
+  --font-ui: 'Exo 2', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'Exo 2', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: 'Orbitron', 'Exo 2', -apple-system, BlinkMacSystemFont, sans-serif;
+  --settings-width: 280px;
+  --dashboard-gap: 16px;
+  --dashboard-edge: 24px;
+  /* canvas's own left margin + gap to the panel + panel width + panel's
+     right margin — the canvas's own bottom/top margins mirror --dashboard-edge too. */
+  --dashboard-reserved-width: calc(
+    var(--dashboard-edge) + var(--dashboard-gap) + var(--settings-width) + var(--dashboard-edge)
+  );
+}
+
+/* ---- Dashboard: the settings panel dock ------------------------------------ */
+.dashboard {
+  position: fixed;
+  top: 50%;
+  right: var(--dashboard-edge);
+  transform: translateY(-50%);
+  z-index: 25;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--dashboard-gap);
+  max-height: calc(100vh - (var(--dashboard-edge) * 2));
+  overflow-y: auto;
+}
+
+/* ---- Panel shell ----------------------------------------------------------- */
+.panel {
+  display: flex;
+  flex-direction: column;
+  height: auto;
+  max-height: 100%;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--panel-radius);
+  box-shadow: var(--panel-shadow);
+  font-family: var(--font-ui);
+  color: var(--text-primary);
+  overflow: hidden;
+}
+
+.panel--settings {
+  width: var(--settings-width);
+  flex-shrink: 0;
+}
+
+/* ---- Header ---------------------------------------------------------------- */
+.panel__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 16px 16px 12px;
+  /* A carved-in "groove" divider (dark line on top, faint light line right
+     beneath it) reads as an inset seam in the surface — the neumorphic
+     equivalent of a border, instead of a flat 1px line. */
+  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.5), inset 0 -2px 0 rgba(255, 255, 255, 0.03);
+}
+
+.panel__title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.panel__eyebrow {
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+  opacity: 0.95;
+}
+
+.panel__title {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.015em;
+  color: var(--text-primary);
+}
+
+/* ---- Body / sections -------------------------------------------------------- */
+.panel__body {
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.panel__body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.panel__body::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 3px;
+}
+
+/* Each section is its own distinct neumorphic card — a subtly-elevated
+   slab (soft raised shadow, slightly lighter surface tone) with its own
+   rounded corners, so the panel's structure (Celestial Bodies / Simulation
+   / Visualization / Actions) reads at a glance instead of blurring into
+   one long scrolling list. */
+.panel__section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px 13px;
+  border-radius: 14px;
+  background: hsl(var(--neu-card-bg));
+  box-shadow: var(--neu-card-shadow);
+}
+
+.panel__section-title {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  opacity: 0.88;
+}
+
+/* ---- Fields ------------------------------------------------------------------ */
+.field-row {
+  display: flex;
+  gap: 10px;
+}
+
+.field-row .field {
+  flex: 1;
+  min-width: 0;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field__label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-secondary);
+  letter-spacing: 0.01em;
+}
+
+.field__value {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--accent);
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Select -------------------------------------------------------------------- */
+.select {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  padding: 9px 32px 9px 12px;
+  background: var(--surface-bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23d4d4d8' stroke-width='1.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 12px center;
+  border: none;
+  border-radius: 10px;
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  /* Recessed "pressed into the surface" look — a select/dropdown reads as
+     an input, so it's inset rather than raised. */
+  box-shadow: var(--neu-inset-sm);
+  transition: box-shadow 0.2s ease;
+}
+
+.select:hover {
+  box-shadow: var(--neu-inset);
+}
+
+.select:focus-visible {
+  outline: none;
+  box-shadow: var(--neu-inset-sm), 0 0 0 3px var(--accent-soft);
+}
+
+.select option {
+  background: #14161f;
+  color: var(--text-primary);
+}
+
+/* ---- Custom combobox (replaces the native <select> popup) ---------------------
+   Native OS option lists can't be restyled, so js/combobox.js swaps in this
+   fully custom trigger + listbox, kept in sync with the underlying <select>.
+   Same recessed trigger as .select, with a raised neumorphic popup list. */
+.combobox {
+  position: relative;
+}
+
+/* The real <select> stays in the DOM (as the source of truth for value/
+   options) but is fully invisible — the custom trigger below is what's seen
+   and interacted with. */
+.combobox select {
+  position: absolute;
+  inset: 0;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.combobox__trigger {
+  appearance: none;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 12px;
+  background: hsl(var(--neu-surface));
+  border: none;
+  border-radius: 10px;
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: var(--neu-inset-sm);
+  transition: box-shadow 0.2s ease;
+}
+
+.combobox__trigger:hover {
+  box-shadow: var(--neu-inset);
+}
+
+.combobox__trigger:focus-visible {
+  outline: none;
+  box-shadow: var(--neu-inset-sm), 0 0 0 3px var(--accent-soft);
+}
+
+.combobox.is-open .combobox__trigger {
+  box-shadow: var(--neu-inset), 0 0 0 3px var(--accent-soft);
+}
+
+.combobox__value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.combobox__chevron {
+  width: 10px;
+  height: 6px;
+  flex-shrink: 0;
+  color: hsl(var(--sh-muted-foreground));
+  transition: transform 0.2s ease;
+}
+
+.combobox.is-open .combobox__chevron {
+  transform: rotate(180deg);
+}
+
+.combobox__listbox {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 40;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  max-height: 240px;
+  overflow-y: auto;
+  background: hsl(var(--neu-surface));
+  border-radius: 12px;
+  /* Raised popup, like a card floating above the recessed trigger. */
+  box-shadow: var(--neu-raised-sm), 0 20px 44px -18px rgba(0, 0, 0, 0.7);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s;
+}
+
+.combobox.is-open .combobox__listbox {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.combobox__listbox::-webkit-scrollbar {
+  width: 6px;
+}
+
+.combobox__listbox::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 3px;
+}
+
+.combobox__option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+}
+
+.combobox__option:hover,
+.combobox__option.is-active {
+  background: hsl(var(--sh-secondary) / 70%);
+}
+
+.combobox__option.is-selected {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.combobox__option.is-selected::after {
+  content: '\2713';
+  font-size: 11px;
+}
+
+.combobox__option.is-disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ---- Range sliders --------------------------------------------------------------- */
+.slider {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--accent) 0%, var(--accent) var(--fill, 50%), transparent var(--fill, 50%), transparent 100%), hsl(var(--neu-surface));
+  /* Recessed groove the thumb rides in. */
+  box-shadow: var(--neu-inset-sm);
+  cursor: pointer;
+  outline: none;
+}
+
+.slider::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: hsl(var(--neu-surface));
+  border: none;
+  /* Raised knob popping out of the recessed track. */
+  box-shadow: 3px 3px 6px var(--neu-shadow-dark), -2px -2px 6px var(--neu-shadow-light);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.slider::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+  box-shadow: 3px 3px 6px var(--neu-shadow-dark), -2px -2px 6px var(--neu-shadow-light), 0 0 0 4px var(--accent-soft);
+}
+
+.slider::-webkit-slider-thumb:active {
+  box-shadow: 0 0 0 5px var(--accent-glow);
+}
+
+.slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: hsl(var(--neu-surface));
+  border: none;
+  box-shadow: 3px 3px 6px var(--neu-shadow-dark), -2px -2px 6px var(--neu-shadow-light);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.slider:hover::-moz-range-thumb {
+  transform: scale(1.1);
+  box-shadow: 3px 3px 6px var(--neu-shadow-dark), -2px -2px 6px var(--neu-shadow-light), 0 0 0 4px var(--accent-soft);
+}
+
+.slider::-moz-range-track {
+  height: 6px;
+  border-radius: 3px;
+  background: hsl(var(--neu-surface));
+  box-shadow: var(--neu-inset-sm);
+}
+
+.slider::-moz-range-progress {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--accent);
+}
+
+/* ---- Color picker ------------------------------------------------------------------ */
+.field--color,
+.field--toggle {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.field--color .field__label,
+.field--toggle .field__label {
+  flex: 1;
+}
+
+.color-picker {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: none;
+  border-radius: 10px;
+  background: hsl(var(--neu-surface));
+  box-shadow: var(--neu-inset-sm);
+  cursor: pointer;
+}
+
+.color-picker::-webkit-color-swatch-wrapper {
+  padding: 4px;
+  border-radius: 10px;
+}
+
+.color-picker::-webkit-color-swatch {
+  border: none;
+  border-radius: 7px;
+}
+
+/* ---- Toggle switch -------------------------------------------------------------------- */
+.switch {
+  position: relative;
+  display: inline-flex;
+  width: 38px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+.switch input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  margin: 0;
+  z-index: 1;
+}
+
+.switch__track {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: hsl(var(--neu-surface));
+  /* Recessed pill the thumb slides inside. */
+  box-shadow: var(--neu-inset-sm);
+  transition: background 0.25s ease, box-shadow 0.25s ease;
+}
+
+.switch__thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  /* Distinctly lighter than the track (which shares the dark --neu-surface
+     tone) so the knob actually reads as a separate raised nub instead of
+     blending into an indistinct blob. */
+  background: hsl(var(--sh-muted-foreground));
+  box-shadow: 2px 2px 4px var(--neu-shadow-dark), -1px -1px 4px var(--neu-shadow-light);
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), background 0.25s ease;
+}
+
+.switch input:checked ~ .switch__track {
+  background: hsl(var(--neu-surface));
+  box-shadow: var(--neu-inset-sm), 0 0 0 1px hsl(var(--sh-primary) / 25%) inset;
+}
+
+.switch input:checked ~ .switch__track .switch__thumb {
+  background: var(--accent);
+  transform: translateX(16px);
+}
+
+.switch input:focus-visible ~ .switch__track {
+  box-shadow: var(--neu-inset-sm), 0 0 0 3px var(--accent-soft);
+}
+
+/* ---- Buttons ---------------------------------------------------------------------------- */
+.action-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  border: none;
+  background: var(--surface-bg);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  /* Raised "pressed out of the surface" card — the neumorphic resting
+     state for anything actionable/clickable. */
+  box-shadow: var(--neu-raised-sm);
+  transition: box-shadow 0.15s ease, transform 0.1s ease;
+}
+
+.btn--full {
+  width: 100%;
+}
+
+.btn__icon {
+  flex: none;
+  width: 14px;
+  height: 14px;
+}
+
+/* The Play/Pause button holds both icons at all times and toggles which
+   one is visible via the [data-state] attribute (set from ui.js) — this
+   is the actual play<->pause swap the user sees on each click, rather
+   than the static/generic icon the other action buttons use. */
+.btn__icon--play,
+.btn__icon--pause {
+  display: none;
+}
+
+#actionPauseResume[data-state='paused'] .btn__icon--play {
+  display: block;
+}
+
+#actionPauseResume[data-state='playing'] .btn__icon--pause {
+  display: block;
+}
+
+.btn:hover {
+  box-shadow: 5px 5px 11px var(--neu-shadow-dark), -4px -4px 10px var(--neu-shadow-light);
+}
+
+.btn:active {
+  /* Physically "pushed in" feedback on click — the signature neumorphic
+     interaction, inverting from raised to inset. */
+  box-shadow: var(--neu-inset-sm);
+  transform: scale(0.99);
+}
+
+.btn--primary {
+  background: hsl(var(--sh-primary));
+  color: hsl(var(--sh-primary-foreground));
+  font-weight: 600;
+  box-shadow: 4px 4px 10px var(--neu-shadow-dark), -3px -3px 9px var(--neu-shadow-light), 0 0 0 1px hsl(var(--sh-primary) / 25%);
+}
+
+.btn--primary:hover {
+  background: hsl(var(--sh-primary) / 92%);
+}
+
+.btn--primary:active {
+  box-shadow: inset 3px 3px 7px rgba(0, 0, 0, 0.3), inset -2px -2px 6px rgba(255, 255, 255, 0.25);
+}
+
+.btn.is-active {
+  background: var(--accent-soft);
+  color: var(--accent);
+  box-shadow: var(--neu-inset-sm), 0 0 0 1px hsl(var(--sh-primary) / 25%) inset;
+}
+
