@@ -61,9 +61,9 @@ function makeGlowTexture() {
   canvas.width = canvas.height = size;
   const ctx = canvas.getContext('2d');
   const gradient = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
-  gradient.addColorStop(0, 'rgba(255,235,190,0.9)');
-  gradient.addColorStop(0.35, 'rgba(255,180,90,0.45)');
-  gradient.addColorStop(1, 'rgba(255,140,60,0)');
+  gradient.addColorStop(0, 'rgba(255,250,225,0.95)');
+  gradient.addColorStop(0.35, 'rgba(255,210,130,0.5)');
+  gradient.addColorStop(1, 'rgba(255,160,70,0)');
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, size, size);
   const tex = new THREE.CanvasTexture(canvas);
@@ -219,22 +219,38 @@ function makeSunMaterial() {
         float limbDarken = 1.0 - 0.32 * pow(rim, 1.5);
         vec3 color = base * limbDarken;
 
-        // Slow, gentle breathing pulse — reads as a living light source
-        // rather than a static lit sphere.
-        float pulse = 0.94 + 0.06 * sin(time * 0.6);
+        // Layered, slightly irregular breathing pulse (two sine waves at
+        // different frequencies/phases, rather than one perfectly uniform
+        // sine) — reads as a living, faintly turbulent light source
+        // instead of a mechanically-even blink.
+        float pulse = 0.93 + 0.05 * sin(time * 0.6) + 0.03 * sin(time * 1.7 + 1.3);
+
+        // Fine-grained procedural flicker across the surface — a cheap
+        // trig-based pseudo-noise standing in for solar granulation/
+        // convection cells, so the inner glow doesn't read as a perfectly
+        // flat, uniform wash of light but as roiling plasma welling up
+        // from within.
+        float grain = sin(vUv.x * 42.0 + time * 1.4) * sin(vUv.y * 39.0 - time * 1.1);
+        float flicker = 0.92 + 0.08 * grain;
 
         // Warm CORE glow — brightens toward the CENTER of the disc
         // (1.0 - rim, the opposite direction from the limb darkening and
         // edge glow below), as if light were welling up from inside the
-        // surface rather than just being lit from outside.
-        float coreGlow = pow(1.0 - rim, 2.2);
-        color += vec3(1.0, 0.82, 0.5) * coreGlow * 0.55 * pulse;
+        // surface rather than just being lit from outside. Lower exponent
+        // + higher strength than before so the inner glow reaches further
+        // across the disc and reads unmistakably as an internal light
+        // source, not just a subtle center highlight. Kept close to
+        // yellow-white (not deep orange) so the Sun reads as a genuinely
+        // hot, bright star rather than a dim reddish body (users flagged
+        // an earlier, more-orange version as looking "almost like Mars").
+        float coreGlow = pow(1.0 - rim, 1.6);
+        color += vec3(1.0, 0.93, 0.72) * coreGlow * 1.0 * pulse * flicker;
         // Overall brightening so the whole disc reads as radiant/emissive,
         // not just a photograph of a lit sphere.
-        color *= 1.18 * pulse;
+        color *= 1.4 * pulse;
 
         float edgeGlow = pow(rim, 7.0) * 0.55;
-        color += vec3(1.0, 0.74, 0.48) * edgeGlow;
+        color += vec3(1.0, 0.78, 0.52) * edgeGlow;
         gl_FragColor = vec4(color, 1.0);
       }
     `,
@@ -473,9 +489,9 @@ export function createSolarSystemEngine(canvas, opts) {
     transparent: true,
     depthWrite: false,
     blending: THREE.AdditiveBlending,
-    opacity: 0.32,
+    opacity: 0.45,
   }));
-  glow.scale.set(9.5, 9.5, 1);
+  glow.scale.set(10.5, 10.5, 1);
   scene.add(glow);
 
   // A second, larger, softer sprite layered behind the tight glow above —
@@ -486,9 +502,9 @@ export function createSolarSystemEngine(canvas, opts) {
     transparent: true,
     depthWrite: false,
     blending: THREE.AdditiveBlending,
-    opacity: 0.14,
+    opacity: 0.2,
   }));
-  outerGlow.scale.set(15, 15, 1);
+  outerGlow.scale.set(16.5, 16.5, 1);
   scene.add(outerGlow);
 
   const planets = planetKeys
