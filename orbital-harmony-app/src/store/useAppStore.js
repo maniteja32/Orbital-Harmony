@@ -21,8 +21,8 @@ export const useAppStore = create((set) => ({
 
   goTo: (screen) => set({ screen }),
 
-  setPlanetA: (planetA) => set((s) => (s.planetB === planetA ? s : { planetA })),
-  setPlanetB: (planetB) => set((s) => (s.planetA === planetB ? s : { planetB })),
+  setPlanetA: (planetA) => set({ planetA }),
+  setPlanetB: (planetB) => set({ planetB }),
   setSpeed: (speed) => set({ speed }),
   setDensity: (density) => set({ density }),
   setSnapshot: (snapshot) => set({ snapshot }),
