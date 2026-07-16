@@ -67,7 +67,10 @@ export const PLANETS = [
     texture: '/textures/earth_daymap.jpg',
     cloudTexture: '/textures/earth_clouds.jpg',
     hasAtmosphere: true,
-    hasClouds: true,
+    // Clouds disabled for this iteration per explicit request ("remove the
+    // clouds completely") — cloudTexture/rendering support is left intact
+    // in the engine, just gated off here; flip back to true to restore.
+    hasClouds: false,
     hasMoon: true,
     orbitalPeriodDays: 365.256,
     meanLongitudeDeg: 100.46457,
@@ -127,7 +130,11 @@ export const PLANETS = [
     distance: 67,
     rotationSpeed: 0.03,
     tilt: 82,
-    spinDirection: 1,
+    // Retrograde: Uranus's axial tilt exceeds 90° (its pole points almost
+    // directly at the Sun at times), which by the IAU convention counts as
+    // a retrograde rotator, same category as Venus (just for a different
+    // physical reason — extreme tilt vs. a fully flipped-over spin).
+    spinDirection: -1,
     texture: '/textures/uranus.jpg',
     orbitalPeriodDays: 30688.5,
     meanLongitudeDeg: 313.23810,

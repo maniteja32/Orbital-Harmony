@@ -22,13 +22,35 @@ const DAYS_PER_YEAR = 365.25;
 const textureLoader = new THREE.TextureLoader();
 const textureCache = new Map();
 
-function loadTexture(path, { srgb = true } = {}) {
-  if (textureCache.has(path)) return textureCache.get(path);
-  const tex = textureLoader.load(path);
+function loadTexture(path, { srgb = true, saturate = false } = {}) {
+  const cacheKey = saturate ? `${path}::sat` : path;
+  if (textureCache.has(cacheKey)) return textureCache.get(cacheKey);
+  const tex = textureLoader.load(path, saturate ? boostTextureSaturation : undefined);
   if (srgb) tex.colorSpace = THREE.SRGBColorSpace;
   tex.anisotropy = 4;
-  textureCache.set(path, tex);
+  textureCache.set(cacheKey, tex);
   return tex;
+}
+
+// Redraws a loaded texture's image through a canvas 2D `filter` (saturate +
+// a touch of contrast) so planets read as more vivid/colorful on-screen —
+// cheap, one-time, no full post-processing/bloom pipeline needed (this
+// project deliberately avoids that for bundle simplicity). Runs once per
+// texture right after its image finishes loading (passed as the
+// TextureLoader `onLoad` callback, which receives the Texture itself), then
+// swaps `texture.image` to the boosted canvas and flags `needsUpdate` so
+// Three.js re-uploads the adjusted pixels to the GPU.
+function boostTextureSaturation(texture, amount = 1.4) {
+  const img = texture.image;
+  if (!img || !img.width) return;
+  const canvas = document.createElement('canvas');
+  canvas.width = img.width;
+  canvas.height = img.height;
+  const ctx = canvas.getContext('2d');
+  ctx.filter = `saturate(${amount * 100}%) contrast(106%)`;
+  ctx.drawImage(img, 0, 0);
+  texture.image = canvas;
+  texture.needsUpdate = true;
 }
 
 // A soft radial-gradient sprite used for the Sun's glow — cheap, no
@@ -219,6 +241,29 @@ function makeSunMaterial() {
   });
 }
 
+// Browse-mode (ambient, non-pattern) orbit speed is deliberately NOT a
+// linear real-time scale of orbitalPeriodDays — Mercury (88d) to Neptune
+// (60,182d) is a ~684x range, so a linear scale makes Mercury zip around
+// in ~15s while Neptune takes ~2.8 REAL HOURS per revolution (looks
+// completely frozen on a short mobile session). Instead, compress the
+// range with a power curve (exponent < 1) relative to Mercury's period:
+// still slower-the-further-out (correct Kepler ordering/feel), just not
+// an impractical 684x spread. With BROWSE_REFERENCE_ORBIT_SEC=10 and
+// BROWSE_COMPRESSION_EXPONENT=0.35, full-orbit durations work out to
+// roughly Mercury 10s / Venus 14s / Earth 17s / Mars 21s / Jupiter 39s /
+// Saturn 54s / Uranus 78s / Neptune 98s — every planet visibly moving
+// within a normal viewing window instead of some looking static.
+const BROWSE_REFERENCE_PERIOD_DAYS = 87.969; // Mercury
+const BROWSE_REFERENCE_ORBIT_SEC = 10;
+const BROWSE_COMPRESSION_EXPONENT = 0.35;
+
+function browseAngularSpeed(periodDays) {
+  const orbitSeconds =
+    BROWSE_REFERENCE_ORBIT_SEC *
+    Math.pow(periodDays / BROWSE_REFERENCE_PERIOD_DAYS, BROWSE_COMPRESSION_EXPONENT);
+  return (Math.PI * 2) / orbitSeconds;
+}
+
 function buildPlanet(data) {
   const pivot = new THREE.Group();
   // Real current orbital position (see utils/currentPosition.js) instead
@@ -237,7 +282,7 @@ function buildPlanet(data) {
 
   const geometry = new THREE.SphereGeometry(data.radius, 48, 48);
   const material = new THREE.MeshStandardMaterial({
-    map: loadTexture(data.texture),
+    map: loadTexture(data.texture, { saturate: true }),
     roughness: 0.85,
     metalness: 0.02,
   });
@@ -251,6 +296,13 @@ function buildPlanet(data) {
       color: 0xffffff,
       alphaMap: loadTexture(data.cloudTexture, { srgb: false }),
       transparent: true,
+      // Without an explicit opacity cap, the alphaMap alone drives alpha
+      // (bright/white cloud-covered pixels in the texture render at FULL
+      // opacity, 1.0), which blankets the whole globe and hides the actual
+      // planet surface underneath almost entirely. Capping opacity lets
+      // the Earth texture read clearly through the cloud layer, even under
+      // the densest cloud regions.
+      opacity: 0.1,
       depthWrite: false,
       roughness: 1,
     });
@@ -306,7 +358,17 @@ function buildPlanet(data) {
     axialTilt.add(moonPivot);
   }
 
-  return { data, pivot, tiltAnchor, axialTilt, mesh, clouds, moonPivot, startAngle };
+  return {
+    data,
+    pivot,
+    tiltAnchor,
+    axialTilt,
+    mesh,
+    clouds,
+    moonPivot,
+    startAngle,
+    browseSpeed: browseAngularSpeed(data.orbitalPeriodDays),
+  };
 }
 
 /**
@@ -647,6 +709,7 @@ export function createSolarSystemEngine(canvas, opts) {
   // mode advances at a fixed, gentle rate for ambient motion.
   const clock = new THREE.Clock();
   let simDaysElapsed = 0;
+  let browseElapsedSec = 0;
   let lastSampledDay = 0;
   const BROWSE_DAYS_PER_REAL_SECOND = 6;
   const simDaysPerRealSecond = tracePattern
@@ -691,11 +754,28 @@ export function createSolarSystemEngine(canvas, opts) {
     });
 
     if (!completed) simDaysElapsed += delta * simDaysPerRealSecond;
+    if (!completed) browseElapsedSec += delta;
     planets.forEach((planet) => {
-      // Real orbital period drives the angle directly — accurate relative
-      // speeds for free (and, in pattern mode, a deterministic total
-      // reveal duration), plus each planet's own random start offset.
-      planet.pivot.rotation.y = planet.startAngle + (simDaysElapsed / planet.data.orbitalPeriodDays) * Math.PI * 2;
+      if (tracePattern) {
+        // Pattern/reveal mode: real orbital period drives the angle
+        // directly — accurate relative speeds (needed for the resonance
+        // math) and a deterministic total reveal duration.
+        planet.pivot.rotation.y = planet.startAngle + (simDaysElapsed / planet.data.orbitalPeriodDays) * Math.PI * 2;
+      } else {
+        // Browse mode: compressed, mobile-friendly ambient speed (see
+        // browseAngularSpeed() above) instead of the real linear scale.
+        planet.pivot.rotation.y = planet.startAngle + browseElapsedSec * planet.browseSpeed;
+      }
+      // Counter-rotate tiltAnchor by the exact same amount so the axial
+      // tilt's WORLD orientation stays fixed as the planet orbits, instead
+      // of precessing/sweeping around once per orbit (tiltAnchor has no
+      // rotation of its own otherwise, so without this its child axialTilt
+      // would inherit pivot's spin and the "north pole direction" would
+      // visibly rotate together with orbital position — real planets keep
+      // their axis pointed the same way in space throughout their orbit,
+      // e.g. Earth's axis always points toward Polaris regardless of where
+      // Earth is along its orbit, which is what causes the seasons).
+      planet.tiltAnchor.rotation.y = -planet.pivot.rotation.y;
     });
 
     planets.forEach((planet) => {
