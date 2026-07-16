@@ -369,7 +369,11 @@ function buildPlanet(data) {
     const moonGeo = new THREE.SphereGeometry(data.radius * 0.27, 32, 32);
     const moonMat = new THREE.MeshStandardMaterial({ map: loadTexture(MOON_TEXTURE), roughness: 0.95 });
     const moonMesh = new THREE.Mesh(moonGeo, moonMat);
-    moonMesh.position.set(data.radius * 2.2, 0, 0);
+    // Tightened from 2.2x to 1.9x Earth's (now larger) radius so the Moon
+    // hugs Earth more closely and its orbit can never visually reach
+    // toward Mars's orbit, no matter Earth/Mars's current real angular
+    // position relative to each other.
+    moonMesh.position.set(data.radius * 1.9, 0, 0);
     moonPivot.add(moonMesh);
     axialTilt.add(moonPivot);
   }

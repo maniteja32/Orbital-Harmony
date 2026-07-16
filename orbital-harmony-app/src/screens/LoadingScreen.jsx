@@ -277,9 +277,6 @@ export default function LoadingScreen({ onDone, onExited }) {
         <div className={`loading-title-wrap${ready ? ' is-visible' : ''}${transitioning ? ' is-transitioning' : ''}`}>
           <h1 className="loading-title">Orbital Harmony</h1>
         </div>
-        <p className={`loading-subtitle${ready ? ' is-visible' : ''}${transitioning ? ' is-transitioning' : ''}`}>
-          Discover the hidden geometry of planetary motion
-        </p>
       </div>
     </div>
   );

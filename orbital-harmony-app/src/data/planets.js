@@ -28,6 +28,15 @@ export const PLANETS = [
     // just makes it legible without touching its orbit distance or any of
     // the larger planets.
     radius: 0.95,
+    // Orbital distances were widened (16/21/25/31/42/55/67/78 ->
+    // 16/23/31/40/55/72/90/108, progressively larger gaps) after users
+    // reported planets visually crowding/merging — especially Earth's
+    // Moon appearing to touch Mars — once the inner planets' RADII were
+    // bumped up for visibility. Distances are otherwise purely a visual
+    // layout choice (not physically to-scale in this app to begin with),
+    // and every camera-framing calculation in solarSystemEngine.js derives
+    // entirely from these values dynamically, so widening them needs no
+    // other constant changes.
     distance: 16,
     rotationSpeed: 0.004,
     tilt: 0.03,
@@ -44,7 +53,7 @@ export const PLANETS = [
     // Bumped up from 1.1 — same "small inner planet, easier to see" bump as
     // Mercury/Earth/Mars, orbit distance untouched.
     radius: 1.5,
-    distance: 21,
+    distance: 23,
     rotationSpeed: 0.0045,
     tilt: 3,
     spinDirection: -1,
@@ -60,7 +69,7 @@ export const PLANETS = [
     // Bumped up from 1.2 — same "small inner planet, easier to see" bump as
     // the other terrestrials, orbit distance untouched.
     radius: 1.6,
-    distance: 25,
+    distance: 31,
     rotationSpeed: 0.02,
     tilt: 23.4,
     spinDirection: 1,
@@ -71,7 +80,10 @@ export const PLANETS = [
     // clouds completely") — cloudTexture/rendering support is left intact
     // in the engine, just gated off here; flip back to true to restore.
     hasClouds: false,
-    hasMoon: true,
+    // Moon disabled for now per explicit request ("remove the moon") —
+    // moon-rendering support in the engine is left intact, just gated off
+    // here; flip back to true to restore.
+    hasMoon: false,
     orbitalPeriodDays: 365.256,
     meanLongitudeDeg: 100.46457,
     fact: 'The only known planet with life.',
@@ -83,7 +95,7 @@ export const PLANETS = [
     // Bumped up from 0.8 — same "small inner planet, easier to see" bump as
     // the other terrestrials, orbit distance untouched.
     radius: 1.1,
-    distance: 31,
+    distance: 40,
     rotationSpeed: 0.018,
     tilt: 25,
     spinDirection: 1,
@@ -97,7 +109,7 @@ export const PLANETS = [
     name: 'Jupiter',
     color: '#d9a066',
     radius: 3.6,
-    distance: 42,
+    distance: 55,
     rotationSpeed: 0.045,
     tilt: 3,
     spinDirection: 1,
@@ -111,7 +123,7 @@ export const PLANETS = [
     name: 'Saturn',
     color: '#e3c16f',
     radius: 3.0,
-    distance: 55,
+    distance: 72,
     rotationSpeed: 0.042,
     tilt: 27,
     spinDirection: 1,
@@ -127,7 +139,7 @@ export const PLANETS = [
     name: 'Uranus',
     color: '#7de3e0',
     radius: 2.0,
-    distance: 67,
+    distance: 90,
     rotationSpeed: 0.03,
     tilt: 82,
     // Retrograde: Uranus's axial tilt exceeds 90° (its pole points almost
@@ -145,7 +157,7 @@ export const PLANETS = [
     name: 'Neptune',
     color: '#4166f5',
     radius: 1.9,
-    distance: 78,
+    distance: 108,
     rotationSpeed: 0.032,
     tilt: 28,
     spinDirection: 1,
