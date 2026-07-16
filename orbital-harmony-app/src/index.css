@@ -416,7 +416,11 @@ button {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 30px;
+  /* Generous, viewport-proportional breathing room between the Planet A
+     and Planet B rows — this screen has a lot of unused vertical space
+     once the two compact rows are centered, so a fixed small gap left
+     them looking cramped together instead of using it. */
+  gap: clamp(48px, 10vh, 96px);
   min-height: 0;
 }
 
@@ -453,36 +457,58 @@ button {
 }
 
 .swipe-planet {
+  position: relative;
   flex: 0 0 74px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 14px 0;
+  padding: 18px 0;
   scroll-snap-align: center;
 }
 
+/* Ambient halo — small, tight, and quiet (Apple/CRED-style "subtle
+   selection" rather than a bright spotlight/bloom). Sized just a little
+   past the sphere's own edge with a SHORT gradient falloff (no blur
+   filter — softness comes purely from the gradient stops) so the color
+   stays hugging the planet instead of scattering widely into the dark.
+   Opacity is capped low (~30% of --glow's already-fades-with-distance
+   value) for a barely-there tint, not a dramatic glow. */
+.swipe-planet__glow {
+  position: absolute;
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--planet-color) 70%, transparent) 0%,
+    color-mix(in srgb, var(--planet-color) 30%, transparent) 55%,
+    transparent 80%
+  );
+  opacity: calc(var(--glow) * 0.3);
+  transform: scale(var(--scale));
+  pointer-events: none;
+}
+
 .swipe-planet__sphere {
+  position: relative;
   width: 52px;
   height: 52px;
   border-radius: 50%;
   /* Real planet texture photo, with two CSS-only lighting gradients layered
-     on top (a soft highlight upper-left, a darkening shadow lower-right) so
-     it still reads as a lit 3D sphere rather than a flat circular photo. */
+     on top (a soft highlight upper-left, a gentle darkening lower-right) so
+     it reads as a naturally lit 3D sphere rather than a flat circular photo
+     or a sphere outlined with an artificial ring. */
   background-image:
-    radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0) 45%),
-    radial-gradient(circle at 72% 78%, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0) 55%),
+    radial-gradient(circle at 30% 26%, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0) 52%),
+    radial-gradient(circle at 74% 80%, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0) 60%),
     var(--planet-texture);
   background-size: cover;
   background-position: center;
   transform: scale(var(--scale));
   opacity: var(--opacity);
   filter: brightness(var(--brightness)) saturate(var(--saturate));
-  box-shadow: 0 0 16px -4px var(--planet-color);
-  transition: box-shadow 0.25s ease;
-}
-
-.swipe-planet.is-center .swipe-planet__sphere {
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.75), 0 0 32px 0px var(--planet-color);
+  /* Small, tight contact-shadow only — grounding, not a glow. */
+  box-shadow: 0 2px 10px -2px rgba(0, 0, 0, 0.5);
 }
 
 .swipe-row__info {

@@ -83,13 +83,22 @@ export function PlanetSwipeRow({ label, planets, selectedKey, initialKey, onSele
         <div className="swipe-row__pad" aria-hidden="true" />
         {planets.map((planet) => {
           const dist = distances[planet.key] ?? 2;
-          const scale = Math.max(1 - dist * 0.34, 0.5);
+          // Selected planet scales up slightly PAST 1 (a gentle "pop" to
+          // indicate selection, Apple/CRED-style) instead of just being the
+          // biggest among shrinking neighbours.
+          const scale = Math.max(1.06 - dist * 0.4, 0.5);
           const opacity = Math.max(1 - dist * 0.6, 0.25);
           // Active planet reads brighter/more saturated (real texture at
           // full punch); inactive ones fade toward dim/washed-out, on top
           // of the scale+opacity shrink, for a clearer "faded" read.
           const brightness = Math.max(1.25 - dist * 0.45, 0.55);
           const saturate = Math.max(1.1 - dist * 0.55, 0.35);
+          // Ambient glow strength — fully visible only right at center,
+          // fading out fast as the planet drifts away. Rendered as its own
+          // small, fixed-size radial-gradient element (see
+          // .swipe-planet__glow) that hugs close to the sphere's edge — a
+          // subtle, premium halo rather than a bright/blurry spotlight.
+          const glow = Math.max(1 - dist * 1.5, 0);
           const isCenter = dist < 0.12;
           return (
             <button
@@ -106,11 +115,13 @@ export function PlanetSwipeRow({ label, planets, selectedKey, initialKey, onSele
                 '--opacity': opacity,
                 '--brightness': brightness,
                 '--saturate': saturate,
+                '--glow': glow,
               }}
               onClick={() => handleTap(planet.key)}
               aria-label={planet.name}
               aria-current={isCenter}
             >
+              <span className="swipe-planet__glow" />
               <span className="swipe-planet__sphere" />
             </button>
           );
