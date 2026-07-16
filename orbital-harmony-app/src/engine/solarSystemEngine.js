@@ -12,6 +12,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { PLANETS_BY_KEY, SUN_TEXTURE, MOON_TEXTURE } from '../data/planets.js';
+import { currentOrbitAngleRad } from '../utils/currentPosition.js';
 
 const DAYS_PER_YEAR = 365.25;
 // The cinematic browse-screen camera path holds on a true top-down shot
@@ -162,12 +163,19 @@ function buildStarfield() {
 // shaded with a simple view-dependent term for physical believability: a
 // gentle limb darkening across the disc (real photospheres read darker at
 // the edge than the center) plus a thin warm brightening right at the
-// silhouette edge (a cheap stand-in for the chromosphere/corona). Reads as
-// genuine solar surface detail instead of a flat, evenly-lit texture.
+// silhouette edge (a cheap stand-in for the chromosphere/corona). ALSO
+// (per request) a strong warm CORE glow that brightens toward the center
+// of the disc — the opposite falloff direction from the limb/edge terms —
+// plus a slow brightness pulse, so the light reads as radiating outward
+// from WITHIN the surface itself rather than relying on the external
+// additive glow sprites layered behind it (see buildSunGlowSprites) to do
+// all the work. Reads as genuine solar surface detail/light emission,
+// not a flat, evenly-lit texture with a bolted-on halo.
 function makeSunMaterial() {
   return new THREE.ShaderMaterial({
     uniforms: {
       map: { value: loadTexture(SUN_TEXTURE) },
+      time: { value: 0 },
     },
     vertexShader: `
       varying vec2 vUv;
@@ -180,6 +188,7 @@ function makeSunMaterial() {
     `,
     fragmentShader: `
       uniform sampler2D map;
+      uniform float time;
       varying vec2 vUv;
       varying vec3 vNormalView;
       void main() {
@@ -187,6 +196,21 @@ function makeSunMaterial() {
         float rim = clamp(1.0 - abs(vNormalView.z), 0.0, 1.0);
         float limbDarken = 1.0 - 0.32 * pow(rim, 1.5);
         vec3 color = base * limbDarken;
+
+        // Slow, gentle breathing pulse — reads as a living light source
+        // rather than a static lit sphere.
+        float pulse = 0.94 + 0.06 * sin(time * 0.6);
+
+        // Warm CORE glow — brightens toward the CENTER of the disc
+        // (1.0 - rim, the opposite direction from the limb darkening and
+        // edge glow below), as if light were welling up from inside the
+        // surface rather than just being lit from outside.
+        float coreGlow = pow(1.0 - rim, 2.2);
+        color += vec3(1.0, 0.82, 0.5) * coreGlow * 0.55 * pulse;
+        // Overall brightening so the whole disc reads as radiant/emissive,
+        // not just a photograph of a lit sphere.
+        color *= 1.18 * pulse;
+
         float edgeGlow = pow(rim, 7.0) * 0.55;
         color += vec3(1.0, 0.74, 0.48) * edgeGlow;
         gl_FragColor = vec4(color, 1.0);
@@ -197,7 +221,10 @@ function makeSunMaterial() {
 
 function buildPlanet(data) {
   const pivot = new THREE.Group();
-  const startAngle = Math.random() * Math.PI * 2;
+  // Real current orbital position (see utils/currentPosition.js) instead
+  // of a random angle — planets now start roughly where they actually are
+  // in their real orbits right now, relative to each other.
+  const startAngle = currentOrbitAngleRad(data);
   pivot.rotation.y = startAngle;
 
   const tiltAnchor = new THREE.Group();
@@ -345,9 +372,24 @@ export function createSolarSystemEngine(canvas, opts) {
   renderer.setSize(width, height, false);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
 
-  scene.add(new THREE.AmbientLight(0xffffff, 0.18));
-  const sunLight = new THREE.PointLight(0xfff2d8, 3.2, 0, 0.15);
+  // Brightened overall (ambient was 0.18 -> 0.42 -> 0.62, sun 3.2/decay 0.15
+  // -> 4.2/decay 0.12 -> 4.8/decay 0.1) — on lower-brightness mobile
+  // displays (e.g. Pixel 8a) the planets' unlit/night side still read too
+  // close to black. Ambient light raised the most (again) since that's
+  // what lifts the SHADOWED side specifically (it's a uniform fill,
+  // independent of the Sun's direction) without blowing out the already-lit
+  // side; the Sun's own intensity/decay were nudged too so outer, farther-
+  // out planets still read clearly instead of looking dim from
+  // inverse-square falloff. A second faint fill light was added behind the
+  // camera's general direction purely to lift the far/night hemisphere a
+  // little further without adding a second visible highlight (very low
+  // intensity, huge decay-free falloff so it reads as a soft ambient-like
+  // top-up rather than a second sun).
+  scene.add(new THREE.AmbientLight(0xffffff, 0.62));
+  const sunLight = new THREE.PointLight(0xfff2d8, 4.8, 0, 0.1);
   scene.add(sunLight);
+  const fillLight = new THREE.HemisphereLight(0xfff7ea, 0x2a2f45, 0.28);
+  scene.add(fillLight);
 
   const starfield = buildStarfield();
   scene.add(starfield);
@@ -360,12 +402,16 @@ export function createSolarSystemEngine(canvas, opts) {
   // Tight, realistic corona: a small bright core glow plus a softer, much
   // fainter outer layer, both scaled close to the Sun's own radius (not the
   // old huge diffuse halo) so it reads as a corona, not a glowing blob.
+  // Deliberately toned down (opacity 0.5/0.22 -> 0.32/0.14) now that the
+  // Sun's own shader carries a strong internal core glow (see
+  // makeSunMaterial) — these sprites are just a subtle assist, not the
+  // main source of the "glowing" read anymore.
   const glow = new THREE.Sprite(new THREE.SpriteMaterial({
     map: makeGlowTexture(),
     transparent: true,
     depthWrite: false,
     blending: THREE.AdditiveBlending,
-    opacity: 0.5,
+    opacity: 0.32,
   }));
   glow.scale.set(9.5, 9.5, 1);
   scene.add(glow);
@@ -378,7 +424,7 @@ export function createSolarSystemEngine(canvas, opts) {
     transparent: true,
     depthWrite: false,
     blending: THREE.AdditiveBlending,
-    opacity: 0.22,
+    opacity: 0.14,
   }));
   outerGlow.scale.set(15, 15, 1);
   scene.add(outerGlow);
@@ -497,16 +543,17 @@ export function createSolarSystemEngine(canvas, opts) {
   const heroWidePos = heroPosition(dist, HERO_ELEVATION_START_DEG);
   const heroAngledPos = heroPosition(dist, HERO_ELEVATION_END_DEG);
   // Final resting shot: framed tight on Earth's own orbit (not the whole
-  // system) with a generous margin so Earth/its orbit ring are never
-  // cropped and there's still comfortable breathing room around the
-  // Sun+Earth focal point. IMPORTANT for the orthographic camera in use
-  // here: on-screen scale comes ENTIRELY from the frustum half-height, NOT
-  // camera distance (moving an orthographic camera closer/further does
-  // nothing visually) — so "zooming in" is animated by shrinking
-  // `camera.top/bottom/left/right` toward `heroCloseHalf` in tick() below,
-  // not by moving the camera. The camera position/angle/up stay FROZEN at
-  // `heroAngledPos` through the whole zoom phase (no further rotation).
-  const HERO_CLOSE_MARGIN = 1.75;
+  // system) with just enough margin so Earth/its orbit ring are never
+  // cropped, while sitting noticeably closer than before (was 1.75 — read
+  // as too zoomed-out/loose) for a more intimate Sun+Earth focal point.
+  // IMPORTANT for the orthographic camera in use here: on-screen scale
+  // comes ENTIRELY from the frustum half-height, NOT camera distance
+  // (moving an orthographic camera closer/further does nothing visually)
+  // — so "zooming in" is animated by shrinking `camera.top/bottom/left/
+  // right` toward `heroCloseHalf` in tick() below, not by moving the
+  // camera. The camera position/angle/up stay FROZEN at `heroAngledPos`
+  // through the whole zoom phase (no further rotation).
+  const HERO_CLOSE_MARGIN = 1.2;
   const heroWideHalf = orthoHalfHeight(maxDistance, framingMargin, width / height);
   const heroCloseHalf = orthoHalfHeight(earthRefDistance, HERO_CLOSE_MARGIN, width / height);
   // Perspective fallback only (this engine also supports a plain
@@ -638,6 +685,7 @@ export function createSolarSystemEngine(canvas, opts) {
     }
 
     sunMesh.rotation.y += delta * 0.05;
+    sunMat.uniforms.time.value += delta;
     starfield.children.forEach((layer) => {
       layer.rotation.y += delta * layer.userData.spin;
     });

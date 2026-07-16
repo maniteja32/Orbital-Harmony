@@ -7,6 +7,15 @@
 // orbit angle directly in the engine (accurate relative speeds for free,
 // e.g. Earth/Venus's real 8:13 resonance) and powers the Result screen's
 // resonance-ratio calculation.
+// meanLongitudeDeg is each planet's REAL mean ecliptic longitude (degrees)
+// at the J2000.0 epoch (2000-01-01 12:00 TT) — combined with
+// orbitalPeriodDays this lets the engine compute each planet's actual
+// current real-world orbital position (see utils/currentPosition.js),
+// rather than starting every planet at a random angle. Low-precision
+// values (mean/circular orbit approximation, ignores eccentricity and
+// perturbations) from the standard "Keplerian elements for approximate
+// positions of the major planets" reference — plenty accurate for this
+// visualization, not intended for precision ephemeris use.
 // ============================================================================
 
 export const PLANETS = [
@@ -14,33 +23,43 @@ export const PLANETS = [
     key: 'mercury',
     name: 'Mercury',
     color: '#b7b2ad',
-    radius: 0.6,
+    // Bumped up from the real-proportion 0.6 — Mercury is by far the
+    // smallest/hardest-to-see planet; a bit of artistic exaggeration here
+    // just makes it legible without touching its orbit distance or any of
+    // the larger planets.
+    radius: 0.95,
     distance: 16,
     rotationSpeed: 0.004,
     tilt: 0.03,
     spinDirection: 1,
     texture: '/textures/mercury.jpg',
     orbitalPeriodDays: 87.969,
+    meanLongitudeDeg: 252.25032,
     fact: 'Smallest planet, closest to the Sun.',
   },
   {
     key: 'venus',
     name: 'Venus',
     color: '#e6c78c',
-    radius: 1.1,
+    // Bumped up from 1.1 — same "small inner planet, easier to see" bump as
+    // Mercury/Earth/Mars, orbit distance untouched.
+    radius: 1.5,
     distance: 21,
     rotationSpeed: 0.0045,
     tilt: 3,
     spinDirection: -1,
     texture: '/textures/venus.jpg',
     orbitalPeriodDays: 224.701,
+    meanLongitudeDeg: 181.97910,
     fact: 'Spins backwards; hottest planet in the solar system.',
   },
   {
     key: 'earth',
     name: 'Earth',
     color: '#4f86c6',
-    radius: 1.2,
+    // Bumped up from 1.2 — same "small inner planet, easier to see" bump as
+    // the other terrestrials, orbit distance untouched.
+    radius: 1.6,
     distance: 25,
     rotationSpeed: 0.02,
     tilt: 23.4,
@@ -51,19 +70,23 @@ export const PLANETS = [
     hasClouds: true,
     hasMoon: true,
     orbitalPeriodDays: 365.256,
+    meanLongitudeDeg: 100.46457,
     fact: 'The only known planet with life.',
   },
   {
     key: 'mars',
     name: 'Mars',
     color: '#c1440e',
-    radius: 0.8,
+    // Bumped up from 0.8 — same "small inner planet, easier to see" bump as
+    // the other terrestrials, orbit distance untouched.
+    radius: 1.1,
     distance: 31,
     rotationSpeed: 0.018,
     tilt: 25,
     spinDirection: 1,
     texture: '/textures/mars.jpg',
     orbitalPeriodDays: 686.98,
+    meanLongitudeDeg: 355.44657,
     fact: 'The Red Planet, home to the tallest volcano.',
   },
   {
@@ -77,6 +100,7 @@ export const PLANETS = [
     spinDirection: 1,
     texture: '/textures/jupiter.jpg',
     orbitalPeriodDays: 4332.59,
+    meanLongitudeDeg: 34.39644,
     fact: 'Largest planet; a Great Red Spot storm rages for centuries.',
   },
   {
@@ -92,6 +116,7 @@ export const PLANETS = [
     ringTexture: '/textures/saturn_ring.png',
     hasRings: true,
     orbitalPeriodDays: 10759.22,
+    meanLongitudeDeg: 49.95424,
     fact: 'Famous for its dazzling ring system.',
   },
   {
@@ -105,6 +130,7 @@ export const PLANETS = [
     spinDirection: 1,
     texture: '/textures/uranus.jpg',
     orbitalPeriodDays: 30688.5,
+    meanLongitudeDeg: 313.23810,
     fact: 'Rotates on its side, almost rolling along its orbit.',
   },
   {
@@ -118,6 +144,7 @@ export const PLANETS = [
     spinDirection: 1,
     texture: '/textures/neptune.jpg',
     orbitalPeriodDays: 60182,
+    meanLongitudeDeg: 304.87997,
     fact: 'Windiest planet, with supersonic storms.',
   },
 ];
