@@ -14,10 +14,10 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { PLANETS_BY_KEY, SUN_TEXTURE, MOON_TEXTURE } from '../data/planets.js';
 
 const DAYS_PER_YEAR = 365.25;
-// Single fixed viewing angle for the cinematic browse-screen camera path —
-// only the camera's DISTANCE ever changes during that sequence, never this
-// angle.
-const HERO_ELEVATION_DEG = 80;
+// The cinematic browse-screen camera path holds on a true top-down shot
+// (matching the loading screen's overview), then slowly ROTATES down to a
+// more angled, dimensional view — see HERO_ELEVATION_START_DEG/
+// HERO_ELEVATION_END_DEG below. Distance/frustum/no-zoom are unchanged.
 const textureLoader = new THREE.TextureLoader();
 const textureCache = new Map();
 
@@ -396,12 +396,27 @@ export function createSolarSystemEngine(canvas, opts) {
   const maxDistance = Math.max(...planets.map((p) => p.data.distance), 20);
   const framingMargin = planets.length <= 2 ? 1.4 : 1.18;
 
+  // Same "fixed vertical extent, adaptive horizontal extent" convention as
+  // the perspective path below, but for an orthographic camera the FRUSTUM
+  // half-height is what governs on-screen scale (NOT camera distance —
+  // moving an orthographic camera closer/further does nothing visually,
+  // a common trap). `restFrameRadius`/`restFrameMargin` are MUTABLE (not
+  // const) because the "zoom to Sun+Earth" intro phase below changes what
+  // the camera should stay framed on at rest — resize() re-derives the
+  // frustum from whichever of these is current, so a resize mid-zoom or
+  // after it settles still respects the current framing instead of
+  // snapping back to the full-system view.
+  function orthoHalfHeight(radius, margin, aspect) {
+    return (radius * margin) / Math.min(1, aspect);
+  }
+  let restFrameRadius = maxDistance;
+  let restFrameMargin = framingMargin;
+
   // Now that the real planet set is known, size the orthographic frustum
   // to actually fit it (the placeholder bounds passed to the constructor
-  // above were just a stand-in). Same "fixed vertical extent, adaptive
-  // horizontal extent" convention as the perspective path below.
+  // above were just a stand-in).
   if (camera.isOrthographicCamera) {
-    const half = (maxDistance * framingMargin) / Math.min(1, width / height);
+    const half = orthoHalfHeight(restFrameRadius, restFrameMargin, width / height);
     camera.left = (-half * width) / height;
     camera.right = (half * width) / height;
     camera.top = half;
@@ -453,25 +468,59 @@ export function createSolarSystemEngine(canvas, opts) {
   const dist = distanceToFit(width / height);
 
   // ---- Cinematic intro camera path (Solar System browse screen) -----------
-  // A scripted camera hold on a distant establishing shot of the whole
-  // system — deliberately NO zoom-in travel anymore (removed per request:
-  // the resting/settled framing should stay this same wide establishing
-  // shot, matching the loading screen's overview feel, rather than
-  // dollying in closer). A single oblique angle (never purely top-down)
-  // means a plain lookAt() with the DEFAULT up vector is always safe here
-  // (never the degenerate straight-down case above), and — since
-  // OrbitControls is only attached once the intro's hold finishes — the
-  // camera.up/OrbitControls conflict noted above never applies either.
+  // Holds on a true top-down establishing shot (elevation 90° — matches the
+  // loading screen's flat overview), then slowly ROTATES down to a more
+  // angled, dimensional view (34°) over several seconds — distance/frustum
+  // (see the orthographic frustum-fit block above) and the "no zoom" rule
+  // are completely unchanged, only the viewing ANGLE animates.
+  const HERO_ELEVATION_START_DEG = 90;
+  const HERO_ELEVATION_END_DEG = 34;
   function heroPosition(distance, elevationDeg) {
     const rad = THREE.MathUtils.degToRad(elevationDeg);
     return new THREE.Vector3(0, distance * Math.sin(rad), distance * Math.cos(rad));
   }
+  // A camera-up vector that stays PERPENDICULAR to the view direction at
+  // every elevation angle (including exactly 90°) — this is what lets the
+  // rotation pass smoothly THROUGH the true top-down pole position without
+  // ever hitting the degenerate "up parallel to view direction" case a
+  // plain default up=(0,1,0) would (see the long comment above about why
+  // straight-down + default up is unstable for lookAt()). Verified
+  // algebraically: dot(up, forward) = 0 for all elevationDeg.
+  function heroUp(elevationDeg) {
+    const rad = THREE.MathUtils.degToRad(elevationDeg);
+    return new THREE.Vector3(0, Math.cos(rad), -Math.sin(rad));
+  }
+  function easeInOutCubic(t) {
+    return t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2;
+  }
   const earthRefDistance = PLANETS_BY_KEY.earth?.distance ?? maxDistance * 0.35;
-  const heroWidePos = heroPosition(dist, HERO_ELEVATION_DEG);
+  const heroWidePos = heroPosition(dist, HERO_ELEVATION_START_DEG);
+  const heroAngledPos = heroPosition(dist, HERO_ELEVATION_END_DEG);
+  // Final resting shot: framed tight on Earth's own orbit (not the whole
+  // system) with a generous margin so Earth/its orbit ring are never
+  // cropped and there's still comfortable breathing room around the
+  // Sun+Earth focal point. IMPORTANT for the orthographic camera in use
+  // here: on-screen scale comes ENTIRELY from the frustum half-height, NOT
+  // camera distance (moving an orthographic camera closer/further does
+  // nothing visually) — so "zooming in" is animated by shrinking
+  // `camera.top/bottom/left/right` toward `heroCloseHalf` in tick() below,
+  // not by moving the camera. The camera position/angle/up stay FROZEN at
+  // `heroAngledPos` through the whole zoom phase (no further rotation).
+  const HERO_CLOSE_MARGIN = 1.75;
+  const heroWideHalf = orthoHalfHeight(maxDistance, framingMargin, width / height);
+  const heroCloseHalf = orthoHalfHeight(earthRefDistance, HERO_CLOSE_MARGIN, width / height);
+  // Perspective fallback only (this engine also supports a plain
+  // PerspectiveCamera for other screens) — dolly-in works normally there
+  // since scale IS distance-driven for perspective, unlike orthographic.
+  const heroClosePos = camera.isOrthographicCamera
+    ? heroAngledPos
+    : heroPosition(distanceToFit(width / height, earthRefDistance, HERO_CLOSE_MARGIN), HERO_ELEVATION_END_DEG);
   // A small, CONSTANT look-at offset sits the Sun slightly above
   // dead-center for a more considered mobile-portrait composition.
   const introLookTarget = new THREE.Vector3(0, -earthRefDistance * 0.045, 0);
   const INTRO_HOLD_SEC = 1.6;
+  const INTRO_TRAVEL_SEC = 4.5;
+  const INTRO_ZOOM_SEC = 4.5;
   let introPhase = cinematicIntro ? 'hold' : 'done';
   let introElapsed = 0;
   let introCompleteCb = null;
@@ -494,6 +543,7 @@ export function createSolarSystemEngine(canvas, opts) {
   }
 
   if (cinematicIntro) {
+    camera.up.copy(heroUp(HERO_ELEVATION_START_DEG));
     camera.position.copy(heroWidePos);
     camera.lookAt(introLookTarget);
     // OrbitControls (if this screen wants it) is attached once the scripted
@@ -516,7 +566,16 @@ export function createSolarSystemEngine(canvas, opts) {
   const posB = new THREE.Vector3();
 
   if (tracePattern && planets.length === 2) {
-    patternCapacity = Math.min(Math.ceil((totalSimYears * DAYS_PER_YEAR) / traceIntervalDays), 8000);
+    // Raised from 8000: RevealScreen.jsx now sizes `totalSimYears` to fully
+    // CLOSE a pair's natural resonance pattern (see the note there) rather
+    // than an arbitrary short span, which for slow outer-planet pairs can
+    // need many more sampled chords than the old cap allowed — hitting it
+    // silently truncated the shape partway through (the same "abrupt stop"
+    // symptom, just from this cap instead of totalSimYears being too
+    // short). 40000 comfortably covers even the slowest realistic pairs
+    // (findResonance caps the orbit-count side at 20, so this is a very
+    // generous margin) at negligible memory cost (~1MB of Float32Array).
+    patternCapacity = Math.min(Math.ceil((totalSimYears * DAYS_PER_YEAR) / traceIntervalDays), 40000);
     patternPositions = new Float32Array(patternCapacity * 2 * 3);
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute('position', new THREE.BufferAttribute(patternPositions, 3));
@@ -605,13 +664,70 @@ export function createSolarSystemEngine(canvas, opts) {
       if (onCompleteCb) onCompleteCb();
     }
 
-    // ---- Cinematic intro camera hold (no zoom-in travel anymore) ----------
+    // ---- Cinematic intro camera path: hold top-down, slowly ROTATE into
+    // the angled view, then dolly straight in toward Sun+Earth (each phase
+    // only ever changes ONE thing — angle, then distance — never both at
+    // once) ------------------------------------------------------------
     if (introPhase !== 'done') {
       introElapsed += delta;
-      if (introPhase === 'hold' && introElapsed >= INTRO_HOLD_SEC) {
-        introPhase = 'done';
-        if (interactive) attachOrbitControls(introLookTarget);
-        if (introCompleteCb) introCompleteCb();
+      if (introPhase === 'hold') {
+        if (introElapsed >= INTRO_HOLD_SEC) {
+          introPhase = 'travel';
+          introElapsed = 0;
+        }
+      } else if (introPhase === 'travel') {
+        const t = Math.min(introElapsed / INTRO_TRAVEL_SEC, 1);
+        const eased = easeInOutCubic(t);
+        const elevationDeg = THREE.MathUtils.lerp(HERO_ELEVATION_START_DEG, HERO_ELEVATION_END_DEG, eased);
+        camera.position.lerpVectors(heroWidePos, heroAngledPos, eased);
+        camera.up.copy(heroUp(elevationDeg));
+        camera.lookAt(introLookTarget);
+        if (t >= 1) {
+          introPhase = 'zoom';
+          introElapsed = 0;
+        }
+      } else if (introPhase === 'zoom') {
+        // For the ORTHOGRAPHIC camera this screen actually uses, on-screen
+        // scale comes entirely from the frustum half-height, not distance
+        // — so the "zoom toward Sun+Earth" is animated by shrinking
+        // camera.top/bottom/left/right, NOT by moving the camera (moving
+        // an orthographic camera closer/further is a no-op visually).
+        // Position/up/lookAt stay completely frozen at their final
+        // `travel`-phase values, so there is zero further rotation.
+        // (Perspective fallback: dolly the position in instead, since
+        // scale IS distance-driven there.)
+        const t = Math.min(introElapsed / INTRO_ZOOM_SEC, 1);
+        const eased = easeInOutCubic(t);
+        if (camera.isOrthographicCamera) {
+          const half = THREE.MathUtils.lerp(heroWideHalf, heroCloseHalf, eased);
+          camera.left = (-half * width) / height;
+          camera.right = (half * width) / height;
+          camera.top = half;
+          camera.bottom = -half;
+          camera.updateProjectionMatrix();
+        } else {
+          camera.position.lerpVectors(heroAngledPos, heroClosePos, eased);
+          camera.lookAt(introLookTarget);
+        }
+        if (t >= 1) {
+          introPhase = 'done';
+          // Persist the zoomed-in framing as the new "rest" state so a
+          // later resize() (orientation change, mobile chrome show/hide)
+          // re-derives the frustum from THIS framing instead of snapping
+          // back to the full-system view.
+          if (camera.isOrthographicCamera) {
+            restFrameRadius = earthRefDistance;
+            restFrameMargin = HERO_CLOSE_MARGIN;
+          }
+          // Snap back to the default up vector before OrbitControls takes
+          // over — it derives its own spherical coordinates from
+          // camera.up and assumes the default (see the long comment above
+          // distanceToFit about why only the non-interactive path may
+          // ever change camera.up).
+          camera.up.set(0, 1, 0);
+          if (interactive) attachOrbitControls(introLookTarget);
+          if (introCompleteCb) introCompleteCb();
+        }
       }
     }
 
@@ -626,7 +742,12 @@ export function createSolarSystemEngine(canvas, opts) {
       // No "distance" concept for framing here — just recompute the
       // frustum bounds from the new aspect (fixed vertical half-height,
       // adaptive horizontal half-width), same fit formula used at setup.
-      const half = (maxDistance * framingMargin) / Math.min(1, w / h);
+      // Uses `restFrameRadius`/`restFrameMargin` (NOT the raw
+      // `maxDistance`/`framingMargin` constants) so a resize respects
+      // whichever framing is CURRENTLY at rest — the full system before
+      // the cinematic "zoom to Sun+Earth" intro phase completes, or the
+      // Sun+Earth framing after it does (see that phase in tick()).
+      const half = orthoHalfHeight(restFrameRadius, restFrameMargin, w / h);
       camera.left = (-half * w) / h;
       camera.right = (half * w) / h;
       camera.top = half;

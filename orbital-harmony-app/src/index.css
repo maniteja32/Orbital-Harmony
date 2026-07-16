@@ -70,6 +70,30 @@ button {
   position: relative;
 }
 
+/* Sibling of .screen-transition (not one of its keyed children) so the
+   loading screen can keep rendering on top, fading out, WHILE the Solar
+   System screen underneath is already mounted and fading in — a real
+   overlapping crossfade. MUST be taken out of flex flow entirely: since
+   .app-shell is `display:flex; justify-content:center`, two flex-flow
+   children (this + .screen-transition) end up laid out SIDE BY SIDE and
+   centered as a PAIR — not stacked/overlapping — which is exactly the
+   "loading page is somewhere and landing page is somewhere else" bug this
+   caused before absolute positioning was added here. `position: absolute`
+   removes it from the flex layout so .screen-transition re-centers on its
+   own and this sits exactly on top of it (same 560px-capped, centered box,
+   via `left: 50%` + `translateX(-50%)` since `inset: 0` on an absolutely
+   positioned element would stretch it to the FULL fixed .app-shell width
+   instead of the centered column). */
+.app-shell > .loading-screen-slot {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 100%;
+  max-width: 560px;
+  transform: translateX(-50%);
+}
+
 .screen-transition {
   animation: screenIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -496,6 +520,12 @@ button {
 
 .loading-screen.is-leaving {
   opacity: 0;
+  /* Now that this screen fades out WHILE the Solar System screen is
+     already mounted and interactive underneath (see App.jsx), it must
+     stop capturing clicks the instant it starts leaving — otherwise it'd
+     block taps on "Discover a Pattern" for the ~0.3-0.85s it's still
+     fading, even though it's visually almost gone. */
+  pointer-events: none;
 }
 
 .loading-canvas {

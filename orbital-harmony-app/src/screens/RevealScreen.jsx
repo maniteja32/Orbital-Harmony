@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import SolarSystemCanvas from '../components/SolarSystemCanvas.jsx';
 import { PlanetChip } from '../components/PlanetCard.jsx';
 import { PLANETS_BY_KEY } from '../data/planets.js';
+import { findResonance } from '../utils/resonance.js';
 import { useAppStore, SPEED_PRESETS, DENSITY_PRESETS } from '../store/useAppStore.js';
 
 /** Step 5 — animated pattern reveal. Runs the engine in "duo" mode with the
@@ -17,6 +18,29 @@ export default function RevealScreen({ onComplete }) {
   const planetKeys = useMemo(() => [planetA, planetB], [planetA, planetB]);
   const speedCfg = SPEED_PRESETS[speed];
   const densityCfg = DENSITY_PRESETS[density];
+  const planetAData = PLANETS_BY_KEY[planetA];
+  const planetBData = PLANETS_BY_KEY[planetB];
+
+  // BUG FIX: this used to be a flat `densityCfg.years` (4/8/16) regardless
+  // of which two planets were picked — fine for close/fast pairs, but for
+  // anything involving a slow outer planet (e.g. Saturn's ~29.5-year
+  // period) that's nowhere near enough simulated time to complete even ONE
+  // full resonance cycle, so the chord tracer visibly stopped partway
+  // through the shape (a narrow wedge instead of the full closed rosette)
+  // — exactly the "abrupt stop" bug reported. Fix: when the pair has a
+  // clean low-order resonance (see utils/resonance.js), run the simulation
+  // for EXACTLY the number of years needed to complete that resonance's
+  // full closed pattern (`longer` orbits of whichever planet has the
+  // LONGER period) instead of the density preset's arbitrary fixed span.
+  // Only falls back to the preset's fixed years when no clean resonance
+  // exists at all (nothing to "close", so an arbitrary span is fine).
+  const totalSimYears = useMemo(() => {
+    if (!planetAData || !planetBData) return densityCfg.years;
+    const resonance = findResonance(planetAData.orbitalPeriodDays, planetBData.orbitalPeriodDays);
+    if (!resonance) return densityCfg.years;
+    const longerPeriodDays = Math.max(planetAData.orbitalPeriodDays, planetBData.orbitalPeriodDays);
+    return (resonance.longer * longerPeriodDays) / 365.25;
+  }, [planetAData, planetBData, densityCfg.years]);
 
   const handleEngineComplete = useCallback(() => {
     if (doneRef.current) return;
@@ -38,9 +62,6 @@ export default function RevealScreen({ onComplete }) {
     return () => cancelAnimationFrame(raf);
   }, []);
 
-  const planetAData = PLANETS_BY_KEY[planetA];
-  const planetBData = PLANETS_BY_KEY[planetB];
-
   return (
     <div className="screen screen--reveal">
       <SolarSystemCanvas
@@ -48,7 +69,7 @@ export default function RevealScreen({ onComplete }) {
         planetKeys={planetKeys}
         tracePattern
         speedDurationSec={speedCfg.durationSec}
-        totalSimYears={densityCfg.years}
+        totalSimYears={totalSimYears}
         traceIntervalDays={densityCfg.traceIntervalDays}
         onComplete={handleEngineComplete}
         className="screen__canvas"

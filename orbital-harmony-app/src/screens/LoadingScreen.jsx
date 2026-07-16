@@ -44,10 +44,12 @@ function easeInOutCubic(t) {
 
 
 
-export default function LoadingScreen({ onDone }) {
+export default function LoadingScreen({ onDone, onExited }) {
   const canvasRef = useRef(null);
   const onDoneRef = useRef(onDone);
   onDoneRef.current = onDone;
+  const onExitedRef = useRef(onExited);
+  onExitedRef.current = onExited;
 
   const [ready, setReady] = useState(false);
   const [transitioning, setTransitioning] = useState(false);
@@ -112,7 +114,13 @@ export default function LoadingScreen({ onDone }) {
 
     const HOLD_MS = reducedMotion ? 900 : 3400;
     const TRANSITION_MS = reducedMotion ? 500 : 1700;
-    const FADE_MS = reducedMotion ? 400 : 750;
+    // Kept in exact lockstep with the `.loading-screen` CSS opacity
+    // transition duration (0.85s normally, 0.3s under reduced motion — see
+    // index.css) — this timer is what actually swaps to the next screen,
+    // so if it fired even slightly before the CSS fade-out visually
+    // finished, the old screen would pop away mid-fade instead of the
+    // handoff reading as one smooth fade-to-black.
+    const FADE_MS = reducedMotion ? 300 : 850;
     const SPEED_MULT = reducedMotion ? 0.15 : 1;
 
     let phase = 'hold'; // 'hold' -> 'transition' -> 'done'
@@ -126,7 +134,15 @@ export default function LoadingScreen({ onDone }) {
       transitionTimer = setTimeout(() => {
         phase = 'done';
         setLeaving(true);
-        doneTimer = setTimeout(() => onDoneRef.current(), FADE_MS);
+        // Fire `onDone` IMMEDIATELY (not after the fade finishes) so the
+        // parent can swap to the next screen and start ITS fade-in right
+        // now — the two animations then genuinely overlap (a real
+        // crossfade) instead of running one after the other with a gap.
+        // This component keeps rendering itself on top, fading out, for
+        // `FADE_MS` more, then tells the parent it's safe to unmount it
+        // via `onExited`.
+        onDoneRef.current();
+        doneTimer = setTimeout(() => onExitedRef.current?.(), FADE_MS);
       }, TRANSITION_MS);
     }
 
