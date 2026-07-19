@@ -48,9 +48,12 @@ function buildPreviewPlanet(data) {
   // looks tilted differently than its neighbors" consistency, just reset
   // outright here instead of relying on each real tilt being small).
   tiltGroup.rotation.set(0, 0, 0);
-  // `rollGroup` wraps `tiltGroup` in case a diagonal "roll" (rotation
-  // around the camera's view axis, Z) is ever wanted on top of the axial
-  // tilt — left at its default (0) rotation so it has no effect now.
+  // `rollGroup` wraps `tiltGroup` so a diagonal "roll" (rotation around the
+  // camera's view axis, Z) can be applied to the ALREADY tilted+yawed
+  // Saturn system as a whole, in screen space — leaning its vertical
+  // rotation axis left/right — without fighting Euler-order interactions
+  // with tiltGroup's own internal X/Y rotation (rollGroup is the OUTER
+  // parent, so its rotation is composed last, purely in view space).
   const rollGroup = new THREE.Group();
   rollGroup.add(tiltGroup);
   group.add(rollGroup);
@@ -62,31 +65,48 @@ function buildPreviewPlanet(data) {
   if (ring) {
     ring.material.transparent = true;
     // Saturn's rotational axis (pole-to-pole) is `tiltGroup`'s local Y
-    // axis; since `tiltGroup.rotation` is reset to (0,0,0) above, that axis
-    // points straight up in world space, unrotated. A planet's ring plane
-    // is, BY DEFINITION, its equatorial plane — mathematically
-    // perpendicular (90°) to that same rotation axis, always, with no
-    // independent tilt/skew/roll of its own. `RingGeometry` is built lying
-    // flat in the LOCAL XY plane (normal along local Z); rotating it -90°
-    // around local X reorients that plane to be perpendicular to Y (i.e.
-    // the local XZ plane) — exactly Saturn's equatorial plane. The ring
-    // stays a direct child of `tiltGroup` (the mesh's own group, not a
-    // separate sibling group), so it rotates together with Saturn as one
-    // single rigid system with no independent rotation, and remains
-    // centered/passing through the planet's exact center at all times.
-    //
-    // A mathematically EXACT 90° (Math.PI / 2) would put the ring plane
-    // perfectly edge-on to this front-facing camera — a flat 2D annulus
-    // has zero geometric thickness along its own normal, so at exactly
-    // edge-on it projects to a zero-width line and disappears entirely.
-    // Nudging a few degrees short of that (86° instead of 90°) keeps the
-    // ring functionally perpendicular to the rotation axis (visually
-    // indistinguishable from true edge-on) while leaving it JUST open
-    // enough to always render as a thin, readable horizontal line/sliver
-    // through Saturn's equator — never fully invisible — matching how
-    // Saturn still reads as "Saturn" in real edge-on astronomy photos.
-    const RING_EDGE_ON_SAFETY_DEG = 4;
-    ring.rotation.x = -THREE.MathUtils.degToRad(90 - RING_EDGE_ON_SAFETY_DEG);
+    // axis. A planet's ring plane is, BY DEFINITION, its equatorial plane
+    // — mathematically perpendicular (90°) to that same rotation axis,
+    // always, with no independent tilt/skew/roll of its own. `RingGeometry`
+    // is built lying flat in the LOCAL XY plane (normal along local Z);
+    // rotating it -90° around local X reorients that plane to be
+    // perpendicular to Y (i.e. the local XZ plane) — exactly Saturn's
+    // equatorial plane. This is a FIXED, presentation-independent flip —
+    // it only orients the ring geometry into "lying flat on the equator";
+    // it carries no elevation/tilt of its own.
+    ring.rotation.x = -Math.PI / 2;
+    // The actual presentation tilt (how "open" the ellipse looks) and yaw
+    // (the diagonal sweep) are applied to `tiltGroup` itself instead of to
+    // the ring alone — `tiltGroup` is the SHARED parent of both the mesh
+    // and the ring, so both rotate together as one single rigid object.
+    // Previously the elevation lived only on the ring's own local
+    // rotation, which opened/tilted the ring correctly but left the
+    // sphere sitting perfectly upright underneath — Saturn's own band
+    // texture never reflected that tilt, so the planet looked like a
+    // separate object from its rings. Moving the elevation here instead
+    // means Saturn's rotational axis itself now tilts to match the ring
+    // plane, and its bands visibly follow the same orientation the rings
+    // imply. 30° here, composed with the ring's fixed -90° flip (rotations
+    // about the same local X axis simply add: -90° + 30° = -60°),
+    // reproduces the EXACT SAME ring angle as before — nothing about how
+    // the rings themselves look has changed, only which object (now both,
+    // not just the ring) carries that rotation.
+    tiltGroup.rotation.x = THREE.MathUtils.degToRad(30);
+    // Rotate the whole Saturn system — sphere + ring together, as one
+    // rigid unit, no independent ring rotation — around the vertical (Y)
+    // axis, applied to `tiltGroup` itself (the shared parent of both mesh
+    // and ring) so it's a true single-body yaw, like turning a physical
+    // model left/right rather than moving the planet or rings alone.
+    tiltGroup.rotation.y = THREE.MathUtils.degToRad(30);
+    // Per the reference image: the whole Saturn system's vertical
+    // (pole-to-pole) axis should lean toward the LEFT, not stay perfectly
+    // upright. Applied on `rollGroup` (the OUTER wrapper around
+    // `tiltGroup`) rather than mixed into tiltGroup's own rotation, so this
+    // roll is composed last, purely in screen space, on top of the
+    // already-tilted-and-yawed system as a single rigid whole — the
+    // planet and rings lean together, identically, with no relative
+    // change between them.
+    rollGroup.rotation.z = THREE.MathUtils.degToRad(30);
     // IMPORTANT: the ring's real inner radius is 1.15x the sphere radius
     // (see planetFactory.js) — any presentationScale below ~0.87 shrinks
     // the ring's INNER edge to less than the sphere's own radius, making it
