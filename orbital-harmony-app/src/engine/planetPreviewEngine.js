@@ -86,12 +86,13 @@ function buildPreviewPlanet(data) {
     // separate object from its rings. Moving the elevation here instead
     // means Saturn's rotational axis itself now tilts to match the ring
     // plane, and its bands visibly follow the same orientation the rings
-    // imply. 30° here, composed with the ring's fixed -90° flip (rotations
-    // about the same local X axis simply add: -90° + 30° = -60°),
-    // reproduces the EXACT SAME ring angle as before — nothing about how
-    // the rings themselves look has changed, only which object (now both,
-    // not just the ring) carries that rotation.
-    tiltGroup.rotation.x = THREE.MathUtils.degToRad(30);
+    // imply. A smaller elevation (15° instead of 30°) shows less of
+    // Saturn's north pole face-on (less "looking down from above"), while
+    // still composing with the ring's fixed -90° flip to keep the ring
+    // itself open/visible (rotations about the same local X axis simply
+    // add: -90° + 15° = -75°) — only the SPHERE's pole visibility changes
+    // here, not how the rings look.
+    tiltGroup.rotation.x = THREE.MathUtils.degToRad(15);
     // Rotate the whole Saturn system — sphere + ring together, as one
     // rigid unit, no independent ring rotation — around the vertical (Y)
     // axis, applied to `tiltGroup` itself (the shared parent of both mesh
@@ -117,7 +118,18 @@ function buildPreviewPlanet(data) {
     ring.userData.presentationScale = 0.94;
   }
 
-  return { group, mesh, material, ring, spinSpeed: (data.rotationSpeed ?? 0.02) * (data.spinDirection ?? 1) };
+  // Real per-planet rotation speeds (same values solarSystemEngine.js
+  // uses) are quite slow up close — e.g. Earth is only ~1°/sec — so at a
+  // glance the small carousel icons read as static over a few seconds.
+  // A carousel-only visibility multiplier keeps each planet's relative
+  // speed/direction differences intact (Venus still visibly slower/
+  // backwards, Jupiter still fastest, etc.) while making the spin clearly
+  // noticeable as a "living" preview; the actual Solar System scene's
+  // speeds are untouched.
+  const CAROUSEL_SPIN_VISIBILITY_MULTIPLIER = 15;
+  const spinSpeed = (data.rotationSpeed ?? 0.02) * (data.spinDirection ?? 1) * CAROUSEL_SPIN_VISIBILITY_MULTIPLIER;
+
+  return { group, mesh, material, ring, spinSpeed };
 }
 
 /**
