@@ -28,7 +28,6 @@ export default function SolarSystemScreen({ onNext }) {
       />
       <div className={`system-overlay${introDone ? ' is-visible' : ''}`}>
         <div className="system-overlay__top">
-          <span className="eyebrow">Orbital Harmony</span>
           <h1>The Solar System</h1>
           <p>Discover the hidden geometry created by planetary motion.</p>
         </div>

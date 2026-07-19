@@ -13,45 +13,21 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { PLANETS_BY_KEY, SUN_TEXTURE, MOON_TEXTURE } from '../data/planets.js';
 import { currentOrbitAngleRad } from '../utils/currentPosition.js';
+import { loadPlanetTexture, buildPlanetBody } from './planetFactory.js';
 
 const DAYS_PER_YEAR = 365.25;
 // The cinematic browse-screen camera path holds on a true top-down shot
 // (matching the loading screen's overview), then slowly ROTATES down to a
 // more angled, dimensional view — see HERO_ELEVATION_START_DEG/
 // HERO_ELEVATION_END_DEG below. Distance/frustum/no-zoom are unchanged.
-const textureLoader = new THREE.TextureLoader();
-const textureCache = new Map();
 
-function loadTexture(path, { srgb = true, saturate = false } = {}) {
-  const cacheKey = saturate ? `${path}::sat` : path;
-  if (textureCache.has(cacheKey)) return textureCache.get(cacheKey);
-  const tex = textureLoader.load(path, saturate ? boostTextureSaturation : undefined);
-  if (srgb) tex.colorSpace = THREE.SRGBColorSpace;
-  tex.anisotropy = 4;
-  textureCache.set(cacheKey, tex);
-  return tex;
-}
-
-// Redraws a loaded texture's image through a canvas 2D `filter` (saturate +
-// a touch of contrast) so planets read as more vivid/colorful on-screen —
-// cheap, one-time, no full post-processing/bloom pipeline needed (this
-// project deliberately avoids that for bundle simplicity). Runs once per
-// texture right after its image finishes loading (passed as the
-// TextureLoader `onLoad` callback, which receives the Texture itself), then
-// swaps `texture.image` to the boosted canvas and flags `needsUpdate` so
-// Three.js re-uploads the adjusted pixels to the GPU.
-function boostTextureSaturation(texture, amount = 1.4) {
-  const img = texture.image;
-  if (!img || !img.width) return;
-  const canvas = document.createElement('canvas');
-  canvas.width = img.width;
-  canvas.height = img.height;
-  const ctx = canvas.getContext('2d');
-  ctx.filter = `saturate(${amount * 100}%) contrast(106%)`;
-  ctx.drawImage(img, 0, 0);
-  texture.image = canvas;
-  texture.needsUpdate = true;
-}
+// loadTexture() below is now just a thin alias to the shared
+// planetFactory.js loader (single source of truth for texture
+// loading/caching/saturation-boosting, shared with the planet swipe
+// carousel's preview engine) — kept as a local name since it's used
+// throughout this file for the Sun, starfield sprites, etc., not just
+// planets.
+const loadTexture = loadPlanetTexture;
 
 // A soft radial-gradient sprite used for the Sun's glow — cheap, no
 // post-processing bloom pipeline required.
@@ -292,75 +268,12 @@ function buildPlanet(data) {
   tiltAnchor.position.set(data.distance, 0, 0);
   pivot.add(tiltAnchor);
 
-  const axialTilt = new THREE.Group();
-  axialTilt.rotation.z = THREE.MathUtils.degToRad(data.tilt ?? 0);
+  // Real sphere/material/clouds/atmosphere/rings — shared, single-source-
+  // of-truth builder (planetFactory.js) also used by the planet swipe
+  // carousel, so a planet looks IDENTICAL everywhere in the app. This
+  // engine's camera is top-down, hence tiltAxis: 'z'.
+  const { tiltGroup: axialTilt, mesh, clouds, ring } = buildPlanetBody(data, { tiltAxis: 'z' });
   tiltAnchor.add(axialTilt);
-
-  const geometry = new THREE.SphereGeometry(data.radius, 48, 48);
-  const material = new THREE.MeshStandardMaterial({
-    map: loadTexture(data.texture, { saturate: true }),
-    roughness: 0.85,
-    metalness: 0.02,
-  });
-  const mesh = new THREE.Mesh(geometry, material);
-  axialTilt.add(mesh);
-
-  let clouds = null;
-  if (data.hasClouds) {
-    const cloudGeo = new THREE.SphereGeometry(data.radius * 1.03, 48, 48);
-    const cloudMat = new THREE.MeshStandardMaterial({
-      color: 0xffffff,
-      alphaMap: loadTexture(data.cloudTexture, { srgb: false }),
-      transparent: true,
-      // Without an explicit opacity cap, the alphaMap alone drives alpha
-      // (bright/white cloud-covered pixels in the texture render at FULL
-      // opacity, 1.0), which blankets the whole globe and hides the actual
-      // planet surface underneath almost entirely. Capping opacity lets
-      // the Earth texture read clearly through the cloud layer, even under
-      // the densest cloud regions.
-      opacity: 0.1,
-      depthWrite: false,
-      roughness: 1,
-    });
-    clouds = new THREE.Mesh(cloudGeo, cloudMat);
-    mesh.add(clouds);
-  }
-
-  if (data.hasAtmosphere) {
-    const atmoGeo = new THREE.SphereGeometry(data.radius * 1.06, 48, 48);
-    const atmoMat = new THREE.MeshBasicMaterial({
-      color: 0x5fa8ff,
-      transparent: true,
-      opacity: 0.12,
-      side: THREE.BackSide,
-      depthWrite: false,
-    });
-    mesh.add(new THREE.Mesh(atmoGeo, atmoMat));
-  }
-
-  if (data.hasRings) {
-    const inner = data.radius * 1.15;
-    const outer = data.radius * 2.3;
-    const ringGeo = new THREE.RingGeometry(inner, outer, 96, 1);
-    const posAttr = ringGeo.attributes.position;
-    const uv = ringGeo.attributes.uv;
-    const v3 = new THREE.Vector3();
-    for (let i = 0; i < posAttr.count; i++) {
-      v3.fromBufferAttribute(posAttr, i);
-      const dist = v3.length();
-      const t = (dist - inner) / (outer - inner);
-      uv.setXY(i, t, 0.5);
-    }
-    const ringMat = new THREE.MeshBasicMaterial({
-      map: loadTexture(data.ringTexture, { srgb: false }),
-      transparent: true,
-      side: THREE.DoubleSide,
-      depthWrite: false,
-    });
-    const ring = new THREE.Mesh(ringGeo, ringMat);
-    ring.rotation.x = Math.PI / 2;
-    axialTilt.add(ring);
-  }
 
   let moonPivot = null;
   if (data.hasMoon) {

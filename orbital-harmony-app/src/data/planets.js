@@ -125,7 +125,13 @@ export const PLANETS = [
     radius: 3.0,
     distance: 72,
     rotationSpeed: 0.042,
-    tilt: 27,
+    // Precise real obliquity (26.73°, was rounded to 27) — this is the
+    // angle between Saturn's spin axis and its orbital-plane normal; the
+    // ring (added below with hasRings) shares this EXACT same value since
+    // it's parented under the same `axialTilt` group as the planet body
+    // (see buildPlanet()), so the rings always sit flush on Saturn's real
+    // equatorial plane, never independently offset.
+    tilt: 26.73,
     spinDirection: 1,
     texture: '/textures/saturn.jpg',
     ringTexture: '/textures/saturn_ring.png',
