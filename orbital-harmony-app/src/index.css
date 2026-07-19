@@ -114,6 +114,46 @@ button {
   overflow-y: auto;
 }
 
+.back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  align-self: flex-start;
+  margin-bottom: -4px;
+  padding: 6px 4px;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.back-button:active {
+  transform: scale(0.97);
+}
+
+.back-button:hover {
+  color: var(--text-primary);
+}
+
+/* Canvas-backed screens (Reveal) have no in-flow header to dock a back
+   button into — the bottom-docked overlay panel is a separate element —
+   so this variant floats independently at the top-left, over the canvas,
+   with its own subtle scrim for legibility against any background. */
+.back-button--floating {
+  position: absolute;
+  top: calc(20px + var(--safe-top));
+  left: 18px;
+  z-index: 5;
+  margin-bottom: 0;
+  padding: 8px 12px 8px 8px;
+  border-radius: 999px;
+  background: rgba(3, 3, 8, 0.4);
+  backdrop-filter: blur(12px);
+}
+
 .screen__header .eyebrow {
   display: block;
   margin-bottom: 8px;

@@ -201,12 +201,19 @@ export default function LoadingScreen({ onDone, onExited }) {
 
       // ---- Dramatic glowing starfield — static positions, redrawn fresh
       // every frame (so they never fade like the trails) with a gentle
-      // per-star twinkle via a phase-offset sine wave on their alpha. ----
+      // per-star twinkle via a phase-offset sine wave on their alpha. The
+      // twinkle previously only swung the alpha multiplier between 0.7-1.0
+      // (a 30% dip) on a physically tiny (~0.3-1.4px) dot — technically
+      // animating every frame, but so subtle it read as a static field.
+      // Widened to a near-full 0.15-1.0 swing (dimming almost to nothing
+      // at the trough) AND paired with a matching radius pulse so each
+      // star visibly grows/shrinks as it brightens/dims — much closer to a
+      // real naked-eye "twinkle" instead of a barely-perceptible shimmer. ----
       for (const s of stars) {
-        const twinkle = 0.7 + 0.3 * Math.sin(now * 0.001 * s.twinkleSpeed + s.twinklePhase);
+        const twinkle = 0.15 + 0.85 * (0.5 + 0.5 * Math.sin(now * 0.001 * s.twinkleSpeed + s.twinklePhase));
         ctx.fillStyle = `rgba(255, 255, 255, ${s.baseAlpha * twinkle})`;
         ctx.beginPath();
-        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.arc(s.x, s.y, s.r * (0.7 + 0.3 * twinkle), 0, Math.PI * 2);
         ctx.fill();
       }
 

@@ -9,7 +9,7 @@ import { useAppStore, SPEED_PRESETS, DENSITY_PRESETS } from '../store/useAppStor
  * chord tracer enabled; polls progress via rAF to drive a thin progress
  * bar, then captures a PNG snapshot and hands off to the Result screen the
  * moment the simulated span completes. */
-export default function RevealScreen({ onComplete }) {
+export default function RevealScreen({ onComplete, onBack }) {
   const { planetA, planetB, speed, density, setSnapshot } = useAppStore();
   const canvasRef = useRef(null);
   const [progress, setProgress] = useState(0);
@@ -74,6 +74,14 @@ export default function RevealScreen({ onComplete }) {
         onComplete={handleEngineComplete}
         className="screen__canvas"
       />
+      {onBack && (
+        <button type="button" className="back-button back-button--floating" onClick={onBack} aria-label="Back to simulation settings">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          Back
+        </button>
+      )}
       <div className="reveal-overlay">
         <div className="reveal-overlay__top">
           <span className="eyebrow">Revealing geometry</span>

@@ -25,10 +25,10 @@ export default function App() {
     <div className="app-shell">
       <ScreenTransition key={screen}>
         {screen === 'system' && <SolarSystemScreen onNext={() => goTo('select')} />}
-        {screen === 'select' && <PlanetSelectScreen onNext={() => goTo('settings')} />}
-        {screen === 'settings' && <SimulationSettingsScreen onNext={() => goTo('reveal')} />}
-        {screen === 'reveal' && <RevealScreen onComplete={() => goTo('result')} />}
-        {screen === 'result' && <ResultScreen onGenerateNew={() => goTo('select')} />}
+        {screen === 'select' && <PlanetSelectScreen onNext={() => goTo('settings')} onBack={() => goTo('system')} />}
+        {screen === 'settings' && <SimulationSettingsScreen onNext={() => goTo('reveal')} onBack={() => goTo('select')} />}
+        {screen === 'reveal' && <RevealScreen onComplete={() => goTo('result')} onBack={() => goTo('settings')} />}
+        {screen === 'result' && <ResultScreen onGenerateNew={() => goTo('select')} onBack={() => goTo('settings')} />}
       </ScreenTransition>
       {showLoading && (
         <div className="loading-screen-slot">

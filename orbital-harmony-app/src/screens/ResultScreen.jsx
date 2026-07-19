@@ -29,7 +29,7 @@ async function shareSnapshot(dataUrl, title) {
 
 /** Step 6/7 — final pattern, selected planets, resonance ratio, and export
  * actions (Download PNG / Share / Generate New Pattern). */
-export default function ResultScreen({ onGenerateNew }) {
+export default function ResultScreen({ onGenerateNew, onBack }) {
   const { planetA, planetB, snapshot, resetForNewPattern } = useAppStore();
   const planetAData = PLANETS_BY_KEY[planetA];
   const planetBData = PLANETS_BY_KEY[planetB];
@@ -43,6 +43,14 @@ export default function ResultScreen({ onGenerateNew }) {
 
   return (
     <div className="screen screen--result">
+      {onBack && (
+        <button type="button" className="back-button" onClick={onBack} aria-label="Back to simulation settings">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          Back
+        </button>
+      )}
       <div className="screen__header">
         <span className="eyebrow">Your pattern</span>
         <h1>{title}</h1>
