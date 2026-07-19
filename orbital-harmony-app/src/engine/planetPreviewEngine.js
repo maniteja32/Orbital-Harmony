@@ -148,12 +148,14 @@ export function createPlanetPreviewRow(canvas, planets) {
   // A SINGLE directional "sunlight" source, like the actual Solar System
   // engine's Sun — this is what makes a sphere actually read as a sphere:
   // one side clearly lit, one side clearly darker, a real terminator/
-  // shading gradient across the globe. Ambient is kept deliberately LOW
-  // (just enough that the dark side isn't pure crushed black on a small
-  // icon) rather than the previous high-ambient/dual-symmetric-light setup
-  // that lit both sides almost equally and made every planet look like a
-  // flat, evenly-exposed cutout image instead of a real lit 3D body.
-  scene.add(new THREE.AmbientLight(0xffffff, 0.42));
+  // shading gradient across the globe. Ambient is kept LOWER than a flat
+  // full-bright look (avoiding the previous high-ambient/dual-symmetric-
+  // light setup that lit both sides almost equally and made every planet
+  // look like a flat, evenly-exposed cutout image) but raised enough
+  // (0.42 -> 0.58) that the shadowed side still shows real color instead
+  // of crushing toward near-black — small carousel icons need their true
+  // texture color to read clearly even off the direct highlight.
+  scene.add(new THREE.AmbientLight(0xffffff, 0.58));
   const key = new THREE.DirectionalLight(0xfff2df, 2.1);
   key.position.set(-140, 90, 260);
   scene.add(key);

@@ -38,14 +38,14 @@ export function loadPlanetTexture(path, { srgb = true, saturate = false } = {}) 
 // TextureLoader `onLoad` callback, which receives the Texture itself), then
 // swaps `texture.image` to the boosted canvas and flags `needsUpdate` so
 // Three.js re-uploads the adjusted pixels to the GPU.
-function boostTextureSaturation(texture, amount = 1.4) {
+function boostTextureSaturation(texture, amount = 1.65) {
   const img = texture.image;
   if (!img || !img.width) return;
   const canvas = document.createElement('canvas');
   canvas.width = img.width;
   canvas.height = img.height;
   const ctx = canvas.getContext('2d');
-  ctx.filter = `saturate(${amount * 100}%) contrast(106%)`;
+  ctx.filter = `saturate(${amount * 100}%) contrast(112%) brightness(106%)`;
   ctx.drawImage(img, 0, 0);
   texture.image = canvas;
   texture.needsUpdate = true;
