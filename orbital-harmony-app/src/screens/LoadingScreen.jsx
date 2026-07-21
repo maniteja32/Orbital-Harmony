@@ -72,17 +72,25 @@ export default function LoadingScreen({ onDone, onExited }) {
     // These never fade like the planet trails do (redrawn fresh each frame
     // in step 2 below), so they always read as crisp, dramatic pinpricks
     // of light against the pure black background.
+    //
+    // A minority (~12%) are marked `isFeatured` — bigger, brighter, and
+    // given a slower/calmer twinkle plus a soft 4-point sparkle flare at
+    // their brightness peak, so a handful of stars really pop and catch
+    // the eye rather than every star twinkling identically — this reads
+    // as a livelier, more dynamic sky instead of a uniform shimmer.
     function buildStars() {
       const count = Math.round((width * height) / 5500);
       const next = [];
       for (let i = 0; i < count; i++) {
+        const isFeatured = Math.random() < 0.12;
         next.push({
           x: Math.random() * width,
           y: Math.random() * height,
-          r: Math.random() * 1.1 + 0.3,
-          baseAlpha: 0.25 + Math.random() * 0.55,
-          twinkleSpeed: 0.4 + Math.random() * 1.2,
+          r: isFeatured ? Math.random() * 0.9 + 1.4 : Math.random() * 1.1 + 0.3,
+          baseAlpha: isFeatured ? 0.65 + Math.random() * 0.3 : 0.25 + Math.random() * 0.55,
+          twinkleSpeed: isFeatured ? 0.22 + Math.random() * 0.35 : 0.4 + Math.random() * 1.2,
           twinklePhase: Math.random() * Math.PI * 2,
+          isFeatured,
         });
       }
       stars = next;
@@ -211,6 +219,41 @@ export default function LoadingScreen({ onDone, onExited }) {
       // real naked-eye "twinkle" instead of a barely-perceptible shimmer. ----
       for (const s of stars) {
         const twinkle = 0.15 + 0.85 * (0.5 + 0.5 * Math.sin(now * 0.001 * s.twinkleSpeed + s.twinklePhase));
+
+        // Featured stars get a soft 4-point sparkle flare layered UNDER
+        // their core dot, scaled by the same twinkle value — only really
+        // visible near its brightness peak, so it reads as a brief
+        // glinting flash rather than a constant decoration. Rendered as
+        // short gradient lines that fade to fully transparent at the
+        // tips (rather than a flat-opacity stroke with hard-cut ends) and
+        // kept deliberately small/thin/dim — a bold, uniform plus sign
+        // read as an obviously fake sticker; this is meant to be a subtle
+        // glint easily overlooked unless you're looking for it.
+        if (s.isFeatured && twinkle > 0.5) {
+          const flareBoost = (twinkle - 0.5) / 0.5; // 0 at the threshold -> 1 at full brightness
+          const flareLen = s.r * (1.8 + 1.4 * flareBoost);
+          const flarePeakAlpha = s.baseAlpha * flareBoost * 0.3;
+          const hGrad = ctx.createLinearGradient(s.x - flareLen, s.y, s.x + flareLen, s.y);
+          hGrad.addColorStop(0, 'rgba(255, 255, 255, 0)');
+          hGrad.addColorStop(0.5, `rgba(255, 255, 255, ${flarePeakAlpha})`);
+          hGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+          const vGrad = ctx.createLinearGradient(s.x, s.y - flareLen, s.x, s.y + flareLen);
+          vGrad.addColorStop(0, 'rgba(255, 255, 255, 0)');
+          vGrad.addColorStop(0.5, `rgba(255, 255, 255, ${flarePeakAlpha})`);
+          vGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+          ctx.lineWidth = 0.4;
+          ctx.beginPath();
+          ctx.moveTo(s.x - flareLen, s.y);
+          ctx.lineTo(s.x + flareLen, s.y);
+          ctx.strokeStyle = hGrad;
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(s.x, s.y - flareLen);
+          ctx.lineTo(s.x, s.y + flareLen);
+          ctx.strokeStyle = vGrad;
+          ctx.stroke();
+        }
+
         ctx.fillStyle = `rgba(255, 255, 255, ${s.baseAlpha * twinkle})`;
         ctx.beginPath();
         ctx.arc(s.x, s.y, s.r * (0.7 + 0.3 * twinkle), 0, Math.PI * 2);
