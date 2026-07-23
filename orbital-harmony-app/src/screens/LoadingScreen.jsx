@@ -78,14 +78,27 @@ export default function LoadingScreen({ onDone, onExited }) {
     // their brightness peak, so a handful of stars really pop and catch
     // the eye rather than every star twinkling identically — this reads
     // as a livelier, more dynamic sky instead of a uniform shimmer.
+    //
+    // Stars are thinned out (most rejected, only a sparse few kept) within
+    // a radius around the orrery itself — a fully uniform field scattered
+    // background dots right on top of/crowding the orbit rings and Sun,
+    // competing for attention with the actual centerpiece graphic instead
+    // of framing it.
     function buildStars() {
       const count = Math.round((width * height) / 5500);
+      const clearRadius = maxOrbitPx * 1.35;
+      const clearRadiusSq = clearRadius * clearRadius;
       const next = [];
       for (let i = 0; i < count; i++) {
+        const x = Math.random() * width;
+        const y = Math.random() * height;
+        const dx = x - centerX;
+        const dy = y - centerY;
+        if (dx * dx + dy * dy < clearRadiusSq && Math.random() > 0.1) continue;
         const isFeatured = Math.random() < 0.12;
         next.push({
-          x: Math.random() * width,
-          y: Math.random() * height,
+          x,
+          y,
           r: isFeatured ? Math.random() * 0.9 + 1.4 : Math.random() * 1.1 + 0.3,
           baseAlpha: isFeatured ? 0.65 + Math.random() * 0.3 : 0.25 + Math.random() * 0.55,
           twinkleSpeed: isFeatured ? 0.22 + Math.random() * 0.35 : 0.4 + Math.random() * 1.2,

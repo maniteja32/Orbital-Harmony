@@ -43,6 +43,15 @@ export function PlanetSwipeRow({ label, planets, selectedKey, initialKey, onSele
   const engineRef = useRef(null);
   const itemRefs = useRef({});
   const [distances, setDistances] = useState({});
+  // Tracks which way the user is currently swiping (+1 = toward later
+  // planets/scrolling right, -1 = toward earlier planets/scrolling left),
+  // updated on every scroll event by comparing consecutive `scrollLeft`
+  // values — used only by the auto-skip-past-disabled-planet check below,
+  // so the skip continues in the direction the user was already headed
+  // instead of picking whichever neighbour happens to be a few pixels
+  // closer (which could otherwise feel like it "bounces back").
+  const lastScrollLeftRef = useRef(0);
+  const scrollDirectionRef = useRef(1);
   const hasCenteredInitially = useRef(false);
   const settleTimerRef = useRef(null);
   const excludeKeyRef = useRef(excludeKey);
@@ -162,16 +171,31 @@ export function PlanetSwipeRow({ label, planets, selectedKey, initialKey, onSele
   useEffect(() => {
     const track = trackRef.current;
     if (!track) return undefined;
+    lastScrollLeftRef.current = track.scrollLeft;
     let raf = null;
     const handleScroll = () => {
       if (raf) return;
       raf = requestAnimationFrame(() => {
         raf = null;
+        const trackNowForDelta = trackRef.current;
+        if (trackNowForDelta) {
+          const delta = trackNowForDelta.scrollLeft - lastScrollLeftRef.current;
+          // Ignore near-zero jitter (e.g. momentum settling to a stop)
+          // so the recorded direction stays whatever it last genuinely was,
+          // rather than flickering right at the end of a swipe.
+          if (Math.abs(delta) > 0.5) {
+            scrollDirectionRef.current = delta > 0 ? 1 : -1;
+          }
+          lastScrollLeftRef.current = trackNowForDelta.scrollLeft;
+        }
         recompute();
         // Debounce a "settled" check: once scrolling has paused for a
         // moment, if the row is resting on/near the disabled (other slot's)
-        // planet, smooth-scroll past it to the nearest available one — an
-        // automatic "skip" instead of ever letting the user land there.
+        // planet, smooth-scroll PAST it in the direction the user was
+        // already swiping — e.g. swiping rightward (toward later planets)
+        // and landing on the disabled one continues on to the NEXT planet,
+        // not back to the previous one — instead of ever letting the user
+        // land/stay on it.
         if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
         settleTimerRef.current = setTimeout(() => {
           const nearestAvailableKey = recompute();
@@ -183,8 +207,13 @@ export function PlanetSwipeRow({ label, planets, selectedKey, initialKey, onSele
           const centerX = trackRect.left + trackRect.width / 2;
           const r = excludedEl.getBoundingClientRect();
           const restingOnExcluded = Math.abs(r.left + r.width / 2 - centerX) < r.width / 2;
-          if (restingOnExcluded && nearestAvailableKey) {
-            itemRefs.current[nearestAvailableKey]?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+          if (!restingOnExcluded) return;
+          const excludedIndex = planets.findIndex((p) => p.key === excludeKey);
+          const step = scrollDirectionRef.current;
+          const directionalNeighbor = planets[excludedIndex + step];
+          const targetKey = directionalNeighbor?.key ?? nearestAvailableKey;
+          if (targetKey) {
+            itemRefs.current[targetKey]?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
           }
         }, 160);
       });
@@ -195,7 +224,7 @@ export function PlanetSwipeRow({ label, planets, selectedKey, initialKey, onSele
       if (raf) cancelAnimationFrame(raf);
       if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
     };
-  }, [recompute, excludeKey]);
+  }, [recompute, excludeKey, planets]);
 
   // Re-apply planet visual states (opacity/emissive/disabled) whenever the
   // excluded key changes, even without a new scroll event.
