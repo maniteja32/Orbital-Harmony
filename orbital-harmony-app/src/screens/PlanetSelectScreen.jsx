@@ -17,14 +17,6 @@ export default function PlanetSelectScreen({ onNext, onBack }) {
 
   return (
     <div className="screen screen--select">
-      {onBack && (
-        <button type="button" className="back-button" onClick={onBack} aria-label="Back to the Solar System">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          Back
-        </button>
-      )}
       <div className="screen__header">
         <span className="eyebrow">Step 1 of 2</span>
         <h1>Choose two planets</h1>
@@ -49,9 +41,16 @@ export default function PlanetSelectScreen({ onNext, onBack }) {
         />
       </div>
 
-      <button type="button" className="btn btn--primary btn--full" disabled={!canContinue} onClick={onNext}>
-        Continue
-      </button>
+      <div className="screen__actions">
+        {onBack && (
+          <button type="button" className="btn btn--back" onClick={onBack} aria-label="Back to the Solar System">
+            Back
+          </button>
+        )}
+        <button type="button" className="btn btn--primary" disabled={!canContinue} onClick={onNext}>
+          Continue
+        </button>
+      </div>
     </div>
   );
 }
