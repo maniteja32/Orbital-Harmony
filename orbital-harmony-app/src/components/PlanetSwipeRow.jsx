@@ -37,7 +37,7 @@ const BASE_SPHERE_PX = 52;
  * scene stays pixel-perfectly aligned with the (invisible, still fully
  * interactive) DOM buttons underneath, which continue to own scroll-snap,
  * tap-to-center, disabled state, and accessibility. */
-export function PlanetSwipeRow({ label, planets, selectedKey, initialKey, onSelect, excludeKey }) {
+export function PlanetSwipeRow({ label, planets, selectedKey, initialKey, onSelect, excludeKey, hideInfo = false, hideLabel = false, compact = false }) {
   const trackRef = useRef(null);
   const canvasRef = useRef(null);
   const engineRef = useRef(null);
@@ -260,8 +260,8 @@ export function PlanetSwipeRow({ label, planets, selectedKey, initialKey, onSele
   const centered = planets.find((p) => p.key === selectedKey) ?? planets.find((p) => p.key === initialKey);
 
   return (
-    <div className="swipe-row">
-      <span className="swipe-row__label">{label}</span>
+    <div className={`swipe-row${compact ? ' swipe-row--compact' : ''}`}>
+      {!hideLabel && <span className="swipe-row__label">{label}</span>}
       <div className="swipe-row__viewport">
         <canvas className="swipe-row__canvas" ref={canvasRef} aria-hidden="true" />
         <div className="swipe-row__track" ref={trackRef}>
@@ -293,10 +293,12 @@ export function PlanetSwipeRow({ label, planets, selectedKey, initialKey, onSele
           <div className="swipe-row__pad" aria-hidden="true" />
         </div>
       </div>
-      <div className="swipe-row__info">
-        <span className="swipe-row__name">{centered?.name ?? '\u2014'}</span>
-        <span className="swipe-row__fact">{centered?.fact}</span>
-      </div>
+      {!hideInfo && (
+        <div className="swipe-row__info">
+          <span className="swipe-row__name">{centered?.name ?? '\u2014'}</span>
+          <span className="swipe-row__fact">{centered?.fact}</span>
+        </div>
+      )}
     </div>
   );
 }

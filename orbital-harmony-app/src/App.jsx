@@ -3,8 +3,7 @@ import ScreenTransition from './components/ScreenTransition.jsx';
 import LoadingScreen from './screens/LoadingScreen.jsx';
 import SolarSystemScreen from './screens/SolarSystemScreen.jsx';
 import PlanetSelectScreen from './screens/PlanetSelectScreen.jsx';
-import SimulationSettingsScreen from './screens/SimulationSettingsScreen.jsx';
-import RevealScreen from './screens/RevealScreen.jsx';
+import SimulationScreen from './screens/SimulationScreen.jsx';
 import ResultScreen from './screens/ResultScreen.jsx';
 import { useAppStore } from './store/useAppStore.js';
 
@@ -26,8 +25,7 @@ export default function App() {
       <ScreenTransition key={screen}>
         {screen === 'system' && <SolarSystemScreen onNext={() => goTo('select')} />}
         {screen === 'select' && <PlanetSelectScreen onNext={() => goTo('settings')} onBack={() => goTo('system')} />}
-        {screen === 'settings' && <SimulationSettingsScreen onNext={() => goTo('reveal')} onBack={() => goTo('select')} />}
-        {screen === 'reveal' && <RevealScreen onComplete={() => goTo('result')} onBack={() => goTo('settings')} />}
+        {screen === 'settings' && <SimulationScreen onComplete={() => goTo('result')} onBack={() => goTo('select')} />}
         {screen === 'result' && <ResultScreen onGenerateNew={() => goTo('select')} onBack={() => goTo('settings')} />}
       </ScreenTransition>
       {showLoading && (

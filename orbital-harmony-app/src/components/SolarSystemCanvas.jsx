@@ -3,9 +3,11 @@ import { createSolarSystemEngine } from '../engine/solarSystemEngine.js';
 
 /**
  * Thin React wrapper around the framework-agnostic Three.js engine.
- * Exposes an imperative handle ({ getProgress, captureDataURL, setPaused })
- * so parent screens (Reveal/Result) can poll progress and grab a snapshot
- * without re-rendering the whole canvas subtree.
+ * Exposes an imperative handle ({ getProgress, captureDataURL, setPaused,
+ * setLineStyle, setSpeedMultiplier }) so parent screens (Simulation/Reveal/
+ * Result) can poll progress, grab a snapshot, and drive play/pause, trace
+ * line style, and a live playback-speed multiplier without re-rendering
+ * the whole canvas subtree.
  */
 const SolarSystemCanvas = forwardRef(function SolarSystemCanvas(
   {
@@ -18,6 +20,8 @@ const SolarSystemCanvas = forwardRef(function SolarSystemCanvas(
     speedDurationSec,
     totalSimYears,
     traceIntervalDays,
+    startPaused,
+    initialSpeedMultiplier,
     onComplete,
     onIntroComplete,
     className,
@@ -38,6 +42,8 @@ const SolarSystemCanvas = forwardRef(function SolarSystemCanvas(
       speedDurationSec,
       totalSimYears,
       traceIntervalDays,
+      startPaused,
+      initialSpeedMultiplier,
     });
     engineRef.current = engine;
     if (onComplete) engine.onComplete(onComplete);
@@ -51,6 +57,9 @@ const SolarSystemCanvas = forwardRef(function SolarSystemCanvas(
     getProgress: () => engineRef.current?.getProgress() ?? 0,
     captureDataURL: () => engineRef.current?.captureDataURL(),
     setPaused: (v) => engineRef.current?.setPaused(v),
+    setLineStyle: (style) => engineRef.current?.setLineStyle(style),
+    setSpeedMultiplier: (value) => engineRef.current?.setSpeedMultiplier(value),
+    reset: () => engineRef.current?.reset(),
   }));
 
   return (

@@ -11,8 +11,21 @@
 // ============================================================================
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { LineSegments2 } from 'three/addons/lines/LineSegments2.js';
+import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js';
+import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
 import { PLANETS_BY_KEY, SUN_TEXTURE, MOON_TEXTURE } from '../data/planets.js';
 import { currentOrbitAngleRad } from '../utils/currentPosition.js';
+
+// Pattern-tracer line style presets, ported from the original vanilla-JS
+// prototype (js/main.js) — dashSize/gapSize are in the same screen-space
+// pixel units as LineMaterial's `linewidth` (worldUnits defaults to
+// false), so these numbers stay visually consistent across screen sizes.
+// "solid" uses gapSize: 0 so no gap ever opens regardless of dashSize.
+const LINE_STYLES = {
+  solid: { dashSize: 1, gapSize: 0 },
+  dots: { dashSize: 0.5, gapSize: 1 },
+};
 import { loadPlanetTexture, buildPlanetBody } from './planetFactory.js';
 
 const DAYS_PER_YEAR = 365.25;
@@ -219,13 +232,14 @@ function makeSunMaterial() {
         // yellow-white (not deep orange) so the Sun reads as a genuinely
         // hot, bright star rather than a dim reddish body (users flagged
         // an earlier, more-orange version as looking "almost like Mars").
-        float coreGlow = pow(1.0 - rim, 1.6);
-        color += vec3(1.0, 0.93, 0.72) * coreGlow * 1.0 * pulse * flicker;
+        float coreGlow = pow(1.0 - rim, 1.4);
+        color += vec3(1.0, 0.93, 0.72) * coreGlow * 1.25 * pulse * flicker;
         // Overall brightening so the whole disc reads as radiant/emissive,
-        // not just a photograph of a lit sphere.
-        color *= 1.4 * pulse;
+        // not just a photograph of a lit sphere. Bumped up (1.4 -> 1.6) for
+        // a stronger overall glow per request.
+        color *= 1.6 * pulse;
 
-        float edgeGlow = pow(rim, 7.0) * 0.55;
+        float edgeGlow = pow(rim, 6.0) * 0.7;
         color += vec3(1.0, 0.78, 0.52) * edgeGlow;
         gl_FragColor = vec4(color, 1.0);
       }
@@ -331,6 +345,8 @@ export function createSolarSystemEngine(canvas, opts) {
     speedDurationSec = 10,
     totalSimYears = 8,
     traceIntervalDays = 3,
+    startPaused = false,
+    initialSpeedMultiplier = 1,
   } = opts;
 
   const scene = new THREE.Scene();
@@ -394,21 +410,19 @@ export function createSolarSystemEngine(canvas, opts) {
   const sunMesh = new THREE.Mesh(sunGeo, sunMat);
   scene.add(sunMesh);
 
-  // Tight, realistic corona: a small bright core glow plus a softer, much
-  // fainter outer layer, both scaled close to the Sun's own radius (not the
-  // old huge diffuse halo) so it reads as a corona, not a glowing blob.
-  // Deliberately toned down (opacity 0.5/0.22 -> 0.32/0.14) now that the
-  // Sun's own shader carries a strong internal core glow (see
-  // makeSunMaterial) — these sprites are just a subtle assist, not the
-  // main source of the "glowing" read anymore.
+  // Bright, more prominent corona: a bold bright core glow plus a larger,
+  // softer outer halo (bumped up from opacity 0.45/0.2 & scale 10.5/16.5
+  // per request for a stronger glow) so the Sun reads as radiant/luminous
+  // from further away, on top of the Sun's own shader-driven internal
+  // core glow (see makeSunMaterial).
   const glow = new THREE.Sprite(new THREE.SpriteMaterial({
     map: makeGlowTexture(),
     transparent: true,
     depthWrite: false,
     blending: THREE.AdditiveBlending,
-    opacity: 0.45,
+    opacity: 0.7,
   }));
-  glow.scale.set(10.5, 10.5, 1);
+  glow.scale.set(13, 13, 1);
   scene.add(glow);
 
   // A second, larger, softer sprite layered behind the tight glow above —
@@ -419,9 +433,9 @@ export function createSolarSystemEngine(canvas, opts) {
     transparent: true,
     depthWrite: false,
     blending: THREE.AdditiveBlending,
-    opacity: 0.2,
+    opacity: 0.4,
   }));
-  outerGlow.scale.set(16.5, 16.5, 1);
+  outerGlow.scale.set(21, 21, 1);
   scene.add(outerGlow);
 
   const planets = planetKeys
@@ -560,9 +574,9 @@ export function createSolarSystemEngine(canvas, opts) {
   // A small, CONSTANT look-at offset sits the Sun slightly above
   // dead-center for a more considered mobile-portrait composition.
   const introLookTarget = new THREE.Vector3(0, -earthRefDistance * 0.045, 0);
-  const INTRO_HOLD_SEC = 1.6;
-  const INTRO_TRAVEL_SEC = 4.5;
-  const INTRO_ZOOM_SEC = 4.5;
+  const INTRO_HOLD_SEC = 0.8;
+  const INTRO_TRAVEL_SEC = 2.1;
+  const INTRO_ZOOM_SEC = 2.1;
   let introPhase = cinematicIntro ? 'hold' : 'done';
   let introElapsed = 0;
   let introCompleteCb = null;
@@ -600,8 +614,21 @@ export function createSolarSystemEngine(canvas, opts) {
   }
 
   // ---- Pattern tracer (chord between the two active planets) --------------
+  // Uses the "fat line" addon (LineSegments2/LineSegmentsGeometry/
+  // LineMaterial) instead of plain THREE.LineSegments/LineBasicMaterial —
+  // ported from the original vanilla-JS prototype (js/main.js) — because
+  // it's the only way to get a real, reliable dashed/dotted line style for
+  // a buffer of disconnected 2-point segments (plain LineDashedMaterial's
+  // distance-based dashing only works cleanly on a single continuous
+  // polyline). `dashed` is left permanently enabled — the Line/Dots toggle
+  // only ever changes the dashSize/gapSize NUMBERS (safe to change any
+  // time), never the `dashed` boolean itself (a compile-time shader define
+  // that would need a costly recompile to toggle) — gapSize: 0 (solid)
+  // simply never opens a visible gap.
   let patternLines = null;
   let patternPositions = null;
+  let patternDistances = null;
+  let distanceBuffer = null;
   let patternCapacity = 0;
   let patternCount = 0;
   const posA = new THREE.Vector3();
@@ -619,20 +646,55 @@ export function createSolarSystemEngine(canvas, opts) {
     // generous margin) at negligible memory cost (~1MB of Float32Array).
     patternCapacity = Math.min(Math.ceil((totalSimYears * DAYS_PER_YEAR) / traceIntervalDays), 40000);
     patternPositions = new Float32Array(patternCapacity * 2 * 3);
-    const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute('position', new THREE.BufferAttribute(patternPositions, 3));
-    geometry.setDrawRange(0, 0);
-    const material = new THREE.LineBasicMaterial({
+    const geometry = new LineSegmentsGeometry();
+    // Allocate the full buffer ONCE, at fixed capacity — calling
+    // setPositions() again later with a different-sized array causes GPU
+    // buffer/instance-count mismatches. Frequent updates instead mutate
+    // this same buffer in place and reveal new segments via
+    // `instanceCount` (the instanced-rendering equivalent of
+    // BufferGeometry's setDrawRange()).
+    geometry.setPositions(patternPositions);
+    geometry.instanceCount = 0;
+    // Distances feeding the dashed/dotted shader are computed LOCALLY per
+    // chord (each segment's own range always starts at 0) instead of via
+    // LineSegments2's built-in computeLineDistances(), which accumulates
+    // distance CONTINUOUSLY across every segment as if they were one long
+    // connected polyline. For a pattern with hundreds of disconnected
+    // chords that running total climbs into the thousands of units, and
+    // at that magnitude float32 precision loss in the shader's
+    // `mod(vLineDistance, dashSize + gapSize)` check flips seemingly-
+    // random pixels across the discard threshold — rendering as fine
+    // "static" noise instead of clean lines, especially for pairs whose
+    // resonance needs many chords (e.g. Venus:Earth's 8:13). Resetting
+    // each chord's own distance range to start at 0 keeps every value
+    // tiny (at most one chord's length), eliminating the precision issue.
+    patternDistances = new Float32Array(patternCapacity * 2);
+    distanceBuffer = new THREE.InstancedInterleavedBuffer(patternDistances, 2, 1);
+    geometry.setAttribute('instanceDistanceStart', new THREE.InterleavedBufferAttribute(distanceBuffer, 1, 0));
+    geometry.setAttribute('instanceDistanceEnd', new THREE.InterleavedBufferAttribute(distanceBuffer, 1, 1));
+    const material = new LineMaterial({
       color: 0xffffff,
       transparent: true,
-      opacity: 0.8,
+      // Softened from 0.8 — paired with the now much lower, constant
+      // per-pattern chord count (see traceIntervalDays derivation in
+      // SimulationScreen.jsx), this keeps busy/overlapping regions
+      // reading as a gentle, glowing weave instead of oversaturating to a
+      // flat solid-white blob under additive blending.
+      opacity: 0.5,
+      linewidth: 1.3, // in pixels (screen-space), since worldUnits defaults to false
       blending: THREE.AdditiveBlending,
       depthWrite: false,
+      dashed: true,
+      dashScale: 1,
+      dashSize: LINE_STYLES.solid.dashSize,
+      gapSize: LINE_STYLES.solid.gapSize,
     });
-    patternLines = new THREE.LineSegments(geometry, material);
+    material.resolution.set(width, height);
+    patternLines = new LineSegments2(geometry, material);
     patternLines.frustumCulled = false;
     scene.add(patternLines);
   }
+
 
   // ---- Simulation clock -----------------------------------------------------
   // A single simDaysElapsed accumulator drives every planet's orbit angle in
@@ -645,16 +707,27 @@ export function createSolarSystemEngine(canvas, opts) {
   let browseElapsedSec = 0;
   let lastSampledDay = 0;
   const BROWSE_DAYS_PER_REAL_SECOND = 6;
-  const simDaysPerRealSecond = tracePattern
+  const baseSimDaysPerRealSecond = tracePattern
     ? (totalSimYears * DAYS_PER_YEAR) / speedDurationSec
     : BROWSE_DAYS_PER_REAL_SECOND;
-  let paused = false;
+  // Live playback-rate multiplier — lets a caller speed up/slow down an
+  // ALREADY-RUNNING pattern reveal in real time (e.g. a "rocket" slider
+  // control) without restarting the simulation or recomputing
+  // `totalSimYears`/`speedDurationSec`, unlike changing those fixed
+  // values which only take effect on the next fresh engine instance.
+  // Starts from `initialSpeedMultiplier` (default 1x) rather than always
+  // 1x so a caller can start an already-fast reveal (e.g. the mobile
+  // Simulation screen's default "5x" pace) without a separate initial
+  // setSpeedMultiplier() call racing the first rendered frame.
+  let speedMultiplier = initialSpeedMultiplier;
+  let paused = startPaused;
   let completed = false;
   let onCompleteCb = null;
   let rafId = null;
 
   function sampleChordIfDue() {
     if (!patternLines || patternCount >= patternCapacity) return;
+    let added = false;
     while (simDaysElapsed - lastSampledDay >= traceIntervalDays && patternCount < patternCapacity) {
       lastSampledDay += traceIntervalDays;
       planets[0].mesh.getWorldPosition(posA);
@@ -666,10 +739,21 @@ export function createSolarSystemEngine(canvas, opts) {
       patternPositions[base + 3] = posB.x;
       patternPositions[base + 4] = posB.y;
       patternPositions[base + 5] = posB.z;
+      const distBase = patternCount * 2;
+      patternDistances[distBase] = 0;
+      patternDistances[distBase + 1] = posA.distanceTo(posB);
       patternCount++;
+      added = true;
     }
-    patternLines.geometry.setDrawRange(0, patternCount * 2);
-    patternLines.geometry.attributes.position.needsUpdate = true;
+    if (!added) return;
+    // instanceStart & instanceEnd are two views over the SAME
+    // InterleavedBuffer (see LineSegmentsGeometry.setPositions), so
+    // flagging one is enough.
+    patternLines.geometry.attributes.instanceStart.data.needsUpdate = true;
+    patternLines.geometry.instanceCount = patternCount;
+    // Push the freshly-written LOCAL distances (see construction above)
+    // up to the GPU — replaces the old computeLineDistances() call.
+    distanceBuffer.needsUpdate = true;
   }
 
   function tick() {
@@ -686,7 +770,7 @@ export function createSolarSystemEngine(canvas, opts) {
       layer.rotation.y += delta * layer.userData.spin;
     });
 
-    if (!completed) simDaysElapsed += delta * simDaysPerRealSecond;
+    if (!completed) simDaysElapsed += delta * baseSimDaysPerRealSecond * speedMultiplier;
     if (!completed) browseElapsedSec += delta;
     planets.forEach((planet) => {
       if (tracePattern) {
@@ -827,6 +911,9 @@ export function createSolarSystemEngine(canvas, opts) {
     }
     camera.updateProjectionMatrix();
     renderer.setSize(w, h, false);
+    // LineMaterial's dashing/width math is screen-space (pixels), so its
+    // `resolution` uniform must stay in sync with the actual render size.
+    if (patternLines) patternLines.material.resolution.set(w, h);
   }
 
   const resizeObserver = new ResizeObserver(resize);
@@ -839,6 +926,45 @@ export function createSolarSystemEngine(canvas, opts) {
     },
     setPaused(value) {
       paused = value;
+    },
+    // style: 'solid' | 'dots' — see LINE_STYLES. Only touches the
+    // dashSize/gapSize NUMBERS (never the `dashed` boolean itself, which
+    // is a compile-time shader define that would need a costly recompile
+    // to toggle).
+    setLineStyle(style) {
+      if (!patternLines) return;
+      const preset = LINE_STYLES[style] ?? LINE_STYLES.solid;
+      patternLines.material.dashSize = preset.dashSize;
+      patternLines.material.gapSize = preset.gapSize;
+    },
+    // Live playback-rate multiplier for an already-running pattern reveal
+    // (e.g. driven by a "rocket" speed slider) — see baseSimDaysPerRealSecond
+    // above for why this is a separate live multiplier rather than
+    // recomputing the fixed speedDurationSec/totalSimYears configuration.
+    setSpeedMultiplier(value) {
+      speedMultiplier = Math.max(0.1, value);
+    },
+    // Restarts the pattern reveal from the very beginning — clears every
+    // sampled trace chord, rewinds every planet to its original starting
+    // orbital angle, and resets the completion/progress state. Renders
+    // one frame immediately so the reset is visible right away even while
+    // paused (the normal tick() loop skips all position/geometry updates
+    // while paused, so simply zeroing the counters wouldn't repaint until
+    // the next unpause otherwise).
+    reset() {
+      simDaysElapsed = 0;
+      lastSampledDay = 0;
+      patternCount = 0;
+      completed = false;
+      if (patternLines) {
+        patternLines.geometry.instanceCount = 0;
+      }
+      planets.forEach((planet) => {
+        planet.pivot.rotation.y = planet.startAngle;
+        planet.tiltAnchor.rotation.y = -planet.startAngle;
+      });
+      scene.updateMatrixWorld(true);
+      renderer.render(scene, camera);
     },
     getProgress() {
       if (!tracePattern) return 0;

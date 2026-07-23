@@ -536,6 +536,14 @@ button {
   scroll-snap-align: center;
 }
 
+/* Compact variant used by the Simulation screen — the planet strip there
+   is a secondary, informational element (the live pattern preview is the
+   focus, centered below it), so it doesn't need the full Saturn-ring
+   headroom the dedicated Planet Select screen reserves. */
+.swipe-row--compact .swipe-planet {
+  height: 108px;
+}
+
 /* Ambient halo — small, tight, and quiet (Apple/CRED-style "subtle
    selection" rather than a bright spotlight/bloom), sitting just behind
    where the real 3D planet renders in the canvas below. Short gradient
@@ -630,6 +638,90 @@ button {
 }
 
 .segmented__option.is-active {
+  background: var(--text-primary);
+  color: #0b0b12;
+}
+
+/* ---- Simulation screen (merges live preview + playback controls into
+   the old Simulation Settings step) ------------------------------------------ */
+.screen--simulation {
+  padding-top: calc(16px + var(--safe-top));
+  padding-left: 0;
+  padding-right: 0;
+  padding-bottom: 0;
+  gap: 10px;
+  /* Everything (header, live preview, controls) is sized to fit within one
+     viewport-height screen — the live pattern preview is the focus and
+     fills essentially the whole screen between the header and the
+     playback controls, never requiring a scroll to reach the controls on
+     a real mobile viewport. */
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.screen--simulation .back-button,
+.screen--simulation .screen__header {
+  margin-left: 22px;
+  margin-right: 22px;
+}
+
+.screen--simulation .screen__header {
+  margin-bottom: 0;
+}
+
+.sim-canvas-wrap {
+  position: relative;
+  flex: 1;
+  min-height: 140px;
+  margin: 0 22px;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--glass-border);
+  background: #000;
+}
+
+.sim-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  flex-shrink: 0;
+  padding: 6px 22px calc(10px + var(--safe-bottom));
+}
+
+/* Four uniform circular "glass" buttons — line style, play/pause, reset,
+   rocket speed-boost — all the same size/shape per the reference design
+   (no more special tall drag-slider treatment for the rocket control). */
+.sim-control {
+  position: relative;
+  width: 62px;
+  height: 62px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.02) 60%);
+  border: 1px solid var(--glass-border);
+  color: var(--text-secondary);
+  box-shadow: 0 6px 18px -8px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -6px 12px -8px rgba(0, 0, 0, 0.5);
+  transition: transform 0.15s ease, background 0.2s ease;
+}
+
+.sim-control:active {
+  transform: scale(0.94);
+}
+
+.sim-control__badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+  padding: 3px 5px;
+  border-radius: 999px;
   background: var(--text-primary);
   color: #0b0b12;
 }
