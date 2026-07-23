@@ -476,24 +476,39 @@ button {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  /* Generous, viewport-proportional breathing room between the Planet A
-     and Planet B rows — this screen has a lot of unused vertical space
-     once the two compact rows are centered, so a fixed small gap left
-     them looking cramped together instead of using it. */
-  gap: clamp(48px, 10vh, 96px);
+  /* Viewport-proportional breathing room between the Planet A and Planet
+     B rows — uses dvh (accounts for mobile Safari's dynamic address bar,
+     unlike vh) and a much lower floor/ratio than before: the previous
+     clamp(48px, 10vh, 96px) combined with a fixed 176px planet viewport
+     per row didn't leave enough room on short phones (e.g. iPhone SE,
+     375×667) — the two rows' combined natural height exceeded the
+     available space, and because this container is vertically CENTERED,
+     the overflow pushed symmetrically both up (overlapping the header's
+     "Choose two planets" title) and down (overlapping the Back/Continue
+     buttons). See .swipe-planet below for the matching responsive fix. */
+  gap: clamp(16px, 5dvh, 96px);
   min-height: 0;
 }
 
 .swipe-row {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  /* Tightened from 10px per request — brings the "Planet A"/"Planet B"
+     label and the selected planet's name/fact text visually closer to
+     the carousel itself on both sides. */
+  gap: 4px;
 }
 
 .swipe-row__label {
   padding: 0 22px;
   font-size: 11px;
   font-weight: 700;
+  /* Pulls the label a little further down toward the carousel, on top of
+     the row's own 4px gap — safe because the actual rendered sphere sits
+     centered within its (Saturn-ring-sized) canvas box with its own
+     margin above/below, so this never overlaps real planet artwork, even
+     for Saturn's ring (the tallest content in that shared box). */
+  margin-bottom: -6px;
   text-transform: uppercase;
   letter-spacing: 0.14em;
   color: var(--text-tertiary);
@@ -548,8 +563,14 @@ button {
      enough that Saturn's ring — now built with the SAME real proportions
      (radius*2.3 outer) as the actual Solar System engine, not a shrunk
      carousel-only approximation — isn't clipped by the ortho camera's
-     frustum even at its largest (selected) scale. */
-  height: 176px;
+     frustum even at its largest (selected) scale.
+     Responsive (dvh-based) rather than a flat 176px — on short phones
+     (e.g. iPhone SE, 375×667) a fixed 176px per row left the two rows'
+     combined height taller than the screen, causing them to overflow into
+     the header/buttons (see .swipe-select above); scaling down on short
+     viewports while still reaching the full 176px on taller phones keeps
+     every row on-screen without clipping Saturn's ring. */
+  height: clamp(112px, 20dvh, 176px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -605,9 +626,17 @@ button {
   flex-direction: column;
   align-items: center;
   gap: 3px;
-  min-height: 52px;
+  /* Trimmed from 52px — a small additional margin toward fitting both
+     rows within short iPhone viewports (see .swipe-select/.swipe-planet)
+     without needing to shrink the name/fact text itself. */
+  min-height: 44px;
   padding: 0 32px;
   text-align: center;
+  /* Pulls the name/fact text a little closer up toward the carousel,
+     matching .swipe-row__label's symmetric pull above — safe for the same
+     reason (real planet artwork is centered within the shared box with
+     its own margin, even for Saturn's ring). */
+  margin-top: -6px;
 }
 
 .swipe-row__name {

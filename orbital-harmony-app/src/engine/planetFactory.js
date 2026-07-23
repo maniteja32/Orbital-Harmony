@@ -26,7 +26,12 @@ export function loadPlanetTexture(path, { srgb = true, saturate = false } = {}) 
   if (textureCache.has(cacheKey)) return textureCache.get(cacheKey);
   const tex = textureLoader.load(path, saturate ? boostTextureSaturation : undefined);
   if (srgb) tex.colorSpace = THREE.SRGBColorSpace;
-  tex.anisotropy = 4;
+  // Bumped from 4 — at the small on-screen sizes planets render at (e.g.
+  // the zoomed-out Solar System overview), mipmapping/minification was
+  // smoothing surface detail into a flatter, duller-looking average color
+  // more than necessary; a higher anisotropy keeps more of the source
+  // detail/contrast through that downsampling.
+  tex.anisotropy = 8;
   textureCache.set(cacheKey, tex);
   return tex;
 }
@@ -38,14 +43,20 @@ export function loadPlanetTexture(path, { srgb = true, saturate = false } = {}) 
 // TextureLoader `onLoad` callback, which receives the Texture itself), then
 // swaps `texture.image` to the boosted canvas and flags `needsUpdate` so
 // Three.js re-uploads the adjusted pixels to the GPU.
-function boostTextureSaturation(texture, amount = 1.65) {
+function boostTextureSaturation(texture, amount = 1.85) {
   const img = texture.image;
   if (!img || !img.width) return;
   const canvas = document.createElement('canvas');
   canvas.width = img.width;
   canvas.height = img.height;
   const ctx = canvas.getContext('2d');
-  ctx.filter = `saturate(${amount * 100}%) contrast(112%) brightness(106%)`;
+  // Bumped saturate/contrast/brightness slightly (was 165%/112%/106%) —
+  // planets render quite small on the Solar System overview screen, and
+  // mipmapped minification was averaging away enough of the source detail
+  // that they read as flatter/duller than the same textures do up close
+  // (e.g. the Planet Select carousel). A stronger boost compensates so the
+  // color still pops even after that averaging.
+  ctx.filter = `saturate(${amount * 100}%) contrast(116%) brightness(108%)`;
   ctx.drawImage(img, 0, 0);
   texture.image = canvas;
   texture.needsUpdate = true;
