@@ -238,6 +238,7 @@ export function createSolarSystemEngine(canvas, opts) {
     interactive = false,
     tracePattern = false,
     physicalPattern = false,
+    connectAllPlanets = false,
     showOrbitRings = true,
     cinematicIntro = false,
     startSettled = false,
@@ -585,10 +586,22 @@ export function createSolarSystemEngine(canvas, opts) {
   let distanceBuffer = null;
   let patternCapacity = 0;
   let patternCount = 0;
+  // Which planet index-pairs get a chord each sample: just the two planets
+  // for Explore, or a closed loop wiring EVERY planet together for the
+  // Cosmic Signature (set in the setup block below).
+  let patternEdges = [[0, 1]];
   const posA = new THREE.Vector3();
   const posB = new THREE.Vector3();
 
-  if (tracePattern && planets.length === 2) {
+  if (tracePattern && planets.length >= 2) {
+    // Connectivity: a single chord between the two picked planets (Explore),
+    // or a closed loop connecting EVERY planet in orbit order (Cosmic
+    // Signature) — each planet sits at its real position for the birth
+    // date/time (see `patternStartDate`) and the whole wired figure is swept
+    // over time to generate the signature.
+    patternEdges = connectAllPlanets
+      ? planets.map((_, i) => [i, (i + 1) % planets.length])
+      : [[0, 1]];
     // Raised from 8000: RevealScreen.jsx now sizes `totalSimYears` to fully
     // CLOSE a pair's natural resonance pattern (see the note there) rather
     // than an arbitrary short span, which for slow outer-planet pairs can
@@ -598,7 +611,8 @@ export function createSolarSystemEngine(canvas, opts) {
     // short). 40000 comfortably covers even the slowest realistic pairs
     // (findResonance caps the orbit-count side at 20, so this is a very
     // generous margin) at negligible memory cost (~1MB of Float32Array).
-    patternCapacity = Math.min(Math.ceil((totalSimYears * DAYS_PER_YEAR) / traceIntervalDays), 40000);
+    const sampleCount = Math.ceil((totalSimYears * DAYS_PER_YEAR) / traceIntervalDays);
+    patternCapacity = Math.min(sampleCount * patternEdges.length, 40000);
     patternPositions = new Float32Array(patternCapacity * 2 * 3);
     const geometry = new LineSegmentsGeometry();
     // Allocate the full buffer ONCE, at fixed capacity — calling
@@ -683,21 +697,28 @@ export function createSolarSystemEngine(canvas, opts) {
   function sampleChordIfDue() {
     if (!patternLines || patternCount >= patternCapacity) return;
     let added = false;
-    while (simDaysElapsed - lastSampledDay >= traceIntervalDays && patternCount < patternCapacity) {
+    const edgeCount = patternEdges.length;
+    while (
+      simDaysElapsed - lastSampledDay >= traceIntervalDays &&
+      patternCount + edgeCount <= patternCapacity
+    ) {
       lastSampledDay += traceIntervalDays;
-      planets[0].mesh.getWorldPosition(posA);
-      planets[1].mesh.getWorldPosition(posB);
-      const base = patternCount * 6;
-      patternPositions[base] = posA.x;
-      patternPositions[base + 1] = posA.y;
-      patternPositions[base + 2] = posA.z;
-      patternPositions[base + 3] = posB.x;
-      patternPositions[base + 4] = posB.y;
-      patternPositions[base + 5] = posB.z;
-      const distBase = patternCount * 2;
-      patternDistances[distBase] = 0;
-      patternDistances[distBase + 1] = posA.distanceTo(posB);
-      patternCount++;
+      for (let e = 0; e < edgeCount; e++) {
+        const edge = patternEdges[e];
+        planets[edge[0]].mesh.getWorldPosition(posA);
+        planets[edge[1]].mesh.getWorldPosition(posB);
+        const base = patternCount * 6;
+        patternPositions[base] = posA.x;
+        patternPositions[base + 1] = posA.y;
+        patternPositions[base + 2] = posA.z;
+        patternPositions[base + 3] = posB.x;
+        patternPositions[base + 4] = posB.y;
+        patternPositions[base + 5] = posB.z;
+        const distBase = patternCount * 2;
+        patternDistances[distBase] = 0;
+        patternDistances[distBase + 1] = posA.distanceTo(posB);
+        patternCount++;
+      }
       added = true;
     }
     if (!added) return;

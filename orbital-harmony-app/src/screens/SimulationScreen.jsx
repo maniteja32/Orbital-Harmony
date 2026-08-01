@@ -2,7 +2,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import SolarSystemCanvas from '../components/SolarSystemCanvas.jsx';
 import LiquidGlassIconButton from '../components/LiquidGlassIconButton.jsx';
-import { PLANETS_BY_KEY } from '../data/planets.js';
+import { PLANETS, PLANETS_BY_KEY } from '../data/planets.js';
 import { patternTimeframe } from '../utils/resonance.js';
 import { useAppStore, SPEED_PRESETS } from '../store/useAppStore.js';
 
@@ -27,6 +27,13 @@ const CHORDS_PER_PETAL = 13;
 const MIN_CHORDS = 70;
 const MAX_CHORDS = 1600;
 
+// Cosmic Signature — connects ALL planets (positioned at their real birth
+// date/time locations) in a closed loop and sweeps the wired figure over a
+// fixed span. ~1 Jupiter orbit lets the inner planets loop many times (rich
+// web) while the slow outer planets act as drifting anchors.
+const SIGNATURE_YEARS = 12;
+const SIGNATURE_SAMPLES = 260;
+
 /** Replaces the old segmented-control-only "Simulation settings" screen —
  * merges a LIVE pattern-tracer preview (previously only shown on the
  * separate Reveal screen) with four playback controls (line/dots trace
@@ -47,7 +54,10 @@ export default function SimulationScreen({ onComplete, onBack }) {
   const [lineStyle, setLineStyleState] = useState('solid');
   const [speedMultiplier, setSpeedMultiplierState] = useState(DEFAULT_SPEED_MULTIPLIER);
 
-  const planetKeys = useMemo(() => [planetA, planetB], [planetA, planetB]);
+  const planetKeys = useMemo(
+    () => (isCosmic ? PLANETS.map((p) => p.key) : [planetA, planetB]),
+    [isCosmic, planetA, planetB],
+  );
   const speedCfg = SPEED_PRESETS[speed];
   const planetAData = PLANETS_BY_KEY[planetA];
   const planetBData = PLANETS_BY_KEY[planetB];
@@ -56,8 +66,12 @@ export default function SimulationScreen({ onComplete, onBack }) {
   // `patternTimeframe`): run for exactly the pair's real orbital-resonance
   // closure so each combination traces its TRUE characteristic pattern
   // (e.g. Earth+Venus's 8:13 => a clean 5-petaled rose), with chord count
-  // scaled to the petal count for consistent line density.
+  // scaled to the petal count for consistent line density. In Cosmic mode a
+  // fixed span sweeps the all-planets figure instead.
   const { totalSimYears, traceIntervalDays } = useMemo(() => {
+    if (isCosmic) {
+      return { totalSimYears: SIGNATURE_YEARS, traceIntervalDays: (SIGNATURE_YEARS * 365.25) / SIGNATURE_SAMPLES };
+    }
     if (!planetAData || !planetBData) return { totalSimYears: 8, traceIntervalDays: 3 };
     const { years, petals } = patternTimeframe(
       planetAData.orbitalPeriodDays,
@@ -67,7 +81,7 @@ export default function SimulationScreen({ onComplete, onBack }) {
     );
     const chords = Math.min(Math.max((petals ?? 6) * CHORDS_PER_PETAL, MIN_CHORDS), MAX_CHORDS);
     return { totalSimYears: years, traceIntervalDays: (years * 365.25) / chords };
-  }, [planetAData, planetBData]);
+  }, [isCosmic, planetAData, planetBData]);
 
   const handleEngineComplete = useCallback(() => {
     if (doneRef.current) return;
@@ -135,6 +149,7 @@ export default function SimulationScreen({ onComplete, onBack }) {
           planetKeys={planetKeys}
           tracePattern
           physicalPattern
+          connectAllPlanets={isCosmic}
           startPaused
           speedDurationSec={speedCfg.durationSec}
           totalSimYears={totalSimYears}
