@@ -209,21 +209,19 @@ export const LiquidGlass = forwardRef(function LiquidGlass(
             // Rim thickness, overridable per-consumer via --liquid-glass-rim-width.
             padding: "var(--liquid-glass-rim-width, 0.5px)",
             background:
-              // DIAGONAL specular rim (Apple / macOS "Liquid Glass"). On a wide
-              // pill a rotated linear band still reads horizontal (the two long
-              // edges dominate), so instead use two LARGE, SOFT corner-anchored
-              // radials: a bright light spread broadly from the TOP-LEFT corner
-              // (lights the upper + left edges, fading right) and a dark shadow
-              // from the BOTTOM-RIGHT. Big radius + soft falloff = the light is
-              // DISTRIBUTED across the top-left half (not a tight corner blob)
-              // while still reading as a clean top-left→bottom-right diagonal.
-              // Intensity tunable via --liquid-glass-rim-light / -rim-dark.
-              "radial-gradient(140% 320% at 6% 0%, " +
-              "var(--liquid-glass-rim-light, rgba(255,255,255,0.5)) 0%, " +
-              "rgba(255,255,255,0) 62%), " +
-              "radial-gradient(140% 320% at 94% 100%, " +
-              "var(--liquid-glass-rim-dark, rgba(0,0,0,0.45)) 0%, " +
-              "rgba(0,0,0,0) 62%)",
+              // Apple / macOS "Liquid Glass" rim: the edge catches light at the
+              // two OPPOSITE corners (top-left + bottom-right) and is dimmer on
+              // the other two — a symmetric diagonal specular, NOT a light-vs-
+              // shadow bevel. Two big soft radial glows (both bright) do the
+              // corner highlights; a faint flat base keeps the whole rim gently
+              // visible in between so it never goes fully dark. Glow intensity
+              // tunable via --liquid-glass-rim-light, the base via
+              // --liquid-glass-rim-base.
+              "radial-gradient(120% 300% at 4% 0%, " +
+              "var(--liquid-glass-rim-light, rgba(255,255,255,0.55)) 0%, rgba(255,255,255,0) 55%), " +
+              "radial-gradient(120% 300% at 96% 100%, " +
+              "var(--liquid-glass-rim-light, rgba(255,255,255,0.55)) 0%, rgba(255,255,255,0) 55%), " +
+              "linear-gradient(var(--liquid-glass-rim-base, rgba(255,255,255,0.10)), var(--liquid-glass-rim-base, rgba(255,255,255,0.10)))",
             WebkitMask: "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)",
             WebkitMaskComposite: "xor",
             mask: "linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0)",
