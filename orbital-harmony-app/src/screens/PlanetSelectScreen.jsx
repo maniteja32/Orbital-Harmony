@@ -61,7 +61,9 @@ export default function PlanetSelectScreen({ onNext, onBack }) {
         />
       </div>
 
-      {factPlanet && (
+      {/* Planet Fact card hidden for now — flip this back to `factPlanet &&`
+          (and it uses factSlot / reroll below) to bring it back. */}
+      {false && factPlanet && (
         <div className="planet-fact-card">
           <span className="planet-fact-card__icon" style={{ '--planet-color': factPlanet.color }} aria-hidden="true" />
           <div className="planet-fact-card__body">
