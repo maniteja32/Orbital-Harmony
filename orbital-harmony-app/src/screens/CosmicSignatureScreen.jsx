@@ -1,14 +1,16 @@
 import { useMemo, useState } from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Clock } from 'lucide-react';
 import { GlassButton } from '../components/ui/glasscn/glass-button.jsx';
+import { GlassDatePicker } from '../components/GlassDatePicker.jsx';
 import { cosmicSignatureFromDate } from '../utils/cosmicSignature.js';
 import { useAppStore } from '../store/useAppStore.js';
 
-/** Screen 3b — "Cosmic Signature". The user enters a birth date; a pair of
- * planets is deterministically derived from it (see utils/cosmicSignature.js)
- * and the engine anchors each planet's starting phase to its real position on
- * that date, so the traced pattern is personal. Hands off to the shared
- * Simulation screen (patternMode = 'cosmic') to render + capture it. */
+/** Screen 3b — "Cosmic Signature". The user enters a birth date (and an
+ * optional time); a pair of planets is deterministically derived from it
+ * (see utils/cosmicSignature.js) and the engine anchors each planet's
+ * starting phase to its real position at that moment, so the traced pattern
+ * is personal. Hands off to the shared Simulation screen
+ * (patternMode = 'cosmic') to render + capture it. */
 export default function CosmicSignatureScreen({ onReveal, onBack }) {
   const setPlanetA = useAppStore((s) => s.setPlanetA);
   const setPlanetB = useAppStore((s) => s.setPlanetB);
@@ -16,18 +18,20 @@ export default function CosmicSignatureScreen({ onReveal, onBack }) {
   const setPatternMode = useAppStore((s) => s.setPatternMode);
 
   const [dateStr, setDateStr] = useState('');
+  const [timeStr, setTimeStr] = useState('');
 
   // Today, as YYYY-MM-DD, to cap the date input (no future birth dates).
   const maxDate = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
-  // Parse at local noon so the calendar day is stable regardless of timezone.
-  const parsed = dateStr ? new Date(`${dateStr}T12:00:00`) : null;
+  // Parse at the given time (or local noon if none) so the calendar day is
+  // stable regardless of timezone.
+  const parsed = dateStr ? new Date(`${dateStr}T${timeStr || '12:00'}:00`) : null;
   const valid = parsed != null && !Number.isNaN(parsed.getTime());
 
   const signature = useMemo(
     () => (valid ? cosmicSignatureFromDate(parsed) : null),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [dateStr]
+    [dateStr, timeStr]
   );
 
   function handleReveal() {
@@ -49,41 +53,37 @@ export default function CosmicSignatureScreen({ onReveal, onBack }) {
       </div>
 
       <div className="screen__header screen__header--mode">
-        <span className="eyebrow">Cosmic Signature</span>
-        <h1>Your birth date</h1>
-        <p>Enter the day you were born to reveal the pattern the planets traced for you.</p>
+        <h1>Cosmic Signature</h1>
+        <p>Enter your birth details</p>
       </div>
 
       <div className="cosmic-form">
         <label className="cosmic-field">
-          <span className="cosmic-field__label">Birth date</span>
-          <input
-            type="date"
-            className="cosmic-input"
+          <span className="cosmic-field__label">Date of Birth</span>
+          <GlassDatePicker
             value={dateStr}
             max={maxDate}
-            onChange={(e) => setDateStr(e.target.value)}
+            onChange={setDateStr}
+            placeholder="Select your birth date"
           />
         </label>
 
-        {signature && (
-          <div className="cosmic-preview">
-            <span className="cosmic-preview__label">Your signature planets</span>
-            <span className="cosmic-preview__pair">
-              <span
-                className="cosmic-preview__dot"
-                style={{ background: signature.planetA.color }}
-              />
-              {signature.planetA.name}
-              <span className="cosmic-preview__times">×</span>
-              <span
-                className="cosmic-preview__dot"
-                style={{ background: signature.planetB.color }}
-              />
-              {signature.planetB.name}
-            </span>
-          </div>
-        )}
+        <label className="cosmic-field">
+          <span className="cosmic-field__label">Time (Optional)</span>
+          <span className="cosmic-field__control">
+            <input
+              type="time"
+              className="cosmic-input"
+              value={timeStr}
+              onChange={(e) => setTimeStr(e.target.value)}
+            />
+            <Clock size={18} strokeWidth={1.8} className="cosmic-field__icon" aria-hidden="true" />
+          </span>
+        </label>
+
+        <p className="cosmic-hint">
+          Your Signature will be based on the planetary positions at that moment.
+        </p>
       </div>
 
       <div className="screen__actions">
@@ -93,7 +93,7 @@ export default function CosmicSignatureScreen({ onReveal, onBack }) {
           disabled={!valid}
           onClick={handleReveal}
         >
-          Reveal My Signature
+          Generate Signature
         </GlassButton>
       </div>
     </div>
