@@ -5,6 +5,7 @@ import SolarSystemScreen from './screens/SolarSystemScreen.jsx';
 import ModeSelectScreen from './screens/ModeSelectScreen.jsx';
 import CosmicSignatureScreen from './screens/CosmicSignatureScreen.jsx';
 import PlanetSelectScreen from './screens/PlanetSelectScreen.jsx';
+import GeneratingScreen from './screens/GeneratingScreen.jsx';
 import SimulationScreen from './screens/SimulationScreen.jsx';
 import ResultScreen from './screens/ResultScreen.jsx';
 import { useAppStore } from './store/useAppStore.js';
@@ -69,8 +70,14 @@ export default function App() {
             onBack={() => goTo('system')}
           />
         )}
-        {screen === 'select' && <PlanetSelectScreen onNext={() => goTo('settings')} onBack={() => goTo('mode')} />}
-        {screen === 'cosmic' && <CosmicSignatureScreen onReveal={() => goTo('settings')} onBack={() => goTo('mode')} />}
+        {screen === 'select' && <PlanetSelectScreen onNext={() => goTo('generating')} onBack={() => goTo('mode')} />}
+        {screen === 'cosmic' && <CosmicSignatureScreen onReveal={() => goTo('generating')} onBack={() => goTo('mode')} />}
+        {screen === 'generating' && (
+          <GeneratingScreen
+            onDone={() => goTo('settings')}
+            onBack={() => goTo(patternMode === 'cosmic' ? 'cosmic' : 'select')}
+          />
+        )}
         {screen === 'settings' && (
           <SimulationScreen
             onComplete={() => goTo('result')}

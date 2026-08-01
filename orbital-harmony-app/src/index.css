@@ -1438,6 +1438,124 @@ button {
   transition: width 0.2s linear;
 }
 
+/* ---- Generating (screen 5) ------------------------------------------------- */
+.gen-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 30px;
+}
+
+.gen-title {
+  font-weight: 400;
+  font-size: clamp(20px, 5.6vw, 26px);
+}
+
+.gen-orbit {
+  position: relative;
+  width: 200px;
+  height: 200px;
+}
+
+.gen-orbit__ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.gen-orbit__ring--outer {
+  width: 200px;
+  height: 200px;
+  margin: -100px 0 0 -100px;
+}
+
+.gen-orbit__ring--inner {
+  width: 120px;
+  height: 120px;
+  margin: -60px 0 0 -60px;
+}
+
+.gen-orbit__core {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  border-radius: 999px;
+  background: radial-gradient(circle at 40% 35%, #ffd9b8, #ff6a3d 60%, #ff5124);
+  box-shadow: 0 0 16px 2px rgba(255, 106, 61, 0.55);
+}
+
+.gen-orbit__planet {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+}
+
+.gen-orbit__planet--a {
+  width: 200px;
+  height: 200px;
+  margin: -100px 0 0 -100px;
+  animation: gen-spin 3.4s linear infinite;
+}
+
+.gen-orbit__planet--b {
+  width: 120px;
+  height: 120px;
+  margin: -60px 0 0 -60px;
+  animation: gen-spin 2.2s linear infinite reverse;
+}
+
+.gen-orbit__planet i {
+  position: absolute;
+  top: -4.5px;
+  left: 50%;
+  margin-left: -4.5px;
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  display: block;
+}
+
+@keyframes gen-spin {
+  to { transform: rotate(360deg); }
+}
+
+.gen-hint {
+  max-width: 280px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-tertiary);
+}
+
+.gen-progress {
+  width: 100%;
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.gen-progress__pct {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gen-orbit__planet {
+    animation: none;
+  }
+}
+
 /* ---- Result screen ------------------------------------------------------------ */
 .result-frame {
   border-radius: var(--radius-lg);
