@@ -26,12 +26,11 @@ export function loadPlanetTexture(path, { srgb = true, saturate = false } = {}) 
   if (textureCache.has(cacheKey)) return textureCache.get(cacheKey);
   const tex = textureLoader.load(path, saturate ? boostTextureSaturation : undefined);
   if (srgb) tex.colorSpace = THREE.SRGBColorSpace;
-  // Bumped from 4 — at the small on-screen sizes planets render at (e.g.
-  // the zoomed-out Solar System overview), mipmapping/minification was
-  // smoothing surface detail into a flatter, duller-looking average color
-  // more than necessary; a higher anisotropy keeps more of the source
-  // detail/contrast through that downsampling.
-  tex.anisotropy = 8;
+  // Max anisotropy (16) keeps texture detail/contrast crisp when a planet is
+  // viewed at a grazing angle (its limb/edge) and when it's magnified on the
+  // wider desktop framing — three.js clamps this to the GPU's real maximum,
+  // so 16 is a safe request everywhere.
+  tex.anisotropy = 16;
   textureCache.set(cacheKey, tex);
   return tex;
 }
