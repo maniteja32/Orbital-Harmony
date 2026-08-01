@@ -1495,6 +1495,18 @@ button {
   display: block;
 }
 
+/* Width-match the two title lines (both 7 letters, but HARMONY's glyphs are
+   ~18.8px wider than ORBITAL's at 23px/0.3em). Each word's letter-spacing
+   adds 161.02px per 1em, so:
+   OPTION 1 (active): widen ORBITAL's tracking to 0.417em (9.58px) — HARMONY
+   stays at the base 0.3em (6.9px). Both lines then render at ~184.1px.
+   OPTION 2 (alt): instead, condense HARMONY to 0.183em (4.22px) and leave
+   ORBITAL at 0.3em — both lines then render at ~165.4px. To switch, comment
+   the rule below and use:  .loading-title span:last-child { letter-spacing: 0.183em; } */
+.loading-title span:first-child {
+  letter-spacing: 0.417em;
+}
+
 .loading-subtitle {
   position: absolute;
   left: 0;
