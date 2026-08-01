@@ -373,7 +373,11 @@ button {
   z-index: 2;
   display: flex;
   justify-content: center;
-  padding: 28px 22px calc(24px + var(--safe-bottom));
+  /* Generous bottom clearance so the CTA never sits under mobile browser
+     chrome. env(safe-area-inset-bottom) covers the iPhone home indicator, but
+     it reports 0 while Safari's bottom address bar is SHOWING — so `max()`
+     also guarantees a firm ~40px gap in that state. */
+  padding: 28px 22px max(40px, calc(24px + var(--safe-bottom)));
 }
 
 /* Keep the CTA to a readable centred column, matched to the "Orbital Harmony"
