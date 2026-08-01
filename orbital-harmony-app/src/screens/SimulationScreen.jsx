@@ -118,8 +118,8 @@ export default function SimulationScreen({ onComplete, onBack }) {
           </button>
         )}
         <div className="screen__header">
-          <span className="eyebrow">{isCosmic ? 'Cosmic Signature' : 'Step 2 of 2'}</span>
-          <h1>{isCosmic ? 'Your Signature' : 'Simulation'}</h1>
+          {isCosmic && <span className="eyebrow">Cosmic Signature</span>}
+          <h1>{isCosmic ? 'Your Signature' : 'Your Pattern'}</h1>
         </div>
       </div>
 
