@@ -77,13 +77,25 @@ export default function ResultScreen({ onGenerateNew, onBack }) {
       </div>
 
       <div className="result-actions">
-        <GlassButton className="w-full h-12" onClick={() => downloadDataUrl(snapshot, 'orbital-harmony.png')}>
+        <GlassButton
+          className="w-full h-12"
+          style={{ color: 'rgba(245, 246, 250, 0.68)' }}
+          onClick={() => downloadDataUrl(snapshot, 'orbital-harmony.png')}
+        >
           Download PNG
         </GlassButton>
-        <GlassButton className="w-full h-12" onClick={() => shareSnapshot(snapshot, title)}>
+        <GlassButton
+          className="w-full h-12"
+          style={{ color: 'rgba(245, 246, 250, 0.68)' }}
+          onClick={() => shareSnapshot(snapshot, title)}
+        >
           Share
         </GlassButton>
-        <GlassButton className="w-full h-12 text-base font-semibold" onClick={handleGenerateNew}>
+        <GlassButton
+          className="w-full h-12 text-base font-semibold"
+          style={{ backgroundColor: 'rgba(140, 150, 255, 0.22)' }}
+          onClick={handleGenerateNew}
+        >
           Generate New Pattern
         </GlassButton>
       </div>

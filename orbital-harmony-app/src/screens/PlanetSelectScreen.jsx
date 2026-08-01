@@ -47,13 +47,23 @@ export default function PlanetSelectScreen({ onNext, onBack }) {
       <div className="screen__actions">
         {onBack && (
           <div className="flex-1">
-            <GlassButton className="w-full h-12" onClick={onBack} aria-label="Back to the Solar System">
+            <GlassButton
+              className="w-full h-12"
+              style={{ color: 'rgba(245, 246, 250, 0.68)' }}
+              onClick={onBack}
+              aria-label="Back to the Solar System"
+            >
               Back
             </GlassButton>
           </div>
         )}
         <div className="flex-[3]">
-          <GlassButton className="w-full h-12 text-base font-semibold" disabled={!canContinue} onClick={onNext}>
+          <GlassButton
+            className="w-full h-12 text-base font-semibold"
+            style={{ backgroundColor: 'rgba(140, 150, 255, 0.22)' }}
+            disabled={!canContinue}
+            onClick={onNext}
+          >
             Continue
           </GlassButton>
         </div>

@@ -33,7 +33,11 @@ export default function SolarSystemScreen({ onNext }) {
           <p>Discover the hidden geometry created by planetary motion.</p>
         </div>
         <div className="system-cta">
-          <GlassButton className="w-full h-12 text-base font-semibold" onClick={onNext}>
+          <GlassButton
+            className="w-full h-12 text-base font-semibold"
+            style={{ backgroundColor: 'rgba(140, 150, 255, 0.22)' }}
+            onClick={onNext}
+          >
             Discover a Pattern
           </GlassButton>
         </div>
