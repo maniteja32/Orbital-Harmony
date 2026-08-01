@@ -19,8 +19,12 @@
   --radius-lg: 26px;
   --radius-md: 18px;
   --radius-sm: 12px;
-  --font-ui: 'Rajdhani', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-display: 'Syncopate', 'Rajdhani', -apple-system, sans-serif;
+  /* Subtitle / general UI copy = Funnel Sans (Light/Regular). Capsule
+     (pill) buttons use --font-button = Funnel Display (Medium/Semi-Bold),
+     applied to the glass buttons below. Display headings stay Syncopate. */
+  --font-ui: 'Funnel Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-button: 'Funnel Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-display: 'Syncopate', 'Funnel Sans', -apple-system, sans-serif;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
@@ -50,6 +54,14 @@ button {
   background: none;
   color: inherit;
   cursor: pointer;
+}
+
+/* Capsule (pill) buttons — the glasscn GlassButton, rendered with
+   data-slot="glass-button" — use Funnel Display. This selector is unlayered
+   and more specific than the `button { font-family: inherit }` reset above,
+   so it wins over both that reset and any Tailwind font utility. */
+[data-slot='glass-button'] {
+  font-family: var(--font-button);
 }
 
 .app-shell {
