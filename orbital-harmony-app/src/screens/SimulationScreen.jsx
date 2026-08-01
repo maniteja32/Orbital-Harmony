@@ -3,7 +3,6 @@ import { ArrowLeft } from 'lucide-react';
 import SolarSystemCanvas from '../components/SolarSystemCanvas.jsx';
 import LiquidGlassIconButton from '../components/LiquidGlassIconButton.jsx';
 import { PLANETS, PLANETS_BY_KEY } from '../data/planets.js';
-import { patternTimeframe } from '../utils/resonance.js';
 import { useAppStore, SPEED_PRESETS } from '../store/useAppStore.js';
 
 // Tap-cycled live playback-rate multiplier steps for the rocket button
@@ -15,18 +14,16 @@ import { useAppStore, SPEED_PRESETS } from '../store/useAppStore.js';
 const SPEED_STEPS = [1, 2, 3, 5];
 const DEFAULT_SPEED_MULTIPLIER = 3;
 
-// Chord sampling: how many chords to draw PER petal/lobe of the pattern.
-// Scaling with the petal count keeps every pattern's line density roughly
-// consistent — a 5-petal rose and a 37-petal mandala both read cleanly
-// rather than one sparse and one an overdrawn scribble. Kept deliberately
-// LOW: the chord "string art" resolves into distinct, legible petals at a
-// modest line count (e.g. Earth+Venus's clean 5-rose), whereas a high
-// count fills every pair into an indistinct dense mandala. Min/max clamp
-// keeps degenerate or very-high-petal pairs bounded (engine also caps
-// total chords at 40k).
-const CHORDS_PER_PETAL = 13;
-const MIN_CHORDS = 70;
-const MAX_CHORDS = 1600;
+// Explore pattern shaping. Every pair is drawn with the planets' COMPRESSED
+// `traceSpeed` values (see data/planets.js), which keep every combination a
+// clean, elegant ~TARGET_LOBES-lobe rosette — real orbital periods instead
+// give high-ratio pairs (e.g. Mercury:Earth) a dense, chaotic scribble. A
+// fixed target chord count keeps line density consistent; near-equal-speed
+// pairs clamp the span rather than exploding to hundreds of years.
+const TARGET_LOBES = 6;
+const TARGET_CHORDS = 260;
+const MIN_SPAN_YEARS = 5;
+const MAX_SPAN_YEARS = 22;
 
 // Cosmic Signature — connects ALL planets (positioned at their real birth
 // date/time locations) in a closed loop and sweeps the wired figure over a
@@ -63,25 +60,19 @@ export default function SimulationScreen({ onComplete, onBack }) {
   const planetAData = PLANETS_BY_KEY[planetA];
   const planetBData = PLANETS_BY_KEY[planetB];
 
-  // Resonance-driven run length + chord density (see utils/resonance.js
-  // `patternTimeframe`): run for exactly the pair's real orbital-resonance
-  // closure so each combination traces its TRUE characteristic pattern
-  // (e.g. Earth+Venus's 8:13 => a clean 5-petaled rose), with chord count
-  // scaled to the petal count for consistent line density. In Cosmic mode a
-  // fixed span sweeps the all-planets figure instead.
+  // Run length + chord density. Cosmic mode sweeps the all-planets figure
+  // over a fixed span; Explore uses the pair's COMPRESSED `traceSpeed` ratio
+  // to trace a clean ~TARGET_LOBES-lobe rosette (real periods make high-ratio
+  // pairs a chaotic scribble, so they are deliberately NOT used here).
   const { totalSimYears, traceIntervalDays } = useMemo(() => {
     if (isCosmic) {
       return { totalSimYears: SIGNATURE_YEARS, traceIntervalDays: (SIGNATURE_YEARS * 365.25) / SIGNATURE_SAMPLES };
     }
-    if (!planetAData || !planetBData) return { totalSimYears: 8, traceIntervalDays: 3 };
-    const { years, petals } = patternTimeframe(
-      planetAData.orbitalPeriodDays,
-      planetBData.orbitalPeriodDays,
-      planetAData.key,
-      planetBData.key,
-    );
-    const chords = Math.min(Math.max((petals ?? 6) * CHORDS_PER_PETAL, MIN_CHORDS), MAX_CHORDS);
-    return { totalSimYears: years, traceIntervalDays: (years * 365.25) / chords };
+    const sA = planetAData?.traceSpeed ?? 1;
+    const sB = planetBData?.traceSpeed ?? 1;
+    const rel = Math.max(Math.abs(sA - sB), 0.04); // guard near-equal speeds
+    const span = Math.min(Math.max(TARGET_LOBES / rel, MIN_SPAN_YEARS), MAX_SPAN_YEARS);
+    return { totalSimYears: span, traceIntervalDays: (span * 365.25) / TARGET_CHORDS };
   }, [isCosmic, planetAData, planetBData]);
 
   const handleEngineComplete = useCallback(() => {
@@ -149,7 +140,7 @@ export default function SimulationScreen({ onComplete, onBack }) {
           ref={canvasRef}
           planetKeys={planetKeys}
           tracePattern
-          physicalPattern
+          physicalPattern={isCosmic}
           connectAllPlanets={isCosmic}
           startPaused
           speedDurationSec={speedCfg.durationSec}
