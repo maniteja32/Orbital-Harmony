@@ -116,7 +116,7 @@ export default function LoadingScreen({ onDone, onExited }) {
 
     let phase = 'hold'; // 'hold' -> 'transition' -> 'done'
     let transitionStart = null;
-    let holdTimer, transitionTimer, doneTimer, fontTimer;
+    let holdTimer, transitionTimer, doneTimer;
 
     function beginTransition() {
       phase = 'transition';
@@ -137,27 +137,12 @@ export default function LoadingScreen({ onDone, onExited }) {
       }, TRANSITION_MS);
     }
 
-    // No textures to load for a flat 2D scene, but the loader IS the first
-    // paint — before a newly-added web font may have downloaded. Hold the
-    // reveal until the DISPLAY font (Syncopate) has actually loaded, or the
-    // title flashes in the fallback (Rajdhani) then reflows/swaps a few
-    // hundred ms later (and the width-matched tracking only holds for
-    // Syncopate). Cap the wait so a slow/failed font can never stall the
-    // loader.
+    // No textures to load for a flat 2D scene — reveal on the very next
+    // frame (a hair after mount, so the CSS opacity transitions on the
+    // canvas still have a "from" state to animate out of).
     const readyRaf = requestAnimationFrame(() => {
-      let revealed = false;
-      const reveal = () => {
-        if (revealed) return;
-        revealed = true;
-        setReady(true);
-        holdTimer = setTimeout(beginTransition, HOLD_MS);
-      };
-      if (document.fonts && document.fonts.load) {
-        document.fonts.load('700 1em "Syncopate"').then(reveal, reveal);
-        fontTimer = setTimeout(reveal, 900);
-      } else {
-        reveal();
-      }
+      setReady(true);
+      holdTimer = setTimeout(beginTransition, HOLD_MS);
     });
 
     let rafId = null;
@@ -262,7 +247,6 @@ export default function LoadingScreen({ onDone, onExited }) {
       cancelAnimationFrame(rafId);
       cancelAnimationFrame(readyRaf);
       clearTimeout(holdTimer);
-      clearTimeout(fontTimer);
       clearTimeout(transitionTimer);
       clearTimeout(doneTimer);
       window.removeEventListener('resize', handleResize);
@@ -275,14 +259,6 @@ export default function LoadingScreen({ onDone, onExited }) {
       <canvas ref={starCanvasRef} className={`loading-stars${ready ? ' is-ready' : ''}`} />
       <canvas ref={canvasRef} className={`loading-canvas${ready ? ' is-ready' : ''}`} />
       <div className="loading-vignette" />
-      <div className="loading-ui">
-        <div className={`loading-title-wrap${ready ? ' is-visible' : ''}${transitioning ? ' is-transitioning' : ''}`}>
-          <h1 className="loading-title">
-            <span>Orbital</span>
-            <span>Harmony</span>
-          </h1>
-        </div>
-      </div>
     </div>
   );
 }
