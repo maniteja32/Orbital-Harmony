@@ -597,14 +597,15 @@ export function createSolarSystemEngine(canvas, opts) {
     const material = new LineMaterial({
       color: 0xffffff,
       transparent: true,
-      // Softened from 0.8 — paired with the now much lower, constant
-      // per-pattern chord count (see traceIntervalDays derivation in
-      // SimulationScreen.jsx), this keeps busy/overlapping regions
-      // reading as a gentle, glowing weave instead of oversaturating to a
-      // flat solid-white blob under additive blending.
-      opacity: 0.5,
+      // Crisp, opaque white lines with NORMAL blending — matches the
+      // original vanilla-JS build (js/main.js), whose dense (3-day
+      // sampled) opaque chords read as smooth, bright "Venus rose" curves.
+      // The earlier additive + 0.5-opacity approach, paired with sparse
+      // (10-day) sampling, instead rendered as a faint, spiky web: the
+      // individual straight chords stayed visible and washed-out instead
+      // of blending into a smooth, luminous envelope.
+      opacity: 1,
       linewidth: 1.3, // in pixels (screen-space), since worldUnits defaults to false
-      blending: THREE.AdditiveBlending,
       depthWrite: false,
       dashed: true,
       dashScale: 1,

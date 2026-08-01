@@ -14,15 +14,18 @@ const SPEED_STEPS = [5, 1, 2];
 const DEFAULT_SPEED_MULTIPLIER = SPEED_STEPS[0];
 
 // Fixed sampling interval (days of simulated time between sampled chords)
-// — ported directly from the original vanilla-JS build's "Trace Interval"
-// concept/value (its slider defaults/maxes out around this figure) rather
-// than deriving one from a target chord count. A pair whose resonance
-// needs more simulated years to close will end up with proportionally
-// more chords (denser pattern) than one that closes quickly — matching
-// how the original build behaves — while the earlier float32-precision
-// fix (see the local per-chord distance buffer in solarSystemEngine.js)
-// means even a dense pattern still renders as clean lines, not static.
-const FIXED_TRACE_INTERVAL_DAYS = 10;
+// — matches the original vanilla-JS build's "Trace Interval" DEFAULT of 3
+// days (js/main.js PATTERN_CONFIG.traceInterval), NOT a sparser derived
+// value. This is what makes the pattern beautiful: at 3-day sampling the
+// many closely-spaced chords blend into a smooth, continuous "rose"
+// envelope; a coarser interval (e.g. 10) leaves the individual straight
+// chords visible as a spiky, jagged web instead. A pair whose resonance
+// needs more simulated years to close ends up with proportionally more
+// chords (denser pattern) than one that closes quickly — matching how the
+// original build behaves — while the float32-precision fix (see the local
+// per-chord distance buffer in solarSystemEngine.js) means even a dense
+// pattern still renders as clean lines, not static.
+const FIXED_TRACE_INTERVAL_DAYS = 3;
 
 /** Replaces the old segmented-control-only "Simulation settings" screen —
  * merges a LIVE pattern-tracer preview (previously only shown on the
