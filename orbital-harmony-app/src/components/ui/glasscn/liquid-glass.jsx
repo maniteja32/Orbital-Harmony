@@ -221,7 +221,7 @@ export const LiquidGlass = forwardRef(function LiquidGlass(
               "var(--liquid-glass-rim-light, rgba(255,255,255,0.55)) 0%, rgba(255,255,255,0) 55%), " +
               "radial-gradient(120% 300% at 96% 100%, " +
               "var(--liquid-glass-rim-light, rgba(255,255,255,0.55)) 0%, rgba(255,255,255,0) 55%), " +
-              "linear-gradient(var(--liquid-glass-rim-base, rgba(255,255,255,0.10)), var(--liquid-glass-rim-base, rgba(255,255,255,0.10)))",
+              "linear-gradient(var(--liquid-glass-rim-base, rgba(255,255,255,0.05)), var(--liquid-glass-rim-base, rgba(255,255,255,0.05)))",
             WebkitMask: "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)",
             WebkitMaskComposite: "xor",
             mask: "linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0)",

@@ -17,7 +17,7 @@ const TONES = {
     glass: "bg-white/[0.12]",
     text: { color: "#ffffff" },
     rim: {
-      "--liquid-glass-rim-width": "1px",
+      "--liquid-glass-rim-width": "0.8px",
       "--liquid-glass-rim-light": "rgba(255,255,255,0.55)",
     },
   },
