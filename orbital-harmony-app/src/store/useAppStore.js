@@ -25,8 +25,10 @@ export const DENSITY_PRESETS = {
 const initialSelection = { planetA: null, planetB: null, speed: 'medium', density: 'detailed' };
 
 export const useAppStore = create((set) => ({
-  screen: 'loading', // loading | system | select | settings | result
+  screen: 'loading', // loading | system | mode | select | cosmic | settings | result
   ...initialSelection,
+  patternMode: 'explore', // 'explore' (pick two planets) | 'cosmic' (birth-date signature)
+  cosmicDate: null, // Date the Cosmic Signature pattern is anchored to (null = Explore flow)
   snapshot: null, // captured PNG data URL of the final pattern
 
   goTo: (screen) => set({ screen }),
@@ -36,6 +38,8 @@ export const useAppStore = create((set) => ({
   setSpeed: (speed) => set({ speed }),
   setDensity: (density) => set({ density }),
   setSnapshot: (snapshot) => set({ snapshot }),
+  setPatternMode: (patternMode) => set({ patternMode }),
+  setCosmicDate: (cosmicDate) => set({ cosmicDate }),
 
   resetForNewPattern: () =>
     set({ screen: 'select', planetA: null, planetB: null, snapshot: null }),

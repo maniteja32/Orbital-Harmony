@@ -166,12 +166,14 @@ function browseAngularSpeed(periodDays) {
   return (Math.PI * 2) / orbitSeconds;
 }
 
-function buildPlanet(data) {
+function buildPlanet(data, startDate) {
   const pivot = new THREE.Group();
-  // Real current orbital position (see utils/currentPosition.js) instead
-  // of a random angle — planets now start roughly where they actually are
-  // in their real orbits right now, relative to each other.
-  const startAngle = currentOrbitAngleRad(data);
+  // Real orbital position (see utils/currentPosition.js) instead of a
+  // random angle — planets start where they actually are in their real
+  // orbits, relative to each other. `startDate` (optional) lets the
+  // Cosmic Signature flow anchor the phase to a person's BIRTH date;
+  // undefined => the real current time (browse/Explore flow).
+  const startAngle = currentOrbitAngleRad(data, startDate);
   pivot.rotation.y = startAngle;
 
   const tiltAnchor = new THREE.Group();
@@ -243,6 +245,7 @@ export function createSolarSystemEngine(canvas, opts) {
     traceIntervalDays = 3,
     startPaused = false,
     initialSpeedMultiplier = 1,
+    patternStartDate = undefined,
   } = opts;
 
   const scene = new THREE.Scene();
@@ -353,7 +356,7 @@ export function createSolarSystemEngine(canvas, opts) {
     .map((key) => PLANETS_BY_KEY[key])
     .filter(Boolean)
     .map((data) => {
-      const planet = buildPlanet(data);
+      const planet = buildPlanet(data, patternStartDate);
       scene.add(planet.pivot);
       if (showOrbitRings) scene.add(makeOrbitRing(data.distance, data.color));
       return planet;

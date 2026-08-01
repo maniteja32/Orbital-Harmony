@@ -37,9 +37,10 @@ const MAX_SPAN_YEARS = 22;
  * planetA/planetB are still read from the store (set on the Planet Select
  * screen), just no longer editable here. */
 export default function SimulationScreen({ onComplete, onBack }) {
-  const { planetA, planetB, speed, setSnapshot } = useAppStore();
+  const { planetA, planetB, speed, setSnapshot, cosmicDate, patternMode } = useAppStore();
   const canvasRef = useRef(null);
   const doneRef = useRef(false);
+  const isCosmic = patternMode === 'cosmic';
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [lineStyle, setLineStyleState] = useState('solid');
@@ -118,8 +119,8 @@ export default function SimulationScreen({ onComplete, onBack }) {
           </button>
         )}
         <div className="screen__header">
-          <span className="eyebrow">Step 2 of 2</span>
-          <h1>Simulation</h1>
+          <span className="eyebrow">{isCosmic ? 'Cosmic Signature' : 'Step 2 of 2'}</span>
+          <h1>{isCosmic ? 'Your Signature' : 'Simulation'}</h1>
         </div>
       </div>
 
@@ -133,6 +134,7 @@ export default function SimulationScreen({ onComplete, onBack }) {
           totalSimYears={totalSimYears}
           traceIntervalDays={traceIntervalDays}
           initialSpeedMultiplier={DEFAULT_SPEED_MULTIPLIER}
+          patternStartDate={cosmicDate ?? undefined}
           onComplete={handleEngineComplete}
           className="screen__canvas"
         />

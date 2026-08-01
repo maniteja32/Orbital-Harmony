@@ -22,6 +22,7 @@ const SolarSystemCanvas = forwardRef(function SolarSystemCanvas(
     traceIntervalDays,
     startPaused,
     initialSpeedMultiplier,
+    patternStartDate,
     onComplete,
     onIntroComplete,
     className,
@@ -44,6 +45,7 @@ const SolarSystemCanvas = forwardRef(function SolarSystemCanvas(
       traceIntervalDays,
       startPaused,
       initialSpeedMultiplier,
+      patternStartDate,
     });
     engineRef.current = engine;
     if (onComplete) engine.onComplete(onComplete);

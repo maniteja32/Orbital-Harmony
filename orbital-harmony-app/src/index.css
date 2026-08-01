@@ -1459,6 +1459,207 @@ button {
   margin-top: auto;
 }
 
+/* ---- Mode select ("Choose an Experience") + Cosmic Signature -------------- */
+.mode-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* Small circular glass control (info button) — same frosted-glass language as
+   .back-button, just square-ish and iconic. */
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: none;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(16px) saturate(145%) brightness(1.12);
+  -webkit-backdrop-filter: blur(16px) saturate(145%) brightness(1.12);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.16), inset 0 -1px 2px rgba(0, 0, 0, 0.18);
+  scale: 1;
+  transition: scale 0.2s ease, color 0.15s ease;
+}
+
+.icon-button:active { scale: 0.94; }
+.icon-button:hover { color: var(--text-primary); }
+
+.screen__header--mode {
+  text-align: center;
+  margin-top: 4px;
+}
+
+.screen__header--mode h1 {
+  font-family: var(--font-display);
+  font-size: clamp(19px, 5.6vw, 22px);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+  margin-bottom: 8px;
+}
+
+.screen__header--mode p {
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
+  max-width: 320px;
+  margin: 0 auto;
+}
+
+.screen__header--mode .eyebrow {
+  display: block;
+  margin-bottom: 10px;
+}
+
+.mode-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 6px;
+}
+
+/* Large tappable experience card (a <button>). The `.mode-card` class beats
+   the app's unlayered `button` reset (class 0,1,0 > element 0,0,1), so its
+   background/border/colour apply despite that reset. */
+.mode-card {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  width: 100%;
+  padding: 20px;
+  text-align: left;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  color: var(--text-primary);
+  scale: 1;
+  transition: scale 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.mode-card:hover {
+  background: var(--glass-bg-strong);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.mode-card:active { scale: 0.98; }
+
+.mode-card__icon {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  border-radius: 999px;
+  color: var(--accent);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--glass-border);
+}
+
+.mode-card__text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.mode-card__title {
+  font-family: var(--font-ui);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.mode-card__desc {
+  color: var(--text-secondary);
+  font-size: 13.5px;
+  line-height: 1.45;
+}
+
+/* ---- Cosmic Signature form ------------------------------------------------- */
+.cosmic-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 4px;
+}
+
+.cosmic-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cosmic-field__label,
+.cosmic-preview__label {
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+.cosmic-input {
+  width: 100%;
+  padding: 14px 16px;
+  font-family: var(--font-ui);
+  font-size: 16px;
+  color: var(--text-primary);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  color-scheme: dark;
+}
+
+.cosmic-input:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.28);
+  background: var(--glass-bg-strong);
+}
+
+.cosmic-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+}
+
+.cosmic-preview__pair {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-ui);
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.cosmic-preview__dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.15);
+}
+
+.cosmic-preview__times {
+  color: var(--text-tertiary);
+  margin: 0 2px;
+}
+
+/* Single reveal CTA docked to the bottom, full width (column stretch). */
+.screen--cosmic .screen__actions {
+  flex-direction: column;
+  margin-top: auto;
+}
+
 /* ============================================================================
    Loading screen — top-down orrery sequence (plain 2D canvas, no Three.js).
    The canvas renders a small Sun + orbiting planet dots with fading

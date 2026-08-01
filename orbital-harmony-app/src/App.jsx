@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import ScreenTransition from './components/ScreenTransition.jsx';
 import LoadingScreen from './screens/LoadingScreen.jsx';
 import SolarSystemScreen from './screens/SolarSystemScreen.jsx';
+import ModeSelectScreen from './screens/ModeSelectScreen.jsx';
+import CosmicSignatureScreen from './screens/CosmicSignatureScreen.jsx';
 import PlanetSelectScreen from './screens/PlanetSelectScreen.jsx';
 import SimulationScreen from './screens/SimulationScreen.jsx';
 import ResultScreen from './screens/ResultScreen.jsx';
@@ -11,6 +13,9 @@ import { createStarfieldBackdrop } from './engine/starfieldBackdrop.js';
 export default function App() {
   const screen = useAppStore((s) => s.screen);
   const goTo = useAppStore((s) => s.goTo);
+  const patternMode = useAppStore((s) => s.patternMode);
+  const setPatternMode = useAppStore((s) => s.setPatternMode);
+  const setCosmicDate = useAppStore((s) => s.setCosmicDate);
   // Kept mounted independently of `screen` (not one of the ScreenTransition
   // branches below) so it can sit on top of the Solar System screen and
   // fade out WHILE that screen fades in underneath — a real overlapping
@@ -52,10 +57,27 @@ export default function App() {
     <div className="app-shell" data-screen={screen}>
       <canvas ref={ambientRef} className="ambient-stars" aria-hidden="true" />
       <ScreenTransition key={screen}>
-        {screen === 'system' && <SolarSystemScreen onNext={() => goTo('select')} />}
-        {screen === 'select' && <PlanetSelectScreen onNext={() => goTo('settings')} onBack={() => goTo('system')} />}
-        {screen === 'settings' && <SimulationScreen onComplete={() => goTo('result')} onBack={() => goTo('select')} />}
-        {screen === 'result' && <ResultScreen onGenerateNew={() => goTo('select')} onBack={() => goTo('settings')} />}
+        {screen === 'system' && <SolarSystemScreen onNext={() => goTo('mode')} />}
+        {screen === 'mode' && (
+          <ModeSelectScreen
+            onExplore={() => {
+              setPatternMode('explore');
+              setCosmicDate(null);
+              goTo('select');
+            }}
+            onCosmic={() => goTo('cosmic')}
+            onBack={() => goTo('system')}
+          />
+        )}
+        {screen === 'select' && <PlanetSelectScreen onNext={() => goTo('settings')} onBack={() => goTo('mode')} />}
+        {screen === 'cosmic' && <CosmicSignatureScreen onReveal={() => goTo('settings')} onBack={() => goTo('mode')} />}
+        {screen === 'settings' && (
+          <SimulationScreen
+            onComplete={() => goTo('result')}
+            onBack={() => goTo(patternMode === 'cosmic' ? 'cosmic' : 'select')}
+          />
+        )}
+        {screen === 'result' && <ResultScreen onGenerateNew={() => goTo('mode')} onBack={() => goTo('settings')} />}
       </ScreenTransition>
       {showLoading && (
         <div className="loading-screen-slot">
