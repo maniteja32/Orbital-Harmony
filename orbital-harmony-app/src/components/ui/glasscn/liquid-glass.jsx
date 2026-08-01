@@ -209,17 +209,21 @@ export const LiquidGlass = forwardRef(function LiquidGlass(
             // Rim thickness, overridable per-consumer via --liquid-glass-rim-width.
             padding: "var(--liquid-glass-rim-width, 0.5px)",
             background:
-              // Liquid-glass rim, distributed along the whole edge but tilted
-              // OFF the horizontal/vertical axes so the light reads DIAGONALLY
-              // (Apple-ish) instead of a flat top/bottom symmetry. Same two-band
-              // structure as a plain bevel — a light band + a dark band, each
-              // fading out at its ends — just rotated ~20° (110° / 200° instead
-              // of 90° / 180°): this offsets the bright streak on the top edge
-              // from the one on the bottom edge, giving the diagonal lean while
-              // keeping every side lit. Colours/reach tunable via
-              // --liquid-glass-rim-light / --liquid-glass-rim-dark / -fade.
-              "linear-gradient(110deg, rgba(255,255,255,0), var(--liquid-glass-rim-light, rgba(255,255,255,0.25)) var(--liquid-glass-rim-fade, 18%), var(--liquid-glass-rim-light, rgba(255,255,255,0.25)) calc(100% - var(--liquid-glass-rim-fade, 18%)), rgba(255,255,255,0)), " +
-              "linear-gradient(200deg, rgba(0,0,0,0), var(--liquid-glass-rim-dark, rgba(0,0,0,0.2)) var(--liquid-glass-rim-fade, 18%), var(--liquid-glass-rim-dark, rgba(0,0,0,0.2)) calc(100% - var(--liquid-glass-rim-fade, 18%)), rgba(0,0,0,0))",
+              // DIAGONAL specular rim (Apple / macOS "Liquid Glass"). On a wide
+              // pill a rotated linear band still reads horizontal (the two long
+              // edges dominate), so instead use two LARGE, SOFT corner-anchored
+              // radials: a bright light spread broadly from the TOP-LEFT corner
+              // (lights the upper + left edges, fading right) and a dark shadow
+              // from the BOTTOM-RIGHT. Big radius + soft falloff = the light is
+              // DISTRIBUTED across the top-left half (not a tight corner blob)
+              // while still reading as a clean top-left→bottom-right diagonal.
+              // Intensity tunable via --liquid-glass-rim-light / -rim-dark.
+              "radial-gradient(140% 320% at 6% 0%, " +
+              "var(--liquid-glass-rim-light, rgba(255,255,255,0.5)) 0%, " +
+              "rgba(255,255,255,0) 62%), " +
+              "radial-gradient(140% 320% at 94% 100%, " +
+              "var(--liquid-glass-rim-dark, rgba(0,0,0,0.45)) 0%, " +
+              "rgba(0,0,0,0) 62%)",
             WebkitMask: "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)",
             WebkitMaskComposite: "xor",
             mask: "linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0)",
