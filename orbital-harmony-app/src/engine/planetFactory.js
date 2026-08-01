@@ -36,13 +36,21 @@ export function loadPlanetTexture(path, { srgb = true, saturate = false } = {}) 
   return tex;
 }
 
-// Redraws a loaded texture's image through a canvas 2D `filter` (saturate +
-// a touch of contrast) so planets read as more vivid/colorful on-screen —
+// Redraws a loaded texture's image through a canvas so planets read as more
+// vivid/colorful on-screen (saturate + a touch of contrast/brightness) —
 // cheap, one-time, no full post-processing/bloom pipeline needed. Runs once
 // per texture right after its image finishes loading (passed as the
 // TextureLoader `onLoad` callback, which receives the Texture itself), then
 // swaps `texture.image` to the boosted canvas and flags `needsUpdate` so
 // Three.js re-uploads the adjusted pixels to the GPU.
+//
+// IMPORTANT — done with MANUAL PER-PIXEL math, NOT Canvas 2D `ctx.filter`:
+// `ctx.filter` is only supported in Safari/iPadOS/iOS 17+. On older iPads it
+// is silently ignored, so the boost never applied there and planets rendered
+// at their raw, duller/desaturated colors while looking vivid on a
+// newer-Safari Mac. Per-pixel math produces the SAME result on every device
+// and WebKit version. The math mirrors the old CSS filter order
+// (saturate 185% -> contrast 116% -> brightness 108%).
 function boostTextureSaturation(texture, amount = 1.85) {
   const img = texture.image;
   if (!img || !img.width) return;
@@ -50,14 +58,36 @@ function boostTextureSaturation(texture, amount = 1.85) {
   canvas.width = img.width;
   canvas.height = img.height;
   const ctx = canvas.getContext('2d');
-  // Bumped saturate/contrast/brightness slightly (was 165%/112%/106%) —
-  // planets render quite small on the Solar System overview screen, and
-  // mipmapped minification was averaging away enough of the source detail
-  // that they read as flatter/duller than the same textures do up close
-  // (e.g. the Planet Select carousel). A stronger boost compensates so the
-  // color still pops even after that averaging.
-  ctx.filter = `saturate(${amount * 100}%) contrast(116%) brightness(108%)`;
   ctx.drawImage(img, 0, 0);
+  try {
+    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imgData.data;
+    const sat = amount; // saturate(185%)
+    const con = 1.16; // contrast(116%)
+    const bri = 1.08; // brightness(108%)
+    for (let i = 0; i < data.length; i += 4) {
+      let r = data[i];
+      let g = data[i + 1];
+      let b = data[i + 2];
+      // saturate: push each channel away from the pixel's luminance
+      const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      r = lum + (r - lum) * sat;
+      g = lum + (g - lum) * sat;
+      b = lum + (b - lum) * sat;
+      // contrast around mid-grey (128), then brightness
+      r = ((r - 128) * con + 128) * bri;
+      g = ((g - 128) * con + 128) * bri;
+      b = ((b - 128) * con + 128) * bri;
+      data[i] = r < 0 ? 0 : r > 255 ? 255 : r;
+      data[i + 1] = g < 0 ? 0 : g > 255 ? 255 : g;
+      data[i + 2] = b < 0 ? 0 : b > 255 ? 255 : b;
+    }
+    ctx.putImageData(imgData, 0, 0);
+  } catch {
+    // getImageData throws only on a cross-origin "tainted" canvas; the
+    // textures are same-origin (/textures/*), so this is just a safety net —
+    // fall back to the un-boosted (but still correct) image.
+  }
   texture.image = canvas;
   texture.needsUpdate = true;
 }
