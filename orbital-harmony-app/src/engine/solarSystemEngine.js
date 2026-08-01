@@ -276,7 +276,15 @@ export function createSolarSystemEngine(canvas, opts) {
       )
     : new THREE.PerspectiveCamera(45, width / height, 0.1, 2000);
 
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
+  // NOTE: no `preserveDrawingBuffer` here. Setting it makes WebKit/Safari fall
+  // back to a NON-multisampled backbuffer, which silently disables the MSAA
+  // requested by `antialias: true` — planet limbs and orbit lines then render
+  // jagged/"pixelated" (this was why the mobile app looked less crisp than the
+  // legacy prototype, which never set it). Snapshots are instead taken by
+  // rendering on-demand right before toDataURL (see captureDataURL below).
+  // `powerPreference: high-performance` matches the legacy prototype and asks
+  // multi-GPU Macs to use the discrete GPU for better quality/throughput.
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.setSize(width, height, false);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -911,6 +919,10 @@ export function createSolarSystemEngine(canvas, opts) {
       if (introPhase === 'done') cb();
     },
     captureDataURL() {
+      // Render synchronously right before reading the pixels — required now
+      // that preserveDrawingBuffer is off (the backbuffer is otherwise cleared
+      // before toDataURL could read it).
+      renderScene();
       return renderer.domElement.toDataURL('image/png');
     },
     destroy() {
