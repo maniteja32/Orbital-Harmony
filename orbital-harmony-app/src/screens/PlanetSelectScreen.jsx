@@ -61,7 +61,7 @@ export default function PlanetSelectScreen({ onNext, onBack }) {
           className="flex-[3]"
           style={{ '--liquid-glass-rim-width': '1px', '--liquid-glass-rim-light': 'rgba(255,255,255,0.5)' }}
         >
-          <GlassButton glassClassName="bg-black/40" className="w-full h-12 text-base font-semibold" disabled={!canContinue} onClick={onNext}>
+          <GlassButton className="w-full h-12 text-base font-semibold" disabled={!canContinue} onClick={onNext}>
             Continue
           </GlassButton>
         </div>
