@@ -473,6 +473,12 @@ export function createSolarSystemEngine(canvas, opts) {
   function easeInOutCubic(t) {
     return t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2;
   }
+  // Quintic smootherstep (6t^5-15t^4+10t^3): zero 1st AND 2nd derivative at
+  // both ends, so a motion eased with it starts and stops with no perceptible
+  // jerk — noticeably smoother than cubic for the zoom-in settle.
+  function smootherStep(t) {
+    return t * t * t * (t * (t * 6 - 15) + 10);
+  }
   const earthRefDistance = PLANETS_BY_KEY.earth?.distance ?? maxDistance * 0.35;
   const heroWidePos = heroPosition(dist, HERO_ELEVATION_START_DEG);
   const heroAngledPos = heroPosition(dist, HERO_ELEVATION_END_DEG);
@@ -501,7 +507,7 @@ export function createSolarSystemEngine(canvas, opts) {
   const introLookTarget = new THREE.Vector3(0, -earthRefDistance * 0.045, 0);
   const INTRO_HOLD_SEC = 0.8;
   const INTRO_TRAVEL_SEC = 2.1;
-  const INTRO_ZOOM_SEC = 2.1;
+  const INTRO_ZOOM_SEC = 2.7;
   let introPhase = cinematicIntro ? 'hold' : 'done';
   let introElapsed = 0;
   let introCompleteCb = null;
@@ -789,9 +795,14 @@ export function createSolarSystemEngine(canvas, opts) {
         // (Perspective fallback: dolly the position in instead, since
         // scale IS distance-driven there.)
         const t = Math.min(introElapsed / INTRO_ZOOM_SEC, 1);
-        const eased = easeInOutCubic(t);
+        const eased = smootherStep(t);
         if (camera.isOrthographicCamera) {
-          const half = THREE.MathUtils.lerp(heroWideHalf, heroCloseHalf, eased);
+          // Interpolate the frustum half-height GEOMETRICALLY (exponentially)
+          // rather than linearly: zoom is perceived logarithmically, so a
+          // constant multiplicative step per frame reads as a perfectly even,
+          // smooth zoom — a linear lerp of the half-height instead races
+          // through the early (wide) part and crawls through the end.
+          const half = heroWideHalf * Math.pow(heroCloseHalf / heroWideHalf, eased);
           camera.left = (-half * width) / height;
           camera.right = (half * width) / height;
           camera.top = half;
