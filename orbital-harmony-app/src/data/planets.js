@@ -75,7 +75,10 @@ export const PLANETS = [
     spinDirection: 1,
     texture: '/textures/earth_daymap.jpg',
     cloudTexture: '/textures/earth_clouds.jpg',
-    hasAtmosphere: true,
+    // Atmosphere halo disabled to match the other planets (none of them have
+    // a glow shell) — atmosphere-rendering support in the engine is left
+    // intact, just gated off here; flip back to true to restore.
+    hasAtmosphere: false,
     // Clouds disabled for this iteration per explicit request ("remove the
     // clouds completely") — cloudTexture/rendering support is left intact
     // in the engine, just gated off here; flip back to true to restore.
