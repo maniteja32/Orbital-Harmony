@@ -194,16 +194,16 @@ export default function LoadingScreen({ onDone, onExited }) {
       // one — see createStarfieldBackdrop — so there's no 2D star drawing
       // here anymore.)
 
-      // ---- Sun: small white core with a gentle, slow pulse (no glow —
-      // a plain crisp dot, kept minimal per the brief) ----
+      // ---- Sun: small orange core with a gentle, slow pulse (matches the
+      // app's warm orange accent; a warm-bright centre fading to orange) ----
       sunPulseT += dt;
       const pulseScale = 1 + Math.sin(sunPulseT * 1.4) * 0.04;
       const sunRadius = Math.max(7, maxOrbitPx * 0.035) * pulseScale;
 
       const core = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, sunRadius);
-      core.addColorStop(0, '#ffffff');
-      core.addColorStop(0.6, '#f0f0f0');
-      core.addColorStop(1, '#d8d8d8');
+      core.addColorStop(0, '#ffd9b8');
+      core.addColorStop(0.55, '#ff6a3d');
+      core.addColorStop(1, '#ff5124');
       ctx.fillStyle = core;
       ctx.beginPath();
       ctx.arc(centerX, centerY, sunRadius, 0, Math.PI * 2);
