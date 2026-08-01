@@ -39,11 +39,8 @@ export default function SolarSystemScreen({ onNext }) {
         <p>Discover the hidden geometry created by planetary motion.</p>
       </div>
 
-      <div
-        className="system-cta"
-        style={{ '--liquid-glass-rim-width': '1px', '--liquid-glass-rim-light': 'rgba(255,255,255,0.5)' }}
-      >
-        <GlassButton className="w-full h-12 text-base font-semibold" onClick={onNext}>
+      <div className="system-cta">
+        <GlassButton tone="primary" className="w-full h-12 text-base font-semibold" onClick={onNext}>
           Begin Exploring
         </GlassButton>
       </div>
