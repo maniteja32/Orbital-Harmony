@@ -6,25 +6,29 @@ import { Button } from "../button";
 import { LiquidGlass } from "./liquid-glass";
 
 // Monochromatic "ice-glass" tones — primary vs secondary is conveyed purely
-// by light level (background brightness, border crispness, text opacity), no
-// hue. The LiquidGlass gradient rim is neutralised (transparent) for these
-// tones so the crisp solid border reads cleanly. NOTE: the app's unlayered
-// `button { color: inherit }` reset beats Tailwind text-* utilities, so text
-// colour must be applied via inline style, not a className.
+// by light level (background brightness, specular-rim crispness, text
+// opacity), no hue. We drive the differentiation through the LiquidGlass
+// specular RIM (its signature refractive edge) rather than a flat CSS border,
+// so the buttons keep the liquid-glass look instead of reading as flat frosted
+// panels. NOTE: the app's unlayered `button { color: inherit }` reset beats
+// Tailwind text-* utilities, so text colour must be applied via inline style.
 const TONES = {
   primary: {
-    glass: "bg-white/[0.12] border border-white/40",
+    glass: "bg-white/[0.12]",
     text: { color: "#ffffff" },
+    rim: {
+      "--liquid-glass-rim-width": "1px",
+      "--liquid-glass-rim-light": "rgba(255,255,255,0.55)",
+    },
   },
   secondary: {
-    glass: "bg-white/[0.03] border border-white/15",
+    glass: "bg-white/[0.03]",
     text: { color: "rgba(255,255,255,0.6)" },
+    rim: {
+      "--liquid-glass-rim-width": "0.75px",
+      "--liquid-glass-rim-light": "rgba(255,255,255,0.18)",
+    },
   },
-};
-
-const RIM_OFF = {
-  "--liquid-glass-rim-light": "transparent",
-  "--liquid-glass-rim-dark": "transparent",
 };
 
 function GlassButton({
@@ -37,7 +41,7 @@ function GlassButton({
   const t = tone ? TONES[tone] : null;
   if (glassVariant === "liquid-refract") {
     return (
-      <LiquidGlass className={t?.glass} style={t ? RIM_OFF : undefined}>
+      <LiquidGlass className={t?.glass} style={t?.rim}>
         <Button
           data-slot="glass-button"
           data-glass-variant={glassVariant}
