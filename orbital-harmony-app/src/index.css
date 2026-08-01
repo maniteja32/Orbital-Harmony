@@ -134,24 +134,53 @@ button {
   overflow-y: auto;
 }
 
+/* Back — a subtle Liquid Glass pill (lighter than the CTAs; it's a
+   secondary action). Same refraction/rim language as `.btn` below. */
 .back-button {
+  position: relative;
+  isolation: isolate;
   display: inline-flex;
   align-items: center;
   gap: 4px;
   align-self: flex-start;
-  margin-bottom: -4px;
-  padding: 6px 4px;
-  background: none;
+  padding: 8px 14px 8px 10px;
+  border-radius: 999px;
   border: none;
   color: var(--text-secondary);
   font-size: 14px;
   font-weight: 600;
   letter-spacing: 0.01em;
-  transition: color 0.15s ease, transform 0.15s ease;
+  background: rgba(255, 255, 255, 0.06);
+  /* Clean frosted glass (no #glass-distortion displacement — see `.btn`
+     note: it smears at this size). */
+  backdrop-filter: blur(16px) saturate(145%) brightness(1.12);
+  -webkit-backdrop-filter: blur(16px) saturate(145%) brightness(1.12);
+  box-shadow:
+    0 6px 16px -10px rgba(0, 0, 0, 0.5),
+    inset 0 1px 1px rgba(255, 255, 255, 0.16),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.18);
+  scale: 1;
+  transition: scale 0.2s ease, color 0.15s ease, box-shadow 0.3s ease;
+}
+
+/* Specular hairline rim following the pill's rounded edge (masked 1px
+   gradient border) — shared trick with `.btn::after` below. */
+.back-button::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.1) 45%, rgba(255, 255, 255, 0.05) 60%, rgba(255, 255, 255, 0.22));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
 }
 
 .back-button:active {
-  transform: scale(0.97);
+  scale: 0.97;
 }
 
 .back-button:hover {
@@ -335,39 +364,120 @@ button {
 }
 
 /* ---- Buttons --------------------------------------------------------------- */
+/* ---- Buttons — Liquid Glass ------------------------------------------------
+   Every CTA is a translucent "Liquid Glass" pane: a real backdrop refraction
+   (routed through the #glass-distortion SVG filter defined in App.jsx — the
+   same one the Simulation icon buttons use, see `.glass-btn`), a bright
+   specular hairline rim that follows the rounded corners, a top/bottom inset
+   bevel, and a soft accent glow. Primary actions get a stronger accent tint
+   + glow so they still read as the main action despite being glass. Uses
+   ::after for the rim (a masked 1px gradient border) and ::before for the
+   ambient glow halo, so the plain <button> markup needs no extra spans. */
 .btn {
+  position: relative;
+  isolation: isolate;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   padding: 15px 18px;
-  /* 8px per request — overrides the shared --radius-md (18px) used by
-     other glass elements (cards/chips) so only buttons get the tighter
-     radius. */
+  /* 8px per earlier request — tighter than the shared --radius-md (18px). */
   border-radius: 8px;
-  background: var(--glass-bg-strong);
-  border: 1px solid var(--glass-border);
-  backdrop-filter: blur(20px);
+  border: none;
   color: var(--text-primary);
   font-size: 14.5px;
   font-weight: 600;
   letter-spacing: 0.01em;
-  transition: transform 0.15s ease, background 0.2s ease, opacity 0.2s ease;
+  background: rgba(255, 255, 255, 0.07);
+  /* Clean frosted glass — blur + saturate + brightness only. Deliberately
+     NOT routed through the #glass-distortion SVG displacement filter (which
+     the small circular icon buttons use): on a large, wide button that
+     displacement visibly SMEARS the backdrop at the edges/corners and reads
+     as a smudge rather than crisp glass. A clean frost is the right call at
+     this size. */
+  backdrop-filter: blur(20px) saturate(155%) brightness(1.15);
+  -webkit-backdrop-filter: blur(20px) saturate(155%) brightness(1.15);
+  box-shadow:
+    0 10px 24px -14px rgba(0, 0, 0, 0.6),
+    inset 0 1px 1px rgba(255, 255, 255, 0.22),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.22);
+  scale: 1;
+  transition: scale 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, background 0.2s ease;
+}
+
+/* Soft ambient accent glow halo, extending just past the button edge
+   (unclipped) — subtle at rest, brighter on hover/press. */
+.btn::before {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border-radius: 12px;
+  background: radial-gradient(60% 120% at 50% 50%, var(--accent-glow) 0%, transparent 70%);
+  opacity: 0.16;
+  z-index: -1;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+/* Specular hairline rim following the rounded corners — a masked 1px
+   gradient border (bright at the top, faint at the sides, a touch bright
+   again at the bottom), the "thin bright edge" of real glass. */
+.btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.14) 42%, rgba(255, 255, 255, 0.05) 60%, rgba(255, 255, 255, 0.28));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
+}
+
+.btn:hover::before {
+  opacity: 0.3;
 }
 
 .btn:active {
-  transform: scale(0.98);
+  scale: 0.98;
+}
+
+.btn:active::before {
+  opacity: 0.42;
 }
 
 .btn--full {
   width: 100%;
 }
 
+/* Primary = brighter, accent-tinted glass with a stronger glow + rim so it
+   still pops as the main action despite being translucent. */
 .btn--primary {
-  background: var(--text-primary);
-  color: #0b0b12;
-  border-color: transparent;
-  box-shadow: 0 8px 30px -10px var(--accent-glow);
+  background: linear-gradient(180deg, rgba(180, 188, 255, 0.2), rgba(150, 160, 255, 0.12));
+  color: #ffffff;
+  box-shadow:
+    0 12px 30px -12px var(--accent-glow),
+    0 10px 24px -14px rgba(0, 0, 0, 0.5),
+    inset 0 1px 1px rgba(255, 255, 255, 0.35),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.btn--primary::before {
+  opacity: 0.5;
+}
+
+.btn--primary::after {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.22) 42%, rgba(255, 255, 255, 0.1) 60%, rgba(255, 255, 255, 0.4));
+}
+
+.btn--primary:hover::before {
+  opacity: 0.72;
+}
+
+.btn--primary:active::before {
+  opacity: 0.85;
 }
 
 .btn:disabled {
