@@ -63,11 +63,30 @@ button {
   background: #000000;
 }
 
+/* Ambient full-viewport starfield behind the app column (mounted only on
+   >=561px viewports, see App.jsx). On a phone the column fills the screen so
+   this is never visible; on desktop/web it fills the side margins with the
+   app's own twinkling stars, so the mobile-first column reads as floating in
+   space instead of a narrow strip in dead black. Pure-black backing so the
+   transparent star canvas still reads as deep space; behind all content and
+   non-interactive. */
+.ambient-stars {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  z-index: 0;
+  background: #000000;
+  pointer-events: none;
+}
+
 .app-shell > .screen-transition {
   width: 100%;
   max-width: 560px;
   height: 100%;
   position: relative;
+  z-index: 1;
 }
 
 /* Sibling of .screen-transition (not one of its keyed children) so the
@@ -92,6 +111,7 @@ button {
   width: 100%;
   max-width: 560px;
   transform: translateX(-50%);
+  z-index: 2;
 }
 
 .screen-transition {
@@ -203,6 +223,24 @@ button {
   inset: 0;
 }
 
+/* On desktop/web (>=561px, where the app column no longer fills the screen),
+   let the Solar System screen's column span the FULL viewport width so its
+   3D canvas (position:absolute inset:0 inside it) extends the planets and
+   orbits across the whole screen instead of being boxed into the narrow
+   mobile column. The title/CTA overlay is re-centred to a readable width on
+   top. Mobile is untouched (the column already fills the screen there). */
+@media (min-width: 561px) {
+  .app-shell[data-screen='system'] > .screen-transition {
+    max-width: none;
+  }
+  .screen--system .system-overlay {
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 560px;
+  }
+}
+
 .solar-canvas {
   width: 100%;
   height: 100%;
@@ -227,12 +265,14 @@ button {
   font-family: var(--font-display);
   font-size: 24px;
   margin: 8px 0 6px;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.9), 0 1px 4px rgba(0, 0, 0, 0.95);
 }
 
 .system-overlay__top p {
   color: var(--text-secondary);
   font-size: 14px;
   line-height: 1.5;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.9), 0 1px 3px rgba(0, 0, 0, 0.9);
 }
 
 /* Hidden until the cinematic intro camera settles (see SolarSystemScreen),
@@ -241,6 +281,12 @@ button {
 .system-overlay {
   opacity: 0;
   pointer-events: none;
+  /* No dark scrim gradient (unlike .reveal-overlay): the landing scene now
+     spans the full width on desktop, so a bottom scrim visibly dimmed/tinted
+     any planet that orbited behind it. Legibility instead comes from a soft
+     text-shadow on the title/subtitle below; the CTA has its own solid
+     background so it stays readable regardless. */
+  background: none;
 }
 
 .system-overlay .eyebrow,

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import ScreenTransition from './components/ScreenTransition.jsx';
 import LoadingScreen from './screens/LoadingScreen.jsx';
 import SolarSystemScreen from './screens/SolarSystemScreen.jsx';
@@ -6,6 +6,7 @@ import PlanetSelectScreen from './screens/PlanetSelectScreen.jsx';
 import SimulationScreen from './screens/SimulationScreen.jsx';
 import ResultScreen from './screens/ResultScreen.jsx';
 import { useAppStore } from './store/useAppStore.js';
+import { createStarfieldBackdrop } from './engine/starfieldBackdrop.js';
 
 export default function App() {
   const screen = useAppStore((s) => s.screen);
@@ -20,8 +21,36 @@ export default function App() {
   // actually removes this from the tree.
   const [showLoading, setShowLoading] = useState(true);
 
+  // Ambient full-viewport starfield behind the app. On a phone the centered
+  // app column fills the whole screen so this is never seen; on a wider
+  // (desktop/web) viewport it fills the side margins with the SAME twinkling
+  // starfield the app uses, so the mobile-first column reads as "floating in
+  // space" instead of a narrow strip cropped in dead black. Mounted ONLY when
+  // there are actually margins (>= 561px, the column's 560px cap) so phones
+  // don't spin up an extra WebGL context for something they'd never show.
+  const ambientRef = useRef(null);
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 561px)');
+    let backdrop = null;
+    const sync = () => {
+      if (mq.matches && !backdrop && ambientRef.current) {
+        backdrop = createStarfieldBackdrop(ambientRef.current);
+      } else if (!mq.matches && backdrop) {
+        backdrop.dispose();
+        backdrop = null;
+      }
+    };
+    sync();
+    mq.addEventListener('change', sync);
+    return () => {
+      mq.removeEventListener('change', sync);
+      backdrop?.dispose();
+    };
+  }, []);
+
   return (
-    <div className="app-shell">
+    <div className="app-shell" data-screen={screen}>
+      <canvas ref={ambientRef} className="ambient-stars" aria-hidden="true" />
       <ScreenTransition key={screen}>
         {screen === 'system' && <SolarSystemScreen onNext={() => goTo('select')} />}
         {screen === 'select' && <PlanetSelectScreen onNext={() => goTo('settings')} onBack={() => goTo('system')} />}
