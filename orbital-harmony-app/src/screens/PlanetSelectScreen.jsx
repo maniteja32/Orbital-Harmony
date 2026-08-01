@@ -1,6 +1,7 @@
 import { PLANETS } from '../data/planets.js';
 import { PlanetSwipeRow } from '../components/PlanetSwipeRow.jsx';
 import { MeteorField } from '../components/MeteorField.jsx';
+import { GlassButton } from '../components/ui/glasscn/glass-button.jsx';
 import { useAppStore } from '../store/useAppStore.js';
 
 /** Step 1 — pick Planet A then Planet B via two independent swipeable
@@ -45,13 +46,17 @@ export default function PlanetSelectScreen({ onNext, onBack }) {
 
       <div className="screen__actions">
         {onBack && (
-          <button type="button" className="btn btn--back" onClick={onBack} aria-label="Back to the Solar System">
-            Back
-          </button>
+          <div className="flex-1">
+            <GlassButton className="w-full h-12" onClick={onBack} aria-label="Back to the Solar System">
+              Back
+            </GlassButton>
+          </div>
         )}
-        <button type="button" className="btn btn--primary" disabled={!canContinue} onClick={onNext}>
-          Continue
-        </button>
+        <div className="flex-[3]">
+          <GlassButton className="w-full h-12 text-base font-semibold" disabled={!canContinue} onClick={onNext}>
+            Continue
+          </GlassButton>
+        </div>
       </div>
     </div>
   );

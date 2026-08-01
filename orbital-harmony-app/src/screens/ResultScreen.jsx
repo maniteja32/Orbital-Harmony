@@ -1,4 +1,5 @@
 import { PlanetChip } from '../components/PlanetCard.jsx';
+import { GlassButton } from '../components/ui/glasscn/glass-button.jsx';
 import { PLANETS_BY_KEY } from '../data/planets.js';
 import { findResonance } from '../utils/resonance.js';
 import { useAppStore } from '../store/useAppStore.js';
@@ -76,15 +77,15 @@ export default function ResultScreen({ onGenerateNew, onBack }) {
       </div>
 
       <div className="result-actions">
-        <button type="button" className="btn btn--full" onClick={() => downloadDataUrl(snapshot, 'orbital-harmony.png')}>
+        <GlassButton className="w-full h-12" onClick={() => downloadDataUrl(snapshot, 'orbital-harmony.png')}>
           Download PNG
-        </button>
-        <button type="button" className="btn btn--full" onClick={() => shareSnapshot(snapshot, title)}>
+        </GlassButton>
+        <GlassButton className="w-full h-12" onClick={() => shareSnapshot(snapshot, title)}>
           Share
-        </button>
-        <button type="button" className="btn btn--primary btn--full" onClick={handleGenerateNew}>
+        </GlassButton>
+        <GlassButton className="w-full h-12 text-base font-semibold" onClick={handleGenerateNew}>
           Generate New Pattern
-        </button>
+        </GlassButton>
       </div>
     </div>
   );

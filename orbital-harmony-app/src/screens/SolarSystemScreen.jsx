@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import SolarSystemCanvas from '../components/SolarSystemCanvas.jsx';
+import { GlassButton } from '../components/ui/glasscn/glass-button.jsx';
 import { PLANETS } from '../data/planets.js';
 
 /** Step 2 — cinematic NASA-inspired opening: a distant establishing shot of
@@ -31,9 +32,11 @@ export default function SolarSystemScreen({ onNext }) {
           <h1>The Solar System</h1>
           <p>Discover the hidden geometry created by planetary motion.</p>
         </div>
-        <button type="button" className="btn btn--primary btn--full" onClick={onNext}>
-          Discover a Pattern
-        </button>
+        <div className="system-cta">
+          <GlassButton className="w-full h-12 text-base font-semibold" onClick={onNext}>
+            Discover a Pattern
+          </GlassButton>
+        </div>
       </div>
     </div>
   );
