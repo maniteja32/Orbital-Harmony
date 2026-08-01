@@ -2,30 +2,29 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import SolarSystemCanvas from '../components/SolarSystemCanvas.jsx';
 import LiquidGlassIconButton from '../components/LiquidGlassIconButton.jsx';
 import { PLANETS_BY_KEY } from '../data/planets.js';
-import { findResonance } from '../utils/resonance.js';
-import { useAppStore, SPEED_PRESETS, DENSITY_PRESETS } from '../store/useAppStore.js';
+import { useAppStore, SPEED_PRESETS } from '../store/useAppStore.js';
 
 // Tap-cycled live playback-rate multiplier steps for the rocket button
 // (see setSpeedMultiplier in solarSystemEngine.js) — each tap advances to
-// the next step, wrapping back to the default. 5x is the DEFAULT (first
-// value, matching the original vanilla-JS build's own "Simulation Speed"
-// slider default of 5.0x), not 1x.
-const SPEED_STEPS = [5, 1, 2];
+// the next step, wrapping back to the default. 1x is the DEFAULT (first
+// value) for a slow, graceful pattern reveal; taps speed it up for anyone
+// impatient. (Was 5x, but the pattern creation looked rushed on mobile.)
+const SPEED_STEPS = [1, 2, 5];
 const DEFAULT_SPEED_MULTIPLIER = SPEED_STEPS[0];
 
-// Fixed sampling interval (days of simulated time between sampled chords)
-// — matches the original vanilla-JS build's "Trace Interval" DEFAULT of 3
-// days (js/main.js PATTERN_CONFIG.traceInterval), NOT a sparser derived
-// value. This is what makes the pattern beautiful: at 3-day sampling the
-// many closely-spaced chords blend into a smooth, continuous "rose"
-// envelope; a coarser interval (e.g. 10) leaves the individual straight
-// chords visible as a spiky, jagged web instead. A pair whose resonance
-// needs more simulated years to close ends up with proportionally more
-// chords (denser pattern) than one that closes quickly — matching how the
-// original build behaves — while the float32-precision fix (see the local
-// per-chord distance buffer in solarSystemEngine.js) means even a dense
-// pattern still renders as clean lines, not static.
-const FIXED_TRACE_INTERVAL_DAYS = 3;
+// Pattern shaping. Every pair is drawn as a rosette whose number of lobes
+// = |traceSpeedA - traceSpeedB| * spanYears (each lobe = one conjunction of
+// the two planets, see data/planets.js `traceSpeed`). Targeting a roughly
+// CONSTANT lobe count keeps EVERY combination looking equally clean and
+// full — instead of some pairs closing in a couple of lobes (sparse) and
+// others in dozens (a dense scribble). A fixed target chord count then
+// keeps the line density consistent too. Near-equal-speed pairs (e.g.
+// Mercury+Venus) can't form many lobes no matter the span, so the span is
+// clamped rather than exploding to hundreds of years.
+const TARGET_LOBES = 6;
+const TARGET_CHORDS = 260;
+const MIN_SPAN_YEARS = 5;
+const MAX_SPAN_YEARS = 22;
 
 /** Replaces the old segmented-control-only "Simulation settings" screen —
  * merges a LIVE pattern-tracer preview (previously only shown on the
@@ -38,7 +37,7 @@ const FIXED_TRACE_INTERVAL_DAYS = 3;
  * planetA/planetB are still read from the store (set on the Planet Select
  * screen), just no longer editable here. */
 export default function SimulationScreen({ onComplete, onBack }) {
-  const { planetA, planetB, speed, density, setSnapshot } = useAppStore();
+  const { planetA, planetB, speed, setSnapshot } = useAppStore();
   const canvasRef = useRef(null);
   const doneRef = useRef(false);
 
@@ -48,21 +47,19 @@ export default function SimulationScreen({ onComplete, onBack }) {
 
   const planetKeys = useMemo(() => [planetA, planetB], [planetA, planetB]);
   const speedCfg = SPEED_PRESETS[speed];
-  const densityCfg = DENSITY_PRESETS[density];
   const planetAData = PLANETS_BY_KEY[planetA];
   const planetBData = PLANETS_BY_KEY[planetB];
 
-  // Same resonance-aware duration logic as the old Reveal screen — run the
-  // simulation for exactly the span needed to CLOSE the pair's natural
-  // resonance pattern, not an arbitrary fixed span (see that screen's
-  // longer note for why this matters for slow outer-planet pairs).
-  const totalSimYears = useMemo(() => {
-    if (!planetAData || !planetBData) return densityCfg.years;
-    const resonance = findResonance(planetAData.orbitalPeriodDays, planetBData.orbitalPeriodDays);
-    if (!resonance) return densityCfg.years;
-    const longerPeriodDays = Math.max(planetAData.orbitalPeriodDays, planetBData.orbitalPeriodDays);
-    return (resonance.longer * longerPeriodDays) / 365.25;
-  }, [planetAData, planetBData, densityCfg.years]);
+  // Resonance-aware run length, computed from the pair's Earth-relative
+  // `traceSpeed` values so every combination traces ~TARGET_LOBES clean
+  // lobes at a consistent chord density (see the constants above).
+  const { totalSimYears, traceIntervalDays } = useMemo(() => {
+    const sA = planetAData?.traceSpeed ?? 1;
+    const sB = planetBData?.traceSpeed ?? 1;
+    const rel = Math.max(Math.abs(sA - sB), 0.04); // guard near-equal speeds
+    const span = Math.min(Math.max(TARGET_LOBES / rel, MIN_SPAN_YEARS), MAX_SPAN_YEARS);
+    return { totalSimYears: span, traceIntervalDays: (span * 365.25) / TARGET_CHORDS };
+  }, [planetAData, planetBData]);
 
   const handleEngineComplete = useCallback(() => {
     if (doneRef.current) return;
@@ -134,7 +131,7 @@ export default function SimulationScreen({ onComplete, onBack }) {
           startPaused
           speedDurationSec={speedCfg.durationSec}
           totalSimYears={totalSimYears}
-          traceIntervalDays={FIXED_TRACE_INTERVAL_DAYS}
+          traceIntervalDays={traceIntervalDays}
           initialSpeedMultiplier={DEFAULT_SPEED_MULTIPLIER}
           onComplete={handleEngineComplete}
           className="screen__canvas"

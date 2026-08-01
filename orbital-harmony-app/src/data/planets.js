@@ -42,6 +42,14 @@ export const PLANETS = [
     tilt: 0.03,
     spinDirection: 1,
     texture: '/textures/mercury.jpg',
+    // Pattern-tracer angular speed, Earth-relative (Earth = 1.0), ported
+    // from the original vanilla-JS build's hand-tuned `speed` values
+    // (js/main.js, divided by Earth's 0.5). The pattern tracer drives orbit
+    // angle by THIS, not orbitalPeriodDays: real periods give Mercury:Earth
+    // a ~4.15:1 angular-speed ratio that traces a dense, chaotic web, while
+    // these compressed speeds keep every pair's ratio low (~1-2:1) so every
+    // planet combination forms a clean, elegant rosette (like the legacy).
+    traceSpeed: 1.58,
     orbitalPeriodDays: 87.969,
     meanLongitudeDeg: 252.25032,
     fact: 'Smallest planet, closest to the Sun.',
@@ -58,6 +66,7 @@ export const PLANETS = [
     tilt: 3,
     spinDirection: -1,
     texture: '/textures/venus.jpg',
+    traceSpeed: 1.6254,
     orbitalPeriodDays: 224.701,
     meanLongitudeDeg: 181.97910,
     fact: 'Spins backwards; hottest planet in the solar system.',
@@ -87,6 +96,7 @@ export const PLANETS = [
     // moon-rendering support in the engine is left intact, just gated off
     // here; flip back to true to restore.
     hasMoon: false,
+    traceSpeed: 1.0,
     orbitalPeriodDays: 365.256,
     meanLongitudeDeg: 100.46457,
     fact: 'The only known planet with life.',
@@ -103,6 +113,7 @@ export const PLANETS = [
     tilt: 25,
     spinDirection: 1,
     texture: '/textures/mars.jpg',
+    traceSpeed: 0.8,
     orbitalPeriodDays: 686.98,
     meanLongitudeDeg: 355.44657,
     fact: 'The Red Planet, home to the tallest volcano.',
@@ -117,6 +128,7 @@ export const PLANETS = [
     tilt: 3,
     spinDirection: 1,
     texture: '/textures/jupiter.jpg',
+    traceSpeed: 0.44,
     orbitalPeriodDays: 4332.59,
     meanLongitudeDeg: 34.39644,
     fact: 'Largest planet; a Great Red Spot storm rages for centuries.',
@@ -139,6 +151,7 @@ export const PLANETS = [
     texture: '/textures/saturn.jpg',
     ringTexture: '/textures/saturn_ring.png',
     hasRings: true,
+    traceSpeed: 0.32,
     orbitalPeriodDays: 10759.22,
     meanLongitudeDeg: 49.95424,
     fact: 'Famous for its dazzling ring system.',
@@ -157,6 +170,7 @@ export const PLANETS = [
     // physical reason — extreme tilt vs. a fully flipped-over spin).
     spinDirection: -1,
     texture: '/textures/uranus.jpg',
+    traceSpeed: 0.22,
     orbitalPeriodDays: 30688.5,
     meanLongitudeDeg: 313.23810,
     fact: 'Rotates on its side, almost rolling along its orbit.',
@@ -171,6 +185,7 @@ export const PLANETS = [
     tilt: 28,
     spinDirection: 1,
     texture: '/textures/neptune.jpg',
+    traceSpeed: 0.18,
     orbitalPeriodDays: 60182,
     meanLongitudeDeg: 304.87997,
     fact: 'Windiest planet, with supersonic storms.',
