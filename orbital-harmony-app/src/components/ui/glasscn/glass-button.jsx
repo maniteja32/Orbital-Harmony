@@ -7,12 +7,13 @@ import { LiquidGlass } from "./liquid-glass";
 
 function GlassButton({
   className,
+  glassClassName,
   glassVariant = "liquid-refract",
   ...props
 }) {
   if (glassVariant === "liquid-refract") {
     return (
-      <LiquidGlass>
+      <LiquidGlass className={glassClassName}>
         <Button
           data-slot="glass-button"
           data-glass-variant={glassVariant}

@@ -43,7 +43,7 @@ export default function SolarSystemScreen({ onNext }) {
         className="system-cta"
         style={{ '--liquid-glass-rim-width': '1px', '--liquid-glass-rim-light': 'rgba(255,255,255,0.5)' }}
       >
-        <GlassButton className="w-full h-12 text-base font-semibold" onClick={onNext}>
+        <GlassButton glassClassName="bg-black/40" className="w-full h-12 text-base font-semibold" onClick={onNext}>
           Begin Exploring
         </GlassButton>
       </div>
