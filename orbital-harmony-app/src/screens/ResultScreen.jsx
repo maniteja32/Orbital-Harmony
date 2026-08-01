@@ -91,11 +91,7 @@ export default function ResultScreen({ onGenerateNew, onBack }) {
         >
           Share
         </GlassButton>
-        <GlassButton
-          className="w-full h-12 text-base font-semibold"
-          style={{ backgroundColor: 'rgba(140, 150, 255, 0.22)' }}
-          onClick={handleGenerateNew}
-        >
+        <GlassButton className="w-full h-12 text-base font-semibold" onClick={handleGenerateNew}>
           Generate New Pattern
         </GlassButton>
       </div>

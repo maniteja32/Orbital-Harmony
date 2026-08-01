@@ -58,12 +58,7 @@ export default function PlanetSelectScreen({ onNext, onBack }) {
           </div>
         )}
         <div className="flex-[3]">
-          <GlassButton
-            className="w-full h-12 text-base font-semibold"
-            style={{ backgroundColor: 'rgba(140, 150, 255, 0.22)' }}
-            disabled={!canContinue}
-            onClick={onNext}
-          >
+          <GlassButton className="w-full h-12 text-base font-semibold" disabled={!canContinue} onClick={onNext}>
             Continue
           </GlassButton>
         </div>
