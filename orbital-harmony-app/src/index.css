@@ -222,7 +222,9 @@ button {
 .screen__header h1 {
   font-family: var(--font-display);
   font-size: 22px;
-  font-weight: 700;
+  /* Regular (400) to match the landing 'Orbital Harmony' title — Syncopate
+     headings are kept a consistent weight app-wide. */
+  font-weight: 400;
   letter-spacing: 0.01em;
   margin-bottom: 6px;
 }
@@ -1516,7 +1518,7 @@ button {
 .screen__header--mode h1 {
   font-family: var(--font-display);
   font-size: clamp(19px, 5.6vw, 22px);
-  font-weight: 700;
+  font-weight: 400;
   letter-spacing: 0.01em;
   line-height: 1.2;
   margin-bottom: 8px;
