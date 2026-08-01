@@ -141,7 +141,7 @@ button {
   display: flex;
   flex-direction: column;
   gap: 18px;
-  padding: calc(28px + var(--safe-top)) 22px calc(24px + var(--safe-bottom));
+  padding: calc(28px + var(--safe-top)) 22px max(40px, calc(24px + var(--safe-bottom)));
   overflow-y: auto;
 }
 
