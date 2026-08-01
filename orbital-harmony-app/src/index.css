@@ -376,11 +376,11 @@ button {
   padding: 28px 22px calc(24px + var(--safe-bottom));
 }
 
-/* Keep the CTA (and, on desktop, the whole layout) to a readable centred
-   column even when the canvas spans the full viewport width. */
+/* Keep the CTA to a readable centred column, matched to the "Orbital Harmony"
+   title width (~360px) for balance rather than spanning the full canvas. */
 .system-cta > * {
   width: 100%;
-  max-width: 520px;
+  max-width: 360px;
 }
 
 /* Staggered fade-in once the intro settles. Mobile-first: a calm, uniform
