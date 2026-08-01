@@ -1,9 +1,14 @@
 import { create } from 'zustand';
 
 export const SPEED_PRESETS = {
-  slow: { label: 'Slow', durationSec: 16 },
-  medium: { label: 'Medium', durationSec: 10 },
-  fast: { label: 'Fast', durationSec: 6 },
+  // `durationSec` = real seconds for the FULL pattern reveal at 1× (the
+  // rocket multiplier scales from there). Kept deliberately long/calm — the
+  // default rocket speed is 3× (see SimulationScreen SPEED_STEPS), so the
+  // default reveal lands around a graceful ~15s rather than the old rushed
+  // few-second sprint that read as a "mess" on mobile.
+  slow: { label: 'Slow', durationSec: 60 },
+  medium: { label: 'Medium', durationSec: 45 },
+  fast: { label: 'Fast', durationSec: 30 },
 };
 
 // `targetChords` = roughly how many chords the FULL pattern should end up

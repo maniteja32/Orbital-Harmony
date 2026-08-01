@@ -8,11 +8,12 @@ import { useAppStore, SPEED_PRESETS } from '../store/useAppStore.js';
 
 // Tap-cycled live playback-rate multiplier steps for the rocket button
 // (see setSpeedMultiplier in solarSystemEngine.js) — each tap advances to
-// the next step, wrapping back to the default. 1x is the DEFAULT (first
-// value) for a slow, graceful pattern reveal; taps speed it up for anyone
-// impatient. (Was 5x, but the pattern creation looked rushed on mobile.)
-const SPEED_STEPS = [1, 2, 5];
-const DEFAULT_SPEED_MULTIPLIER = SPEED_STEPS[0];
+// the next step, wrapping back to the default. 3x is the DEFAULT (legacy-
+// like, calm on mobile): paired with the longer base durations in
+// SPEED_PRESETS it gives a graceful reveal rather than a rushed mess. Tap
+// down to 1x/2x for slow-mo, up to 5x to speed through.
+const SPEED_STEPS = [1, 2, 3, 5];
+const DEFAULT_SPEED_MULTIPLIER = 3;
 
 // Chord sampling: how many chords to draw PER petal/lobe of the pattern.
 // Scaling with the petal count keeps every pattern's line density roughly
