@@ -43,17 +43,18 @@ const DAYS_PER_YEAR = 365.25;
 // planets.
 const loadTexture = loadPlanetTexture;
 
-// A soft radial-gradient sprite used for the Sun's glow — cheap, no
-// post-processing bloom pipeline required.
+// A soft radial-gradient sprite used for the Sun's corona glow. Colours are
+// ported verbatim from the legacy vanilla-JS prototype's createRadialGlowTexture
+// (js/main.js): bright white core -> warm amber -> transparent haze.
 function makeGlowTexture() {
   const size = 256;
   const canvas = document.createElement('canvas');
   canvas.width = canvas.height = size;
   const ctx = canvas.getContext('2d');
   const gradient = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
-  gradient.addColorStop(0, 'rgba(255,250,225,0.95)');
-  gradient.addColorStop(0.35, 'rgba(255,210,130,0.5)');
-  gradient.addColorStop(1, 'rgba(255,160,70,0)');
+  gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+  gradient.addColorStop(0.25, 'rgba(255, 200, 120, 0.6)');
+  gradient.addColorStop(1, 'rgba(255, 150, 60, 0)');
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, size, size);
   const tex = new THREE.CanvasTexture(canvas);
@@ -83,77 +84,58 @@ function makeOrbitRing(radiusDistance, colorHex) {
 // star data is a cached singleton), making the loading -> system transition
 // perfectly seamless.
 
-// Unlit (the Sun is a light source, not something lit by scene lights) but
-// shaded with a simple view-dependent term for physical believability: a
-// gentle limb darkening across the disc (real photospheres read darker at
-// the edge than the center) plus a thin warm brightening right at the
-// silhouette edge (a cheap stand-in for the chromosphere/corona). ALSO
-// (per request) a strong warm CORE glow that brightens toward the center
-// of the disc — the opposite falloff direction from the limb/edge terms —
-// plus a slow brightness pulse, so the light reads as radiating outward
-// from WITHIN the surface itself rather than relying on the external
-// additive glow sprites layered behind it (see buildSunGlowSprites) to do
-// all the work. Reads as genuine solar surface detail/light emission,
-// not a flat, evenly-lit texture with a bolted-on halo.
+// Sun surface material — ported from the legacy vanilla-JS prototype's
+// createSun() shader (js/main.js) so the mobile Sun matches it exactly: the
+// real photographic sun.jpg texture (surfaceMap) with classic limb darkening
+// (the disc's grazing edge is cooler/dimmer than its centre) plus a single
+// off-centre upper-left hot-spot highlight for an implied light direction.
+// Unlit (the Sun is a light source, not lit by scene lights). The "alive"
+// pulsing now lives entirely on the corona glow sprites (see below), exactly
+// as in the legacy prototype, rather than on the surface shader.
 function makeSunMaterial() {
   return new THREE.ShaderMaterial({
     uniforms: {
-      map: { value: loadTexture(SUN_TEXTURE) },
+      surfaceMap: { value: loadTexture(SUN_TEXTURE) },
       time: { value: 0 },
     },
     vertexShader: `
       varying vec2 vUv;
-      varying vec3 vNormalView;
+      varying vec3 vNormal;
       void main() {
         vUv = uv;
-        vNormalView = normalize(normalMatrix * normal);
+        vNormal = normalize(normalMatrix * normal);
         gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
       }
     `,
     fragmentShader: `
-      uniform sampler2D map;
+      uniform sampler2D surfaceMap;
       uniform float time;
       varying vec2 vUv;
-      varying vec3 vNormalView;
+      varying vec3 vNormal;
       void main() {
-        vec3 base = texture2D(map, vUv).rgb;
-        float rim = clamp(1.0 - abs(vNormalView.z), 0.0, 1.0);
-        float limbDarken = 1.0 - 0.32 * pow(rim, 1.5);
-        vec3 color = base * limbDarken;
-
-        // Layered, slightly irregular breathing pulse (two sine waves at
-        // different frequencies/phases, rather than one perfectly uniform
-        // sine) — reads as a living, faintly turbulent light source
-        // instead of a mechanically-even blink.
-        float pulse = 0.93 + 0.05 * sin(time * 0.6) + 0.03 * sin(time * 1.7 + 1.3);
-
-        // Fine-grained procedural flicker across the surface — a cheap
-        // trig-based pseudo-noise standing in for solar granulation/
-        // convection cells, so the inner glow doesn't read as a perfectly
-        // flat, uniform wash of light but as roiling plasma welling up
-        // from within.
-        float grain = sin(vUv.x * 42.0 + time * 1.4) * sin(vUv.y * 39.0 - time * 1.1);
-        float flicker = 0.92 + 0.08 * grain;
-
-        // Warm CORE glow — brightens toward the CENTER of the disc
-        // (1.0 - rim, the opposite direction from the limb darkening and
-        // edge glow below), as if light were welling up from inside the
-        // surface rather than just being lit from outside. Lower exponent
-        // + higher strength than before so the inner glow reaches further
-        // across the disc and reads unmistakably as an internal light
-        // source, not just a subtle center highlight. Kept close to
-        // yellow-white (not deep orange) so the Sun reads as a genuinely
-        // hot, bright star rather than a dim reddish body (users flagged
-        // an earlier, more-orange version as looking "almost like Mars").
-        float coreGlow = pow(1.0 - rim, 1.4);
-        color += vec3(1.0, 0.93, 0.72) * coreGlow * 1.25 * pulse * flicker;
-        // Overall brightening so the whole disc reads as radiant/emissive,
-        // not just a photograph of a lit sphere. Bumped up (1.4 -> 1.6) for
-        // a stronger overall glow per request.
-        color *= 1.6 * pulse;
-
-        float edgeGlow = pow(rim, 6.0) * 0.7;
-        color += vec3(1.0, 0.78, 0.52) * edgeGlow;
+        // Slightly brighter photosphere so the surface itself reads as
+        // glowing/emissive rather than a flatly-lit photo.
+        vec3 tex = texture2D(surfaceMap, vUv).rgb * 1.18;
+        // Classic limb darkening: the photosphere's edge (grazing angle to
+        // the viewer) is cooler and dimmer than its center.
+        float facing = clamp(dot(vNormal, vec3(0.0, 0.0, 1.0)), 0.0, 1.0);
+        float limb = mix(0.1, 0.88, pow(facing, 0.75));
+        // Off-center hot spot (upper-left) — an implied light direction that
+        // reinforces the 3D illusion instead of perfectly symmetric shading.
+        vec3 highlightDir = normalize(vec3(-0.4, 0.4, 0.85));
+        float highlight = pow(clamp(dot(vNormal, highlightDir), 0.0, 1.0), 5.0);
+        vec3 color = tex * limb + vec3(1.0, 0.96, 0.85) * highlight * 0.28;
+        // INNER glow — a warm brightening toward the centre of the disc
+        // (facing is 1.0 at the centre, 0.0 at the limb) that visibly WAXES
+        // and WANES over time, so the Sun reads as actively glowing/pulsing
+        // (the twinkle-like life the user asked to see), not a static disc.
+        float core = pow(facing, 2.0);
+        float glowWave = 0.5 + 0.5 * sin(time * 1.8);
+        color += vec3(1.0, 0.84, 0.58) * core * (0.14 + 0.34 * glowWave);
+        // Overall brightness "breath" on the whole disc — a clearly visible
+        // (but still smooth) glow pulse.
+        float pulse = 1.0 + 0.2 * sin(time * 1.6);
+        color *= pulse;
         gl_FragColor = vec4(color, 1.0);
       }
     `,
@@ -322,38 +304,42 @@ export function createSolarSystemEngine(canvas, opts) {
   const fillLight = new THREE.HemisphereLight(0xfff7ea, 0x2a2f45, 0.28);
   scene.add(fillLight);
 
-  const sunGeo = new THREE.SphereGeometry(4.2, 64, 64);
+  // Sun radius — kept at the mobile app's existing value (4.2) so the Sun's
+  // on-screen size is unchanged; only its texture/shading/glow are ported
+  // from the legacy prototype below.
+  const SUN_RADIUS = 4.2;
+  const sunGeo = new THREE.SphereGeometry(SUN_RADIUS, 64, 64);
   const sunMat = makeSunMaterial();
   const sunMesh = new THREE.Mesh(sunGeo, sunMat);
   scene.add(sunMesh);
 
-  // Bright, more prominent corona: a bold bright core glow plus a larger,
-  // softer outer halo (bumped up from opacity 0.45/0.2 & scale 10.5/16.5
-  // per request for a stronger glow) so the Sun reads as radiant/luminous
-  // from further away, on top of the Sun's own shader-driven internal
-  // core glow (see makeSunMaterial).
-  const glow = new THREE.Sprite(new THREE.SpriteMaterial({
-    map: makeGlowTexture(),
-    transparent: true,
-    depthWrite: false,
-    blending: THREE.AdditiveBlending,
-    opacity: 0.7,
-  }));
-  glow.scale.set(13, 13, 1);
-  scene.add(glow);
-
-  // A second, larger, softer sprite layered behind the tight glow above —
-  // a cheap "subtle bloom" stand-in (no post-processing pipeline needed)
-  // so the Sun reads as a genuine light source, not just a lit sphere.
-  const outerGlow = new THREE.Sprite(new THREE.SpriteMaterial({
-    map: makeGlowTexture(),
-    transparent: true,
-    depthWrite: false,
-    blending: THREE.AdditiveBlending,
-    opacity: 0.4,
-  }));
-  outerGlow.scale.set(21, 21, 1);
-  scene.add(outerGlow);
+  // Sun corona — ported verbatim from the legacy vanilla-JS prototype
+  // (js/main.js createSun): three additive glow-sprite layers in a warm
+  // cream (#fff2cf) -> orange (#ffb347) -> soft haze (#ff7a3d) gradient, each
+  // gently "breathing" its scale/opacity in tick() so the glow feels alive.
+  // Scales are relative to SUN_RADIUS (unchanged at 4.2), so the Sun's
+  // on-screen SIZE is exactly the same as before — only its glow/texture/
+  // shading now match the legacy Sun.
+  const sunGlowTexture = makeGlowTexture();
+  const sunCorona = [
+    { scale: 2.5, color: 0xfff2cf, opacity: 0.4, speed: 1.3, phase: 0 },
+    { scale: 3.7, color: 0xffb347, opacity: 0.22, speed: 1.0, phase: 1.4 },
+    { scale: 5.1, color: 0xff7a3d, opacity: 0.12, speed: 0.8, phase: 2.7 },
+  ].map(({ scale, color, opacity, speed, phase }) => {
+    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: sunGlowTexture,
+      color,
+      transparent: true,
+      opacity,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    }));
+    const baseScale = SUN_RADIUS * scale;
+    sprite.scale.set(baseScale, baseScale, 1);
+    scene.add(sprite);
+    return { sprite, baseScale, baseOpacity: opacity, speed, phase };
+  });
+  let sunPulseTime = 0;
 
   const planets = planetKeys
     .map((key) => PLANETS_BY_KEY[key])
@@ -704,8 +690,18 @@ export function createSolarSystemEngine(canvas, opts) {
       return;
     }
 
-    sunMesh.rotation.y += delta * 0.05;
+    sunMesh.rotation.y += delta * 0.03;
     sunMat.uniforms.time.value += delta;
+    // Breathe the Sun's corona layers (ported from the legacy prototype) so
+    // the glow feels alive rather than a static halo — each layer pulses at
+    // its own speed/phase.
+    sunPulseTime += delta;
+    sunCorona.forEach(({ sprite, baseScale, baseOpacity, speed, phase }) => {
+      const wave = Math.sin(sunPulseTime * speed + phase);
+      const s = baseScale * (1 + wave * 0.18);
+      sprite.scale.set(s, s, 1);
+      sprite.material.opacity = baseOpacity * (1 + wave * 0.55);
+    });
     starfield.children.forEach((layer) => {
       layer.rotation.y += delta * layer.userData.spin;
       // Advance each layer's twinkle clock (the ~26% of stars with
