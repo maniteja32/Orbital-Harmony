@@ -1658,7 +1658,7 @@ button {
   width: 100%;
   padding: 20px;
   text-align: left;
-  border: 1px solid var(--glass-border);
+  border: none;
   border-radius: var(--radius-lg);
   background: var(--glass-bg);
   backdrop-filter: blur(16px) saturate(140%);
@@ -1670,7 +1670,6 @@ button {
 
 .mode-card:hover {
   background: var(--glass-bg-strong);
-  border-color: rgba(255, 255, 255, 0.16);
 }
 
 .mode-card:active { scale: 0.98; }
