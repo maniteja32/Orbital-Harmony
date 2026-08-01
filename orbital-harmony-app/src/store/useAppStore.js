@@ -30,6 +30,7 @@ export const useAppStore = create((set) => ({
   patternMode: 'explore', // 'explore' (pick two planets) | 'cosmic' (birth-date signature)
   cosmicDate: null, // Date the Cosmic Signature pattern is anchored to (null = Explore flow)
   snapshot: null, // captured PNG data URL of the final pattern
+  systemIntroPlayed: false, // has the Solar System cinematic zoom-in played once?
 
   goTo: (screen) => set({ screen }),
 
@@ -40,6 +41,7 @@ export const useAppStore = create((set) => ({
   setSnapshot: (snapshot) => set({ snapshot }),
   setPatternMode: (patternMode) => set({ patternMode }),
   setCosmicDate: (cosmicDate) => set({ cosmicDate }),
+  markSystemIntroPlayed: () => set({ systemIntroPlayed: true }),
 
   resetForNewPattern: () =>
     set({ screen: 'select', planetA: null, planetB: null, snapshot: null }),

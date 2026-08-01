@@ -239,6 +239,7 @@ export function createSolarSystemEngine(canvas, opts) {
     tracePattern = false,
     showOrbitRings = true,
     cinematicIntro = false,
+    startSettled = false,
     orthographic = false,
     speedDurationSec = 10,
     totalSimYears = 8,
@@ -535,6 +536,27 @@ export function createSolarSystemEngine(canvas, opts) {
     camera.lookAt(introLookTarget);
     // OrbitControls (if this screen wants it) is attached once the scripted
     // move finishes — see tick() below.
+  } else if (startSettled && interactive) {
+    // Returning to this screen (e.g. Back from Mode select) — jump STRAIGHT
+    // to the final settled hero framing the cinematic intro ends on, so the
+    // zoom-in never replays. Mirrors the exact end-state set in tick()'s
+    // introPhase === 'zoom' completion branch below.
+    camera.up.copy(heroUp(HERO_ELEVATION_END_DEG));
+    camera.position.copy(heroClosePos);
+    camera.lookAt(introLookTarget);
+    if (camera.isOrthographicCamera) {
+      camera.left = (-heroCloseHalf * width) / height;
+      camera.right = (heroCloseHalf * width) / height;
+      camera.top = heroCloseHalf;
+      camera.bottom = -heroCloseHalf;
+      camera.updateProjectionMatrix();
+      // Persist the zoomed framing so a later resize() re-derives from it.
+      restFrameRadius = earthRefDistance;
+      restFrameMargin = HERO_CLOSE_MARGIN;
+    }
+    camera.up.set(0, 1, 0);
+    attachOrbitControls(introLookTarget);
+    controls.autoRotate = false;
   } else if (interactive) {
     camera.position.set(0, dist, dist * 0.001);
     attachOrbitControls();
