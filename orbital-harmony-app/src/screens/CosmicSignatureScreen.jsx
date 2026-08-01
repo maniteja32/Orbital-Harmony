@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { ArrowLeft, Clock } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { GlassButton } from '../components/ui/glasscn/glass-button.jsx';
 import { GlassDatePicker } from '../components/GlassDatePicker.jsx';
 import { cosmicSignatureFromDate } from '../utils/cosmicSignature.js';
@@ -18,20 +18,18 @@ export default function CosmicSignatureScreen({ onReveal, onBack }) {
   const setPatternMode = useAppStore((s) => s.setPatternMode);
 
   const [dateStr, setDateStr] = useState('');
-  const [timeStr, setTimeStr] = useState('');
 
   // Today, as YYYY-MM-DD, to cap the date input (no future birth dates).
   const maxDate = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
-  // Parse at the given time (or local noon if none) so the calendar day is
-  // stable regardless of timezone.
-  const parsed = dateStr ? new Date(`${dateStr}T${timeStr || '12:00'}:00`) : null;
+  // Parse at local noon so the calendar day is stable regardless of timezone.
+  const parsed = dateStr ? new Date(`${dateStr}T12:00:00`) : null;
   const valid = parsed != null && !Number.isNaN(parsed.getTime());
 
   const signature = useMemo(
     () => (valid ? cosmicSignatureFromDate(parsed) : null),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [dateStr, timeStr]
+    [dateStr]
   );
 
   function handleReveal() {
@@ -66,19 +64,6 @@ export default function CosmicSignatureScreen({ onReveal, onBack }) {
             onChange={setDateStr}
             placeholder="Select your birth date"
           />
-        </label>
-
-        <label className="cosmic-field">
-          <span className="cosmic-field__label">Time (Optional)</span>
-          <span className="cosmic-field__control">
-            <input
-              type="time"
-              className="cosmic-input"
-              value={timeStr}
-              onChange={(e) => setTimeStr(e.target.value)}
-            />
-            <Clock size={18} strokeWidth={1.8} className="cosmic-field__icon" aria-hidden="true" />
-          </span>
         </label>
 
         <p className="cosmic-hint">
