@@ -20,7 +20,7 @@
   --radius-md: 18px;
   --radius-sm: 12px;
   --font-ui: 'Rajdhani', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-display: 'Orbitron', 'Rajdhani', -apple-system, sans-serif;
+  --font-display: 'Syncopate', 'Rajdhani', -apple-system, sans-serif;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
@@ -1479,7 +1479,7 @@ button {
 .loading-title {
   font-family: var(--font-display);
   font-size: 23px;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.3em;
   text-transform: uppercase;
   color: var(--text-primary);
@@ -1495,16 +1495,17 @@ button {
   display: block;
 }
 
-/* Width-match the two title lines (both 7 letters, but HARMONY's glyphs are
-   ~18.8px wider than ORBITAL's at 23px/0.3em). Each word's letter-spacing
-   adds 161.02px per 1em, so:
-   OPTION 1 (active): widen ORBITAL's tracking to 0.417em (9.58px) — HARMONY
-   stays at the base 0.3em (6.9px). Both lines then render at ~184.1px.
-   OPTION 2 (alt): instead, condense HARMONY to 0.183em (4.22px) and leave
-   ORBITAL at 0.3em — both lines then render at ~165.4px. To switch, comment
-   the rule below and use:  .loading-title span:last-child { letter-spacing: 0.183em; } */
+/* Width-match the two title lines (both 7 letters, but in Syncopate
+   HARMONY's glyphs are ~30.1px wider than ORBITAL's at 23px / 0.3em / 700).
+   Each word's letter-spacing adds ~161.1px per 1em, so:
+   OPTION 1 (active): widen ORBITAL's tracking to 0.487em (11.2px) — HARMONY
+   stays at the base 0.3em (6.9px). Both lines then render at ~210.6px.
+   OPTION 2 (alt): instead, condense HARMONY to 0.113em (2.6px) and leave
+   ORBITAL at 0.3em — both lines then render at ~180.6px. To switch, comment
+   the rule below and use: .loading-title span:last-child { letter-spacing: 0.113em; }
+   NOTE: these values are FONT-SPECIFIC — recompute if the display font changes. */
 .loading-title span:first-child {
-  letter-spacing: 0.417em;
+  letter-spacing: 0.487em;
 }
 
 .loading-subtitle {
