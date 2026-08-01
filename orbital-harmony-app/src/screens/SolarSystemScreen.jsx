@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
+import { Menu, Info } from 'lucide-react';
 import SolarSystemCanvas from '../components/SolarSystemCanvas.jsx';
 import { GlassButton } from '../components/ui/glasscn/glass-button.jsx';
 import { PLANETS } from '../data/planets.js';
@@ -29,17 +30,11 @@ export default function SolarSystemScreen({ onNext }) {
       />
 
       <button type="button" className="system-menu" aria-label="Open menu">
-        <span />
-        <span />
-        <span />
+        <Menu size={22} strokeWidth={2} aria-hidden="true" />
       </button>
 
       <button type="button" className="system-info" aria-label="About Orbital Harmony">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.6" />
-          <path d="M12 11v5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-          <circle cx="12" cy="7.6" r="1.1" fill="currentColor" />
-        </svg>
+        <Info size={22} strokeWidth={2} aria-hidden="true" />
       </button>
 
       <div className="system-header">

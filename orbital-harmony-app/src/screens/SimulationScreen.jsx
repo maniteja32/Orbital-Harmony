@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
+import { ArrowLeft } from 'lucide-react';
 import SolarSystemCanvas from '../components/SolarSystemCanvas.jsx';
 import LiquidGlassIconButton from '../components/LiquidGlassIconButton.jsx';
 import { PLANETS_BY_KEY } from '../data/planets.js';
@@ -112,9 +113,7 @@ export default function SimulationScreen({ onComplete, onBack }) {
       <div className="screen__topbar">
         {onBack && (
           <button type="button" className="back-button" onClick={onBack} aria-label="Back to planet selection">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+            <ArrowLeft size={18} strokeWidth={2} aria-hidden="true" />
             Back
           </button>
         )}

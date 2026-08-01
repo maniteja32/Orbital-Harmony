@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { ArrowLeft } from 'lucide-react';
 import { GlassButton } from '../components/ui/glasscn/glass-button.jsx';
 import { cosmicSignatureFromDate } from '../utils/cosmicSignature.js';
 import { useAppStore } from '../store/useAppStore.js';
@@ -42,9 +43,7 @@ export default function CosmicSignatureScreen({ onReveal, onBack }) {
     <div className="screen screen--cosmic">
       <div className="mode-topbar">
         <button type="button" className="back-button" onClick={onBack} aria-label="Back to Choose an Experience">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+          <ArrowLeft size={18} strokeWidth={2} aria-hidden="true" />
           Back
         </button>
       </div>
