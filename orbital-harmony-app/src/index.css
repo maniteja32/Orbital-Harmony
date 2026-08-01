@@ -341,8 +341,11 @@ button {
 
 .system-header h1 {
   font-family: var(--font-display);
-  font-size: 30px;
+  /* Syncopate is very wide — scale the title down on narrow phones so
+     "Orbital Harmony" never crowds the edges (mobile-first). */
+  font-size: clamp(22px, 6.4vw, 30px);
   letter-spacing: 0.01em;
+  line-height: 1.15;
   margin-bottom: 12px;
   text-shadow: 0 2px 16px rgba(0, 0, 0, 0.9), 0 1px 4px rgba(0, 0, 0, 0.95);
 }
@@ -374,20 +377,22 @@ button {
   max-width: 520px;
 }
 
-/* Staggered fade/slide-in once the intro settles. The top header slides down
-   from above; the menu and bottom CTA rise from below. */
+/* Staggered fade-in once the intro settles. Mobile-first: a calm, uniform
+   fade with only a tiny upward drift — nothing slides in from opposite
+   directions (which reads as "flying around" on a small screen). The
+   hamburger just fades in place. */
 .screen--system .system-menu,
 .system-header h1,
 .system-header p,
 .system-cta {
   opacity: 0;
-  transition: opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1), transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1), transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.screen--system .system-menu { transform: translateY(-10px); }
+.screen--system .system-menu { transform: none; }
 .system-header h1,
-.system-header p { transform: translateY(-12px); }
-.system-cta { transform: translateY(14px); }
+.system-header p,
+.system-cta { transform: translateY(6px); }
 
 .screen--system.is-ready .system-menu,
 .screen--system.is-ready .system-header h1,
@@ -397,10 +402,21 @@ button {
   transform: translateY(0);
 }
 
-.screen--system.is-ready .system-menu { transition-delay: 0.1s; }
-.screen--system.is-ready .system-header h1 { transition-delay: 0.28s; }
-.screen--system.is-ready .system-header p { transition-delay: 0.46s; }
-.screen--system.is-ready .system-cta { transition-delay: 0.68s; }
+.screen--system.is-ready .system-menu { transition-delay: 0.08s; }
+.screen--system.is-ready .system-header h1 { transition-delay: 0.2s; }
+.screen--system.is-ready .system-header p { transition-delay: 0.32s; }
+.screen--system.is-ready .system-cta { transition-delay: 0.44s; }
+
+/* Respect users who prefer reduced motion: fade only, no drift. */
+@media (prefers-reduced-motion: reduce) {
+  .screen--system .system-menu,
+  .system-header h1,
+  .system-header p,
+  .system-cta {
+    transform: none !important;
+    transition: opacity 0.4s ease;
+  }
+}
 
 .reveal-overlay__top {
   display: flex;
