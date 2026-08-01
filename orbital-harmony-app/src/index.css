@@ -1541,7 +1541,18 @@ button {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  margin-top: 6px;
+  margin-top: 12px;
+}
+
+/* Vertically centre the title + cards group in the space below the top bar
+   (auto margins above the header and below the cards split the free space
+   equally). The top bar stays pinned at the top. */
+.screen--mode .screen__header--mode {
+  margin-top: auto;
+}
+
+.screen--mode .mode-cards {
+  margin-bottom: auto;
 }
 
 /* Large tappable experience card (a <button>). The `.mode-card` class beats
