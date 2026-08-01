@@ -91,3 +91,72 @@ export function formatResonance(periodA, periodB) {
   return `${r.longer} : ${r.shorter}`;
 }
 
+// ============================================================================
+// Pattern timeframe — turns a pair's REAL orbital periods into the "optimal"
+// simulation span (in Earth years) that closes their characteristic chord
+// pattern, plus the expected petal/lobe count. This is the physics behind
+// the "Summary of Optimal Timeframes" table: e.g. Earth+Venus's 8:13
+// resonance closes in 8 Earth years and traces a clean 5-petaled rose
+// (13 − 8 = 5 relative conjunctions), while wide pairs (e.g. Saturn+Uranus)
+// need many more years and trace a far denser mandala.
+//
+// Run the sim for exactly `longer` orbits of the LONGER-period (outer)
+// planet — that's the full closed cycle. `petals` = |shorter − longer|,
+// the number of relative conjunctions and therefore lobes the rosette
+// forms. When no clean low-order resonance exists, fall back to ~6 relative
+// laps over the pair's synodic period so the shape still reads as a full,
+// balanced rosette rather than an arbitrary wedge.
+//
+// CURATED OVERRIDES: the six pairs called out in the "Summary of Optimal
+// Timeframes" reference use the exact hand-picked spans/ratios from that
+// table (some are intentionally looser or higher-order than the first
+// continued-fraction convergent — e.g. Saturn+Uranus's 57:20 mandala — so
+// they can't all be derived generically). Keyed by the two planet `key`s,
+// order-independent. Every other pair falls through to the generic
+// resonance math below.
+const OPTIMAL_TIMEFRAMES = {
+  'earth|venus': { years: 8, petals: 5 }, //  8:13 → clean 5-petaled rose
+  'mercury|venus': { years: 2, petals: 5 }, //  3:8 → ornate 5-sided crown
+  'earth|mars': { years: 15, petals: 7 }, // 15:8 → dense asymmetrical shield
+  'jupiter|mars': { years: 12, petals: 7 }, //  6:1 → crisp 7-lobed rosette
+  'jupiter|saturn': { years: 60, petals: 3 }, //  5:2 → triangular crown
+  'saturn|uranus': { years: 1680, petals: 37 }, // 57:20 → ultra-dense mandala
+};
+
+/**
+ * @param {number} periodA days
+ * @param {number} periodB days
+ * @param {string} [keyA] planet key (for curated-timeframe lookup)
+ * @param {string} [keyB] planet key
+ * @returns {{years: number, petals: number, resonance: object | null}}
+ */
+export function patternTimeframe(periodA, periodB, keyA, keyB) {
+  if (keyA && keyB) {
+    const curated = OPTIMAL_TIMEFRAMES[[keyA, keyB].sort().join('|')];
+    if (curated) return { ...curated, resonance: null };
+  }
+
+  const outerPeriod = Math.max(periodA, periodB);
+  // Tight tolerance so the search reaches the TRUE best convergent
+  // (e.g. Earth+Venus's 13:8, not the looser 5:3 that stops it early),
+  // with wide orbit-count caps so genuinely dense pairs are still allowed.
+  const resonance = findResonance(periodA, periodB, {
+    maxDenominator: 40,
+    maxOrbitCount: 60,
+    tolerance: 0.008,
+    fallbackTolerance: 0.05,
+  });
+
+  if (resonance) {
+    const years = (resonance.longer * outerPeriod) / 365.25;
+    const petals = Math.max(Math.abs(resonance.shorter - resonance.longer), 1);
+    return { years, petals, resonance };
+  }
+
+  // No clean resonance — aim for ~6 relative conjunctions over the synodic
+  // period (clamped so near-equal or very wide pairs stay renderable).
+  const synodicDays = 1 / Math.abs(1 / periodA - 1 / periodB);
+  const years = Math.min(Math.max((synodicDays * 6) / 365.25, 4), 60);
+  return { years, petals: 6, resonance: null };
+}
+

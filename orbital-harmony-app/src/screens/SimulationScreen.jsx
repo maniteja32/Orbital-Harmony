@@ -3,6 +3,7 @@ import { ArrowLeft } from 'lucide-react';
 import SolarSystemCanvas from '../components/SolarSystemCanvas.jsx';
 import LiquidGlassIconButton from '../components/LiquidGlassIconButton.jsx';
 import { PLANETS_BY_KEY } from '../data/planets.js';
+import { patternTimeframe } from '../utils/resonance.js';
 import { useAppStore, SPEED_PRESETS } from '../store/useAppStore.js';
 
 // Tap-cycled live playback-rate multiplier steps for the rocket button
@@ -13,19 +14,18 @@ import { useAppStore, SPEED_PRESETS } from '../store/useAppStore.js';
 const SPEED_STEPS = [1, 2, 5];
 const DEFAULT_SPEED_MULTIPLIER = SPEED_STEPS[0];
 
-// Pattern shaping. Every pair is drawn as a rosette whose number of lobes
-// = |traceSpeedA - traceSpeedB| * spanYears (each lobe = one conjunction of
-// the two planets, see data/planets.js `traceSpeed`). Targeting a roughly
-// CONSTANT lobe count keeps EVERY combination looking equally clean and
-// full — instead of some pairs closing in a couple of lobes (sparse) and
-// others in dozens (a dense scribble). A fixed target chord count then
-// keeps the line density consistent too. Near-equal-speed pairs (e.g.
-// Mercury+Venus) can't form many lobes no matter the span, so the span is
-// clamped rather than exploding to hundreds of years.
-const TARGET_LOBES = 6;
-const TARGET_CHORDS = 260;
-const MIN_SPAN_YEARS = 5;
-const MAX_SPAN_YEARS = 22;
+// Chord sampling: how many chords to draw PER petal/lobe of the pattern.
+// Scaling with the petal count keeps every pattern's line density roughly
+// consistent — a 5-petal rose and a 37-petal mandala both read cleanly
+// rather than one sparse and one an overdrawn scribble. Kept deliberately
+// LOW: the chord "string art" resolves into distinct, legible petals at a
+// modest line count (e.g. Earth+Venus's clean 5-rose), whereas a high
+// count fills every pair into an indistinct dense mandala. Min/max clamp
+// keeps degenerate or very-high-petal pairs bounded (engine also caps
+// total chords at 40k).
+const CHORDS_PER_PETAL = 13;
+const MIN_CHORDS = 70;
+const MAX_CHORDS = 1600;
 
 /** Replaces the old segmented-control-only "Simulation settings" screen —
  * merges a LIVE pattern-tracer preview (previously only shown on the
@@ -52,15 +52,21 @@ export default function SimulationScreen({ onComplete, onBack }) {
   const planetAData = PLANETS_BY_KEY[planetA];
   const planetBData = PLANETS_BY_KEY[planetB];
 
-  // Resonance-aware run length, computed from the pair's Earth-relative
-  // `traceSpeed` values so every combination traces ~TARGET_LOBES clean
-  // lobes at a consistent chord density (see the constants above).
+  // Resonance-driven run length + chord density (see utils/resonance.js
+  // `patternTimeframe`): run for exactly the pair's real orbital-resonance
+  // closure so each combination traces its TRUE characteristic pattern
+  // (e.g. Earth+Venus's 8:13 => a clean 5-petaled rose), with chord count
+  // scaled to the petal count for consistent line density.
   const { totalSimYears, traceIntervalDays } = useMemo(() => {
-    const sA = planetAData?.traceSpeed ?? 1;
-    const sB = planetBData?.traceSpeed ?? 1;
-    const rel = Math.max(Math.abs(sA - sB), 0.04); // guard near-equal speeds
-    const span = Math.min(Math.max(TARGET_LOBES / rel, MIN_SPAN_YEARS), MAX_SPAN_YEARS);
-    return { totalSimYears: span, traceIntervalDays: (span * 365.25) / TARGET_CHORDS };
+    if (!planetAData || !planetBData) return { totalSimYears: 8, traceIntervalDays: 3 };
+    const { years, petals } = patternTimeframe(
+      planetAData.orbitalPeriodDays,
+      planetBData.orbitalPeriodDays,
+      planetAData.key,
+      planetBData.key,
+    );
+    const chords = Math.min(Math.max((petals ?? 6) * CHORDS_PER_PETAL, MIN_CHORDS), MAX_CHORDS);
+    return { totalSimYears: years, traceIntervalDays: (years * 365.25) / chords };
   }, [planetAData, planetBData]);
 
   const handleEngineComplete = useCallback(() => {
@@ -128,6 +134,7 @@ export default function SimulationScreen({ onComplete, onBack }) {
           ref={canvasRef}
           planetKeys={planetKeys}
           tracePattern
+          physicalPattern
           startPaused
           speedDurationSec={speedCfg.durationSec}
           totalSimYears={totalSimYears}

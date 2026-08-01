@@ -237,6 +237,7 @@ export function createSolarSystemEngine(canvas, opts) {
     planetKeys,
     interactive = false,
     tracePattern = false,
+    physicalPattern = false,
     showOrbitRings = true,
     cinematicIntro = false,
     startSettled = false,
@@ -743,15 +744,16 @@ export function createSolarSystemEngine(canvas, opts) {
     if (!completed) browseElapsedSec += delta;
     planets.forEach((planet) => {
       if (tracePattern) {
-        // Pattern/reveal mode: orbit angle is driven by the planet's
-        // Earth-relative `traceSpeed` (see data/planets.js), NOT its real
-        // orbital period. Real periods give high angular-speed ratios
-        // (Mercury:Earth ~4.15) that trace dense, chaotic webs; the
-        // compressed traceSpeeds keep every pair's ratio low so the chord
-        // pattern reads as a clean, elegant rosette for every combination.
-        // Falls back to the real-period ratio (Earth-normalized) if a
-        // planet somehow lacks a traceSpeed.
-        const revsPerYear = planet.data.traceSpeed ?? (365.256 / planet.data.orbitalPeriodDays);
+        // Pattern/reveal mode. By default the orbit angle is driven by the
+        // planet's Earth-relative `traceSpeed` (see data/planets.js), which
+        // COMPRESSES every pair into a calm 1-2 lobe rosette. When
+        // `physicalPattern` is set, drive it by the planet's REAL orbital
+        // period instead, so each pair traces its true resonance pattern
+        // (e.g. Earth+Venus's 8:13 => clean 5-petaled rose) — paired with a
+        // resonance-sized span (see utils/resonance.js patternTimeframe).
+        const revsPerYear = physicalPattern
+          ? 365.256 / planet.data.orbitalPeriodDays
+          : (planet.data.traceSpeed ?? (365.256 / planet.data.orbitalPeriodDays));
         planet.pivot.rotation.y = planet.startAngle + (simDaysElapsed / DAYS_PER_YEAR) * revsPerYear * Math.PI * 2;
       } else {
         // Browse mode: compressed, mobile-friendly ambient speed (see
