@@ -182,6 +182,7 @@ button {
 .back-button::after,
 .system-menu::after,
 .system-info::after,
+.mode-card::after,
 .icon-button::after {
   content: '';
   position: absolute;
@@ -1650,6 +1651,7 @@ button {
    the app's unlayered `button` reset (class 0,1,0 > element 0,0,1), so its
    background/border/colour apply despite that reset. */
 .mode-card {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 18px;
