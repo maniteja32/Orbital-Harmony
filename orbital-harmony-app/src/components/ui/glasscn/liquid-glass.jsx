@@ -209,19 +209,17 @@ export const LiquidGlass = forwardRef(function LiquidGlass(
             // Rim thickness, overridable per-consumer via --liquid-glass-rim-width.
             padding: "var(--liquid-glass-rim-width, 0.5px)",
             background:
-              // DIAGONAL specular rim (Apple / macOS "Liquid Glass" look): a
-              // single 135° gradient so a light source sits at the TOP-LEFT
-              // corner (bright edge) and falls off to a dark edge at the
-              // BOTTOM-RIGHT corner — instead of an axis-aligned bright-top/
-              // dark-sides symmetry. The bright/dark colours + how tight the
-              // highlight hugs each corner are tunable via the
-              // --liquid-glass-rim-light / --liquid-glass-rim-dark /
-              // --liquid-glass-rim-fade CSS variables.
-              "linear-gradient(135deg, " +
-              "var(--liquid-glass-rim-light, rgba(255,255,255,0.25)) 0%, " +
-              "rgba(255,255,255,0) var(--liquid-glass-rim-fade, 34%), " +
-              "rgba(255,255,255,0) calc(100% - var(--liquid-glass-rim-fade, 34%)), " +
-              "var(--liquid-glass-rim-dark, rgba(0,0,0,0.22)) 100%)",
+              // Liquid-glass rim, distributed along the whole edge but tilted
+              // OFF the horizontal/vertical axes so the light reads DIAGONALLY
+              // (Apple-ish) instead of a flat top/bottom symmetry. Same two-band
+              // structure as a plain bevel — a light band + a dark band, each
+              // fading out at its ends — just rotated ~20° (110° / 200° instead
+              // of 90° / 180°): this offsets the bright streak on the top edge
+              // from the one on the bottom edge, giving the diagonal lean while
+              // keeping every side lit. Colours/reach tunable via
+              // --liquid-glass-rim-light / --liquid-glass-rim-dark / -fade.
+              "linear-gradient(110deg, rgba(255,255,255,0), var(--liquid-glass-rim-light, rgba(255,255,255,0.25)) var(--liquid-glass-rim-fade, 18%), var(--liquid-glass-rim-light, rgba(255,255,255,0.25)) calc(100% - var(--liquid-glass-rim-fade, 18%)), rgba(255,255,255,0)), " +
+              "linear-gradient(200deg, rgba(0,0,0,0), var(--liquid-glass-rim-dark, rgba(0,0,0,0.2)) var(--liquid-glass-rim-fade, 18%), var(--liquid-glass-rim-dark, rgba(0,0,0,0.2)) calc(100% - var(--liquid-glass-rim-fade, 18%)), rgba(0,0,0,0))",
             WebkitMask: "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)",
             WebkitMaskComposite: "xor",
             mask: "linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0)",
