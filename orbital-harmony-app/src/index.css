@@ -273,12 +273,6 @@ button {
   .app-shell[data-screen='system'] > .screen-transition {
     max-width: none;
   }
-  .screen--system .system-overlay {
-    left: 50%;
-    transform: translateX(-50%);
-    width: 100%;
-    max-width: 560px;
-  }
 }
 
 .solar-canvas {
@@ -288,7 +282,6 @@ button {
   touch-action: none;
 }
 
-.system-overlay,
 .reveal-overlay {
   position: absolute;
   left: 0;
@@ -301,60 +294,113 @@ button {
   background: linear-gradient(180deg, transparent 0%, rgba(3, 3, 8, 0.55) 35%, rgba(3, 3, 8, 0.92) 100%);
 }
 
-.system-overlay__top h1 {
+/* ---- Landing / Home (System) screen ---------------------------------------
+   Title + subtitle pinned top-centre, a single CTA pinned to the bottom, and
+   a hamburger menu top-left. Everything stays hidden until the cinematic
+   intro camera settles (see SolarSystemScreen -> `is-ready`), then fades /
+   slides in with a staggered per-element delay. */
+.screen--system .system-menu {
+  position: absolute;
+  top: calc(16px + var(--safe-top));
+  left: 16px;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 44px;
+  height: 44px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: rgba(3, 3, 8, 0.32);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.screen--system .system-menu span {
+  display: block;
+  height: 1.6px;
+  border-radius: 2px;
+  background: var(--text-primary);
+}
+
+.screen--system .system-menu span:nth-child(2) {
+  width: 68%;
+}
+
+.system-header {
+  position: absolute;
+  top: calc(76px + var(--safe-top));
+  left: 0;
+  right: 0;
+  z-index: 2;
+  padding: 0 28px;
+  text-align: center;
+  pointer-events: none;
+}
+
+.system-header h1 {
   font-family: var(--font-display);
-  font-size: 24px;
-  margin: 8px 0 6px;
+  font-size: 30px;
+  letter-spacing: 0.01em;
+  margin-bottom: 12px;
   text-shadow: 0 2px 16px rgba(0, 0, 0, 0.9), 0 1px 4px rgba(0, 0, 0, 0.95);
 }
 
-.system-overlay__top p {
+.system-header p {
   color: var(--text-secondary);
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.5;
+  max-width: 320px;
+  margin: 0 auto;
   text-shadow: 0 1px 10px rgba(0, 0, 0, 0.9), 0 1px 3px rgba(0, 0, 0, 0.9);
 }
 
-/* Hidden until the cinematic intro camera settles (see SolarSystemScreen),
-   then fades/slides in with a staggered per-element delay — calm and
-   deliberate rather than a single flat fade. */
-.system-overlay {
-  opacity: 0;
-  pointer-events: none;
-  /* No dark scrim gradient (unlike .reveal-overlay): the landing scene now
-     spans the full width on desktop, so a bottom scrim visibly dimmed/tinted
-     any planet that orbited behind it. Legibility instead comes from a soft
-     text-shadow on the title/subtitle below; the CTA has its own solid
-     background so it stays readable regardless. */
-  background: none;
+.system-cta {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  padding: 28px 22px calc(24px + var(--safe-bottom));
 }
 
-.system-overlay .eyebrow,
-.system-overlay__top h1,
-.system-overlay__top p,
-.system-overlay > .system-cta {
+/* Keep the CTA (and, on desktop, the whole layout) to a readable centred
+   column even when the canvas spans the full viewport width. */
+.system-cta > * {
+  width: 100%;
+  max-width: 520px;
+}
+
+/* Staggered fade/slide-in once the intro settles. The top header slides down
+   from above; the menu and bottom CTA rise from below. */
+.screen--system .system-menu,
+.system-header h1,
+.system-header p,
+.system-cta {
   opacity: 0;
-  transform: translateY(12px);
   transition: opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1), transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.system-overlay.is-visible {
-  opacity: 1;
-  pointer-events: auto;
-}
+.screen--system .system-menu { transform: translateY(-10px); }
+.system-header h1,
+.system-header p { transform: translateY(-12px); }
+.system-cta { transform: translateY(14px); }
 
-.system-overlay.is-visible .eyebrow,
-.system-overlay.is-visible .system-overlay__top h1,
-.system-overlay.is-visible .system-overlay__top p,
-.system-overlay.is-visible > .system-cta {
+.screen--system.is-ready .system-menu,
+.screen--system.is-ready .system-header h1,
+.screen--system.is-ready .system-header p,
+.screen--system.is-ready .system-cta {
   opacity: 1;
   transform: translateY(0);
 }
 
-.system-overlay.is-visible .eyebrow { transition-delay: 0.1s; }
-.system-overlay.is-visible .system-overlay__top h1 { transition-delay: 0.28s; }
-.system-overlay.is-visible .system-overlay__top p { transition-delay: 0.46s; }
-.system-overlay.is-visible > .system-cta { transition-delay: 0.68s; }
+.screen--system.is-ready .system-menu { transition-delay: 0.1s; }
+.screen--system.is-ready .system-header h1 { transition-delay: 0.28s; }
+.screen--system.is-ready .system-header p { transition-delay: 0.46s; }
+.screen--system.is-ready .system-cta { transition-delay: 0.68s; }
 
 .reveal-overlay__top {
   display: flex;

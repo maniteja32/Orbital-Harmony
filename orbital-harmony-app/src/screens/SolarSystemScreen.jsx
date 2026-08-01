@@ -16,7 +16,7 @@ export default function SolarSystemScreen({ onNext }) {
   const handleIntroComplete = useCallback(() => setIntroDone(true), []);
 
   return (
-    <div className="screen screen--system">
+    <div className={`screen screen--system${introDone ? ' is-ready' : ''}`}>
       <SolarSystemCanvas
         ref={canvasRef}
         planetKeys={planetKeys}
@@ -27,19 +27,25 @@ export default function SolarSystemScreen({ onNext }) {
         onIntroComplete={handleIntroComplete}
         className="screen__canvas"
       />
-      <div className={`system-overlay${introDone ? ' is-visible' : ''}`}>
-        <div className="system-overlay__top">
-          <h1>The Solar System</h1>
-          <p>Discover the hidden geometry created by planetary motion.</p>
-        </div>
-        <div
-          className="system-cta"
-          style={{ '--liquid-glass-rim-width': '1px', '--liquid-glass-rim-light': 'rgba(255,255,255,0.5)' }}
-        >
-          <GlassButton className="w-full h-12 text-base font-semibold" onClick={onNext}>
-            Discover a Pattern
-          </GlassButton>
-        </div>
+
+      <button type="button" className="system-menu" aria-label="Open menu">
+        <span />
+        <span />
+        <span />
+      </button>
+
+      <div className="system-header">
+        <h1>Orbital Harmony</h1>
+        <p>Discover the hidden geometry created by planetary motion.</p>
+      </div>
+
+      <div
+        className="system-cta"
+        style={{ '--liquid-glass-rim-width': '1px', '--liquid-glass-rim-light': 'rgba(255,255,255,0.5)' }}
+      >
+        <GlassButton className="w-full h-12 text-base font-semibold" onClick={onNext}>
+          Begin Exploring
+        </GlassButton>
       </div>
     </div>
   );
