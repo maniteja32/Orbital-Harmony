@@ -328,6 +328,24 @@ button {
   width: 68%;
 }
 
+/* Info button — top-right counterpart to the hamburger, same glass pill. */
+.screen--system .system-info {
+  position: absolute;
+  top: calc(16px + var(--safe-top));
+  right: 16px;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  color: var(--text-primary);
+  background: rgba(3, 3, 8, 0.32);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
 .system-header {
   position: absolute;
   top: calc(76px + var(--safe-top));
@@ -389,12 +407,19 @@ button {
   transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1), transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.screen--system .system-menu { transform: none; }
+.screen--system .system-info {
+  opacity: 0;
+  transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1), transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.screen--system .system-menu,
+.screen--system .system-info { transform: none; }
 .system-header h1,
 .system-header p,
 .system-cta { transform: translateY(6px); }
 
 .screen--system.is-ready .system-menu,
+.screen--system.is-ready .system-info,
 .screen--system.is-ready .system-header h1,
 .screen--system.is-ready .system-header p,
 .screen--system.is-ready .system-cta {
@@ -403,6 +428,7 @@ button {
 }
 
 .screen--system.is-ready .system-menu { transition-delay: 0.08s; }
+.screen--system.is-ready .system-info { transition-delay: 0.08s; }
 .screen--system.is-ready .system-header h1 { transition-delay: 0.2s; }
 .screen--system.is-ready .system-header p { transition-delay: 0.32s; }
 .screen--system.is-ready .system-cta { transition-delay: 0.44s; }
@@ -410,6 +436,7 @@ button {
 /* Respect users who prefer reduced motion: fade only, no drift. */
 @media (prefers-reduced-motion: reduce) {
   .screen--system .system-menu,
+  .screen--system .system-info,
   .system-header h1,
   .system-header p,
   .system-cta {
