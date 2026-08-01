@@ -33,6 +33,25 @@ export default function App() {
           <LoadingScreen onDone={() => goTo('system')} onExited={() => setShowLoading(false)} />
         </div>
       )}
+      {/* Referenced by `.glass-btn`'s `backdrop-filter: url(#glass-distortion)`
+          (see index.css) — a subtle feTurbulence + feDisplacementMap filter
+          that bends/refracts whatever sits behind each Liquid Glass button,
+          the actual "background refraction through the glass" effect (a
+          gradient alone can only fake a highlight, never real distortion).
+          Rendered once, globally, completely invisible (0×0, no fill/
+          stroke) — SVG filters just need to exist somewhere in the
+          document to be referenced by id from CSS anywhere else. Browsers
+          that don't support referencing an SVG filter from
+          `backdrop-filter` simply ignore that one (invalid) value and fall
+          back to the plain blur declared earlier in the same rule — see
+          the CSS comment above `.glass-btn` for why that's safe. */}
+      <svg aria-hidden="true" focusable="false" style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden' }}>
+        <filter id="glass-distortion" x="-20%" y="-20%" width="140%" height="140%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.012 0.018" numOctaves="2" seed="7" result="glassNoise" />
+          <feGaussianBlur in="glassNoise" stdDeviation="3" result="glassNoiseBlurred" />
+          <feDisplacementMap in="SourceGraphic" in2="glassNoiseBlurred" scale="14" xChannelSelector="R" yChannelSelector="G" />
+        </filter>
+      </svg>
     </div>
   );
 }

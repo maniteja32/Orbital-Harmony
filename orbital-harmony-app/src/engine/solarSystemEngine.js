@@ -16,6 +16,7 @@ import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js
 import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
 import { PLANETS_BY_KEY, SUN_TEXTURE, MOON_TEXTURE } from '../data/planets.js';
 import { currentOrbitAngleRad } from '../utils/currentPosition.js';
+import { buildStarfield } from './starfieldBackdrop.js';
 
 // Pattern-tracer line style presets, ported from the original vanilla-JS
 // prototype (js/main.js) — dashSize/gapSize are in the same screen-space
@@ -75,100 +76,12 @@ function makeOrbitRing(radiusDistance, colorHex) {
   return new THREE.Line(geometry, material);
 }
 
-// A small, soft circular sprite for star points — WITHOUT this, a plain
-// THREE.PointsMaterial with no map always rasterizes as a hard-edged
-// SQUARE, which reads as an artificial grid of little boxes rather than
-// glowing points of light. A tight radial gradient (bright core fading to
-// fully transparent) is the cheapest way to make every star read as a
-// soft, natural glow instead.
-let starSpriteCache = null;
-function makeStarSprite() {
-  if (starSpriteCache) return starSpriteCache;
-  const size = 32;
-  const canvas = document.createElement('canvas');
-  canvas.width = canvas.height = size;
-  const ctx = canvas.getContext('2d');
-  const gradient = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
-  gradient.addColorStop(0, 'rgba(255,255,255,1)');
-  gradient.addColorStop(0.4, 'rgba(255,255,255,0.55)');
-  gradient.addColorStop(1, 'rgba(255,255,255,0)');
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, size, size);
-  starSpriteCache = new THREE.CanvasTexture(canvas);
-  return starSpriteCache;
-}
-
-function buildStarLayer(count, minR, maxR, size, opacity) {
-  const positions = new Float32Array(count * 3);
-  const colors = new Float32Array(count * 3);
-  for (let i = 0; i < count; i++) {
-    const r = minR + Math.random() * (maxR - minR);
-    const theta = Math.random() * Math.PI * 2;
-    const phi = Math.acos(Math.random() * 2 - 1);
-    positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
-    positions[i * 3 + 1] = Math.abs(r * Math.cos(phi));
-    positions[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta);
-    // Per-star brightness variation (0.45-1.0) via vertex color — reads as
-    // a natural scatter of stronger/weaker stars instead of one uniform
-    // dot size/brightness repeated identically everywhere.
-    const b = 0.45 + Math.random() * 0.55;
-    colors[i * 3] = b;
-    colors[i * 3 + 1] = b;
-    colors[i * 3 + 2] = b;
-  }
-  const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-  geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-  const material = new THREE.PointsMaterial({
-    // Very slightly warm-white (never blue) — plain #ffffff read a touch
-    // cold/blue-ish once blended with the pitch-black background.
-    color: 0xfff6ea,
-    vertexColors: true,
-    map: makeStarSprite(),
-    size,
-    transparent: true,
-    opacity,
-    // Additive so overlapping/near-touching stars blend into a soft glow
-    // instead of a flat alpha-blended disc — reads as actual light rather
-    // than a painted dot.
-    blending: THREE.AdditiveBlending,
-    // OFF, not the default true: with sizeAttenuation on, a point's ON-
-    // SCREEN size scales with its distance from the camera exactly like a
-    // real 3D object would — but these shells sit 900-1700 world units out
-    // while the camera itself only ever sits ~100-300 units away, so the
-    // apparent size collapsed to a sub-pixel, invisible speck. Real stars
-    // are effectively at infinity and don't visibly shrink as the camera
-    // dollies a few hundred units, so a FIXED screen-space size (constant
-    // regardless of distance) is both the fix and the more physically
-    // honest choice here.
-    sizeAttenuation: false,
-    depthWrite: false,
-  });
-  return new THREE.Points(geometry, material);
-}
-
-// Three depth layers (far/dim -> near/bright) read as a much denser, more
-// realistic field than one uniform layer of points. Each layer is later
-// given its own slow, independent rotation in tick() — a cheap stand-in
-// for parallax depth since the camera itself never pans, only zooms.
-function buildStarfield() {
-  // Shell radii are deliberately kept well beyond both the wide AND close
-  // hero camera distances (~200-500 units) so no star ever renders closer
-  // to the camera than the solar system itself — otherwise sizeAttenuation
-  // blows a "nearby" star up into a large, distracting square. Sizes are
-  // small fixed screen-space pixel counts now (see buildStarLayer) rather
-  // than world units, tuned for a natural, subtly glowing scatter instead
-  // of a dense/artificial-looking field.
-  const group = new THREE.Group();
-  const far = buildStarLayer(2400, 900, 1700, 2.2, 0.65);
-  const mid = buildStarLayer(1300, 650, 950, 3, 0.75);
-  const near = buildStarLayer(220, 480, 680, 3.8, 0.9);
-  far.userData.spin = 0.0015;
-  mid.userData.spin = 0.003;
-  near.userData.spin = 0.005;
-  group.add(far, mid, near);
-  return group;
-}
+// The starfield (makeStarSprite / buildStarLayer / sphereStar / buildStarfield)
+// now lives in ./starfieldBackdrop.js and is imported above — a SINGLE shared
+// source so this engine's skybox and the LoadingScreen backdrop render the
+// EXACT same stars at the EXACT same positions (see that module for why the
+// star data is a cached singleton), making the loading -> system transition
+// perfectly seamless.
 
 // Unlit (the Sun is a light source, not something lit by scene lights) but
 // shaded with a simple view-dependent term for physical believability: a
@@ -350,9 +263,11 @@ export function createSolarSystemEngine(canvas, opts) {
   } = opts;
 
   const scene = new THREE.Scene();
-  // Pitch black — deliberately pure (0,0,0), not the earlier near-black
-  // 0x00000a, so there's no residual blue tint anywhere in the backdrop.
-  scene.background = new THREE.Color(0x000000);
+  // Background left null (not a solid Color) so the separate starfield skybox
+  // pass shows through behind the solar system — the renderer's clear color
+  // (set below) paints the pure-black backdrop. A scene.background Color would
+  // repaint over the stars during the main pass and hide them.
+  scene.background = null;
 
   const parent = canvas.parentElement;
   const width = parent?.clientWidth || window.innerWidth;
@@ -382,6 +297,11 @@ export function createSolarSystemEngine(canvas, opts) {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.setSize(width, height, false);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
+  // Manual two-pass rendering (starfield skybox, then the main scene) — see
+  // renderScene(). autoClear off so the main pass doesn't wipe the stars; the
+  // clear color paints the pure-black backdrop at the start of each frame.
+  renderer.autoClear = false;
+  renderer.setClearColor(0x000000, 1);
 
   // Brightened overall (ambient was 0.18 -> 0.42 -> 0.62, sun 3.2/decay 0.15
   // -> 4.2/decay 0.12 -> 4.8/decay 0.1) — on lower-brightness mobile
@@ -401,9 +321,6 @@ export function createSolarSystemEngine(canvas, opts) {
   scene.add(sunLight);
   const fillLight = new THREE.HemisphereLight(0xfff7ea, 0x2a2f45, 0.28);
   scene.add(fillLight);
-
-  const starfield = buildStarfield();
-  scene.add(starfield);
 
   const sunGeo = new THREE.SphereGeometry(4.2, 64, 64);
   const sunMat = makeSunMaterial();
@@ -478,6 +395,17 @@ export function createSolarSystemEngine(canvas, opts) {
     camera.bottom = -half;
     camera.updateProjectionMatrix();
   }
+
+  // Starfield is rendered as a separate "skybox" pass: its own scene + a
+  // perspective camera at the origin that copies the MAIN camera's orientation
+  // each frame (see renderScene()). This fills the frame at any angle for BOTH
+  // camera types — critically, it sidesteps the orthographic browse camera's
+  // narrow frustum, which would otherwise clip an in-scene star sphere away to
+  // nothing (the pure-black, star-less sky bug).
+  const starfield = buildStarfield();
+  const starScene = new THREE.Scene();
+  starScene.add(starfield);
+  const starCamera = new THREE.PerspectiveCamera(85, width / height, 1, 4000);
 
   // A fixed-vertical-FOV PerspectiveCamera shows a NARROWER horizontal slice
   // than vertical whenever aspect (width/height) < 1 — exactly the case for
@@ -756,11 +684,23 @@ export function createSolarSystemEngine(canvas, opts) {
     distanceBuffer.needsUpdate = true;
   }
 
+  // Two-pass render: the starfield skybox first (its camera copies the main
+  // camera's orientation so the sky tracks the view), then the solar system on
+  // top. clearDepth() between passes so the near star shell never
+  // depth-occludes the scene.
+  function renderScene() {
+    renderer.clear();
+    starCamera.quaternion.copy(camera.quaternion);
+    renderer.render(starScene, starCamera);
+    renderer.clearDepth();
+    renderer.render(scene, camera);
+  }
+
   function tick() {
     rafId = requestAnimationFrame(tick);
     const delta = Math.min(clock.getDelta(), 0.05);
     if (paused) {
-      renderer.render(scene, camera);
+      renderScene();
       return;
     }
 
@@ -768,6 +708,9 @@ export function createSolarSystemEngine(canvas, opts) {
     sunMat.uniforms.time.value += delta;
     starfield.children.forEach((layer) => {
       layer.rotation.y += delta * layer.userData.spin;
+      // Advance each layer's twinkle clock (the ~26% of stars with
+      // twinkleAmount > 0 scintillate off this uTime uniform).
+      if (layer.material.uniforms?.uTime) layer.material.uniforms.uTime.value += delta;
     });
 
     if (!completed) simDaysElapsed += delta * baseSimDaysPerRealSecond * speedMultiplier;
@@ -877,7 +820,7 @@ export function createSolarSystemEngine(canvas, opts) {
     }
 
     if (controls) controls.update();
-    renderer.render(scene, camera);
+    renderScene();
   }
 
   function resize() {
@@ -910,6 +853,10 @@ export function createSolarSystemEngine(canvas, opts) {
       }
     }
     camera.updateProjectionMatrix();
+    // Keep the starfield skybox camera's aspect in sync so the sky never
+    // stretches/crops on resize or orientation change.
+    starCamera.aspect = w / h;
+    starCamera.updateProjectionMatrix();
     renderer.setSize(w, h, false);
     // LineMaterial's dashing/width math is screen-space (pixels), so its
     // `resolution` uniform must stay in sync with the actual render size.
@@ -964,7 +911,7 @@ export function createSolarSystemEngine(canvas, opts) {
         planet.tiltAnchor.rotation.y = -planet.startAngle;
       });
       scene.updateMatrixWorld(true);
-      renderer.render(scene, camera);
+      renderScene();
     },
     getProgress() {
       if (!tracePattern) return 0;

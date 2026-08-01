@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { createStarfieldBackdrop } from '../engine/starfieldBackdrop.js';
 
 /**
  * Premium cinematic loading sequence — a clean, top-down "orrery" view of
@@ -46,6 +47,7 @@ function easeInOutCubic(t) {
 
 export default function LoadingScreen({ onDone, onExited }) {
   const canvasRef = useRef(null);
+  const starCanvasRef = useRef(null);
   const onDoneRef = useRef(onDone);
   onDoneRef.current = onDone;
   const onExitedRef = useRef(onExited);
@@ -60,54 +62,23 @@ export default function LoadingScreen({ onDone, onExited }) {
     const ctx = canvas.getContext('2d');
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+    // The starfield is the EXACT same Three.js skybox the Solar System screen
+    // uses (see engine/starfieldBackdrop.js) rendered on its own WebGL canvas
+    // BEHIND this 2D orrery canvas — so the loading -> system transition shows
+    // literally identical stars. The orrery (Sun + planet dots + trails) is
+    // still drawn on the transparent 2D canvas on top.
+    const backdrop = starCanvasRef.current ? createStarfieldBackdrop(starCanvasRef.current) : null;
+
     let width = 0;
     let height = 0;
     let centerX = 0;
     let centerY = 0;
     let maxOrbitPx = 0;
-    let stars = [];
 
-    // A fixed, static field of tiny glowing points scattered across the
-    // whole canvas (not just around the orrery) — regenerated on resize.
-    // These never fade like the planet trails do (redrawn fresh each frame
-    // in step 2 below), so they always read as crisp, dramatic pinpricks
-    // of light against the pure black background.
-    //
-    // A minority (~12%) are marked `isFeatured` — bigger, brighter, and
-    // given a slower/calmer twinkle plus a soft 4-point sparkle flare at
-    // their brightness peak, so a handful of stars really pop and catch
-    // the eye rather than every star twinkling identically — this reads
-    // as a livelier, more dynamic sky instead of a uniform shimmer.
-    //
-    // Stars are thinned out (most rejected, only a sparse few kept) within
-    // a radius around the orrery itself — a fully uniform field scattered
-    // background dots right on top of/crowding the orbit rings and Sun,
-    // competing for attention with the actual centerpiece graphic instead
-    // of framing it.
-    function buildStars() {
-      const count = Math.round((width * height) / 5500);
-      const clearRadius = maxOrbitPx * 1.35;
-      const clearRadiusSq = clearRadius * clearRadius;
-      const next = [];
-      for (let i = 0; i < count; i++) {
-        const x = Math.random() * width;
-        const y = Math.random() * height;
-        const dx = x - centerX;
-        const dy = y - centerY;
-        if (dx * dx + dy * dy < clearRadiusSq && Math.random() > 0.1) continue;
-        const isFeatured = Math.random() < 0.12;
-        next.push({
-          x,
-          y,
-          r: isFeatured ? Math.random() * 0.9 + 1.4 : Math.random() * 1.1 + 0.3,
-          baseAlpha: isFeatured ? 0.65 + Math.random() * 0.3 : 0.25 + Math.random() * 0.55,
-          twinkleSpeed: isFeatured ? 0.22 + Math.random() * 0.35 : 0.4 + Math.random() * 1.2,
-          twinklePhase: Math.random() * Math.PI * 2,
-          isFeatured,
-        });
-      }
-      stars = next;
-    }
+    // The starfield now lives on a separate WebGL canvas behind this one
+    // (see createStarfieldBackdrop above) — it is the SAME star field the
+    // Solar System screen renders, so the transition is seamless. This 2D
+    // canvas only draws the orrery (Sun + planet dots + trails) on top.
 
     function handleResize() {
       const parent = canvas.parentElement;
@@ -126,7 +97,6 @@ export default function LoadingScreen({ onDone, onExited }) {
       // deliberately compact (was 0.42) so the whole loading pattern reads
       // as a small, minimal accent rather than a dominant centerpiece.
       maxOrbitPx = Math.min(width, height) * 0.3;
-      buildStars();
     }
     handleResize();
     window.addEventListener('resize', handleResize);
@@ -220,58 +190,9 @@ export default function LoadingScreen({ onDone, onExited }) {
         ctx.stroke();
       }
 
-      // ---- Dramatic glowing starfield — static positions, redrawn fresh
-      // every frame (so they never fade like the trails) with a gentle
-      // per-star twinkle via a phase-offset sine wave on their alpha. The
-      // twinkle previously only swung the alpha multiplier between 0.7-1.0
-      // (a 30% dip) on a physically tiny (~0.3-1.4px) dot — technically
-      // animating every frame, but so subtle it read as a static field.
-      // Widened to a near-full 0.15-1.0 swing (dimming almost to nothing
-      // at the trough) AND paired with a matching radius pulse so each
-      // star visibly grows/shrinks as it brightens/dims — much closer to a
-      // real naked-eye "twinkle" instead of a barely-perceptible shimmer. ----
-      for (const s of stars) {
-        const twinkle = 0.15 + 0.85 * (0.5 + 0.5 * Math.sin(now * 0.001 * s.twinkleSpeed + s.twinklePhase));
-
-        // Featured stars get a soft 4-point sparkle flare layered UNDER
-        // their core dot, scaled by the same twinkle value — only really
-        // visible near its brightness peak, so it reads as a brief
-        // glinting flash rather than a constant decoration. Rendered as
-        // short gradient lines that fade to fully transparent at the
-        // tips (rather than a flat-opacity stroke with hard-cut ends) and
-        // kept deliberately small/thin/dim — a bold, uniform plus sign
-        // read as an obviously fake sticker; this is meant to be a subtle
-        // glint easily overlooked unless you're looking for it.
-        if (s.isFeatured && twinkle > 0.5) {
-          const flareBoost = (twinkle - 0.5) / 0.5; // 0 at the threshold -> 1 at full brightness
-          const flareLen = s.r * (1.8 + 1.4 * flareBoost);
-          const flarePeakAlpha = s.baseAlpha * flareBoost * 0.3;
-          const hGrad = ctx.createLinearGradient(s.x - flareLen, s.y, s.x + flareLen, s.y);
-          hGrad.addColorStop(0, 'rgba(255, 255, 255, 0)');
-          hGrad.addColorStop(0.5, `rgba(255, 255, 255, ${flarePeakAlpha})`);
-          hGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
-          const vGrad = ctx.createLinearGradient(s.x, s.y - flareLen, s.x, s.y + flareLen);
-          vGrad.addColorStop(0, 'rgba(255, 255, 255, 0)');
-          vGrad.addColorStop(0.5, `rgba(255, 255, 255, ${flarePeakAlpha})`);
-          vGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
-          ctx.lineWidth = 0.4;
-          ctx.beginPath();
-          ctx.moveTo(s.x - flareLen, s.y);
-          ctx.lineTo(s.x + flareLen, s.y);
-          ctx.strokeStyle = hGrad;
-          ctx.stroke();
-          ctx.beginPath();
-          ctx.moveTo(s.x, s.y - flareLen);
-          ctx.lineTo(s.x, s.y + flareLen);
-          ctx.strokeStyle = vGrad;
-          ctx.stroke();
-        }
-
-        ctx.fillStyle = `rgba(255, 255, 255, ${s.baseAlpha * twinkle})`;
-        ctx.beginPath();
-        ctx.arc(s.x, s.y, s.r * (0.7 + 0.3 * twinkle), 0, Math.PI * 2);
-        ctx.fill();
-      }
+      // (The starfield is rendered on the separate WebGL canvas behind this
+      // one — see createStarfieldBackdrop — so there's no 2D star drawing
+      // here anymore.)
 
       // ---- Sun: small white core with a gentle, slow pulse (no glow —
       // a plain crisp dot, kept minimal per the brief) ----
@@ -329,16 +250,21 @@ export default function LoadingScreen({ onDone, onExited }) {
       clearTimeout(transitionTimer);
       clearTimeout(doneTimer);
       window.removeEventListener('resize', handleResize);
+      backdrop?.dispose();
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className={`loading-screen${leaving ? ' is-leaving' : ''}`}>
+      <canvas ref={starCanvasRef} className={`loading-stars${ready ? ' is-ready' : ''}`} />
       <canvas ref={canvasRef} className={`loading-canvas${ready ? ' is-ready' : ''}`} />
       <div className="loading-vignette" />
       <div className="loading-ui">
         <div className={`loading-title-wrap${ready ? ' is-visible' : ''}${transitioning ? ' is-transitioning' : ''}`}>
-          <h1 className="loading-title">Orbital Harmony</h1>
+          <h1 className="loading-title">
+            <span>Orbital</span>
+            <span>Harmony</span>
+          </h1>
         </div>
       </div>
     </div>

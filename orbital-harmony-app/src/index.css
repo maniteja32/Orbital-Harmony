@@ -173,6 +173,16 @@ button {
   line-height: 1.5;
 }
 
+/* Planet Select's header ("Step 1 of 2" / "Choose two planets") reads
+   better centered above the two symmetric Planet A/Planet B carousels
+   below it — scoped to just this screen since other screens using the
+   same `.screen__header` (Result, Simulation) keep their left-aligned
+   title sitting next to a back button/canvas, which centering would
+   throw off. */
+.screen--select .screen__header {
+  text-align: center;
+}
+
 .eyebrow {
   font-family: var(--font-display);
   font-size: 11px;
@@ -472,43 +482,136 @@ button {
    "coverflow" grow/fade effect tracks the swipe continuously and fluidly
    instead of only snapping between discrete states. */
 .swipe-select {
+  position: relative;
   flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
   /* Viewport-proportional breathing room between the Planet A and Planet
-     B rows — uses dvh (accounts for mobile Safari's dynamic address bar,
-     unlike vh) and a much lower floor/ratio than before: the previous
-     clamp(48px, 10vh, 96px) combined with a fixed 176px planet viewport
-     per row didn't leave enough room on short phones (e.g. iPhone SE,
-     375×667) — the two rows' combined natural height exceeded the
-     available space, and because this container is vertically CENTERED,
-     the overflow pushed symmetrically both up (overlapping the header's
-     "Choose two planets" title) and down (overlapping the Back/Continue
-     buttons). See .swipe-planet below for the matching responsive fix. */
-  gap: clamp(16px, 5dvh, 96px);
+     B GROUPS — deliberately much larger than a .swipe-row's own internal
+     gap (2px, see below) so the two sections read as clearly separate,
+     self-contained groups rather than one continuous list. Uses dvh
+     (accounts for mobile Safari's dynamic address bar, unlike vh); the
+     16px floor keeps the two groups from ever overlapping the header/
+     buttons on short phones (e.g. iPhone SE, 375×667) — see .swipe-planet
+     below for the matching responsive row-height fix. */
+  gap: clamp(20px, 6dvh, 96px);
   min-height: 0;
+}
+
+/* ---- Meteor field (subtle "shooting star" ambiance between Planet A and
+   Planet B) --------------------------------------------------------------
+   Spans the whole .swipe-select box (not just the literal gap) so a
+   meteor has real travel distance to read as a diagonal streak rather
+   than a static blip — in practice each one's brief visible window lands
+   while it's crossing through the gap between the two carousels. Sits
+   FIRST in DOM order (see PlanetSelectScreen.jsx) so it paints behind the
+   carousels/text, never occluding a planet or competing with selection;
+   `pointer-events: none` + clipped via `overflow: hidden` keeps it purely
+   decorative and contained. */
+.meteor-field {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.meteor {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: rgba(245, 246, 250, 0.9);
+  /* Soft glow, NASA-reference-shot style — a tight bright core with a
+     gentle falloff, not a dramatic/blown-out comet. */
+  box-shadow: 0 0 5px 1px rgba(234, 230, 255, 0.45);
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+/* The trailing streak — sits BEHIND the dot's direction of travel (to the
+   right, in the element's own unrotated coordinate space) fading to
+   nothing, so rotating the whole element to match its travel angle always
+   keeps the trail pointing the opposite way. Kept short and low-opacity
+   (a "distant shooting star", not a bold comet tail). */
+.meteor::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 100%;
+  width: 64px;
+  height: 1px;
+  transform: translateY(-50%);
+  background: linear-gradient(90deg, transparent, rgba(245, 246, 250, 0.5));
+}
+
+.meteor--1 {
+  /* Right at the gap BETWEEN the Planet A and Planet B groups (the same
+     band .swipe-select's own `gap` opens up between the two .swipe-row
+     children, roughly the vertical center since both groups are the same
+     height) — matches the user-annotated reference exactly, rather than
+     the more diagonal, corner-to-corner path this used before. */
+  top: 47%;
+  left: -8%;
+  animation: meteor-pass-1 17s ease-in 3s infinite;
+}
+
+.meteor--2 {
+  top: 53%;
+  left: -12%;
+  animation: meteor-pass-2 23s ease-in 12s infinite;
+}
+
+/* Each keyframe set is invisible for almost the entire duration and only
+   streaks briefly near the very start — combined with `infinite`, this is
+   what gives an every-17s/every-23s repeat cadence per meteor without any
+   JS timers/randomness. The two different durations/delays/angles/start
+   positions mean the pair drift in and out of sync with each other rather
+   than ever repeating in an obviously mechanical unison. */
+@keyframes meteor-pass-1 {
+  0% { opacity: 0; transform: translate(0, 0) rotate(4deg); }
+  1% { opacity: 0.75; }
+  9% { opacity: 0; transform: translate(430px, 32px) rotate(4deg); }
+  100% { opacity: 0; transform: translate(430px, 32px) rotate(4deg); }
+}
+
+@keyframes meteor-pass-2 {
+  0% { opacity: 0; transform: translate(0, 0) rotate(-3deg); }
+  1% { opacity: 0.6; }
+  11% { opacity: 0; transform: translate(470px, -20px) rotate(-3deg); }
+  100% { opacity: 0; transform: translate(470px, -20px) rotate(-3deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .meteor-field {
+    display: none;
+  }
 }
 
 .swipe-row {
   display: flex;
   flex-direction: column;
-  /* Tightened from 10px per request — brings the "Planet A"/"Planet B"
-     label and the selected planet's name/fact text visually closer to
-     the carousel itself on both sides. */
-  gap: 4px;
+  /* Tight intra-group spacing (label/carousel/name+description) — much
+     smaller than .swipe-select's inter-group gap above — so each Planet
+     A/Planet B section reads as one cohesive, self-contained unit. */
+  gap: 2px;
 }
 
 .swipe-row__label {
   padding: 0 22px;
   font-size: 11px;
   font-weight: 700;
+  /* Centered above its carousel (was left-aligned) so each "PLANET A"/
+     "PLANET B" group reads as one balanced, centered unit rather than a
+     left-hanging list item. */
+  text-align: center;
   /* Pulls the label a little further down toward the carousel, on top of
      the row's own 4px gap — safe because the actual rendered sphere sits
      centered within its (Saturn-ring-sized) canvas box with its own
      margin above/below, so this never overlaps real planet artwork, even
      for Saturn's ring (the tallest content in that shared box). */
-  margin-bottom: -6px;
+  margin-bottom: -8px;
   text-transform: uppercase;
   letter-spacing: 0.14em;
   color: var(--text-tertiary);
@@ -636,7 +739,7 @@ button {
      matching .swipe-row__label's symmetric pull above — safe for the same
      reason (real planet artwork is centered within the shared box with
      its own margin, even for Saturn's ring). */
-  margin-top: -6px;
+  margin-top: -8px;
 }
 
 .swipe-row__name {
@@ -708,14 +811,43 @@ button {
   overflow: hidden;
 }
 
-.screen--simulation .back-button,
-.screen--simulation .screen__header {
-  margin-left: 22px;
-  margin-right: 22px;
+/* Back button + header used to stack vertically (button above the
+   title); now placed in the SAME row via a single-cell CSS grid — both
+   children share `grid-area: 1 / 1` so they overlap, with the button
+   pinned to the left edge and the header centered across the FULL row
+   width (unaffected by the button's own width, unlike a flex row would
+   be) — reads as "Back" sitting consistently beside "Step 2 of 2"
+   instead of floating above it. */
+.screen--simulation .screen__topbar {
+  position: relative;
+  display: grid;
+  margin: 0 22px;
+}
+
+.screen--simulation .back-button {
+  grid-area: 1 / 1;
+  align-self: start;
+  justify-self: start;
+  margin: 0;
+  z-index: 1;
+  /* `align-self: start` only aligns the button's TOP edge with the
+     header's top edge — but the button's own 30px tall padded box is
+     noticeably taller than the 13.5px "Step 2 of 2" eyebrow line sitting
+     at that same top edge, so its center (and the "Back" text inside it)
+     visually hung lower than the eyebrow text instead of sitting level
+     with it. Nudges it up by the measured difference between the two
+     boxes' vertical centers (~8px) using the standalone `translate`
+     property (composes with the `transform: scale(...)` on
+     `.back-button:active` instead of fighting it, same technique used
+     for `.glass-btn`'s float/press animations elsewhere in this file) so
+     "Back" reads as inline with "Step 2 of 2", not floating above it. */
+  translate: 0 -8px;
 }
 
 .screen--simulation .screen__header {
-  margin-bottom: 0;
+  grid-area: 1 / 1;
+  text-align: center;
+  margin: 0;
 }
 
 .sim-canvas-wrap {
@@ -738,34 +870,255 @@ button {
   padding: 6px 22px calc(10px + var(--safe-bottom));
 }
 
-/* Four uniform circular "glass" buttons — line style, play/pause, reset,
-   rocket speed-boost — all the same size/shape per the reference design
-   (no more special tall drag-slider treatment for the rocket control). */
-.sim-control {
+/* ---- Liquid Glass icon buttons (Simulation screen controls) --------------
+   Circular, frosted "Liquid Glass" buttons (see components/
+   LiquidGlassIconButton.jsx) — line style, play/pause, reset, rocket
+   speed-boost — the web counterpart of the native SwiftUI
+   `LiquidGlassButton` (ios/OrbitalHarmony/App/Components/
+   LiquidGlassButton.swift).
+
+   REVISED per explicit feedback that v1 read as "glossy plastic" (one big
+   hotspot highlight + a strong pink/blue rim = a shiny sphere, not thin
+   glass). This version deliberately avoids anything that reads as a
+   continuous curved-surface shading gradient across the WHOLE face — real
+   thin glass has a flat-ish face + almost all of its optical "activity"
+   concentrated right at the edge, which is what every layer below is
+   built around:
+     `.glass-btn`        — sizing/backdrop + a real SVG-filter refraction
+                            (bends whatever's behind it, not just blurs it)
+                            + an idle floating drift (via the standalone
+                            `translate` property, kept independent of the
+                            press/hover `scale` property below so the two
+                            never fight over `transform`).
+     `.glass-btn__base`  — the outer translucent shell, barely tinted.
+     `.glass-btn__frost` — a smaller, inset "second surface" — the glass's
+                           own thickness/layered translucency, not just one
+                           flat pane.
+     `.glass-btn__sheen` — THREE small, soft highlights (not one big one),
+                           blended gently (`overlay`, not additive) so none
+                           of them blow out to a hotspot.
+     `.glass-btn__rim`   — a thin, mostly-white/silver hairline edge, with
+                           only a faint chromatic hint confined to a short
+                           arc near the top (not a saturated pink/blue ring
+                           around half the circle).
+     `.glass-btn__icon`  — the glyph, dimmed/desaturated slightly so it
+                           reads as embedded IN the glass, not floating
+                           brightly on top of it.
+   ---------------------------------------------------------------------- */
+.glass-btn {
   position: relative;
-  width: 62px;
-  height: 62px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.02) 60%);
-  border: 1px solid var(--glass-border);
-  color: var(--text-secondary);
-  box-shadow: 0 6px 18px -8px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    inset 0 -6px 12px -8px rgba(0, 0, 0, 0.5);
-  transition: transform 0.15s ease, background 0.2s ease;
+  border: none;
+  color: rgba(230, 233, 240, 0.82);
+  /* A little brighter than pure see-through — real Liquid Glass still
+     scatters/reflects a fair amount of ambient light even over a near-
+     black backdrop (it's a material, not a hole cut in the UI), so a
+     backdrop-filter alone over this app's near-black canvas would read
+     as smoked/dark glass rather than bright glass. */
+  background: rgba(255, 255, 255, 0.065);
+  /* Baseline (always valid) blur first — if a browser can't parse the
+     SVG-filter reference in the second declaration below, THAT
+     declaration is invalid and gets dropped entirely by the CSS parser,
+     leaving this plain-blur baseline in effect. Never merged/averaged;
+     it's one or the other. */
+  backdrop-filter: blur(16px) saturate(140%) brightness(1.15);
+  -webkit-backdrop-filter: blur(16px) saturate(140%) brightness(1.15);
+  /* Progressive enhancement: routes the backdrop through the
+     `#glass-distortion` SVG filter (feTurbulence + feDisplacementMap,
+     defined once in App.jsx) before blurring/saturating it — this is what
+     actually bends the Solar System canvas/background behind each button
+     rather than just softening it, the "subtle background refraction"
+     requirement a gradient alone can never deliver. */
+  backdrop-filter: url('#glass-distortion') blur(9px) saturate(150%) brightness(1.2);
+  -webkit-backdrop-filter: blur(9px) saturate(150%) brightness(1.2);
+  isolation: isolate;
+  /* Thinner, lower shadow than a sphere would cast — a floating DISC
+     grounds with a soft, fairly tight shadow, not a deep dome-shaped one. */
+  box-shadow:
+    0 6px 16px -8px rgba(0, 0, 0, 0.45),
+    0 1px 0 0 rgba(255, 255, 255, 0.05),
+    inset 0 1px 1px rgba(255, 255, 255, 0.12),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.18);
+  scale: 1;
+  translate: 0 0;
+  /* `scale` (press/hover) transitions; the idle `translate` float below is
+     driven by `animation`, not `transition` — keeping them on separate
+     transform-adjacent properties means neither ever fights the other. */
+  transition: scale 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+  animation: glass-btn-float 7.5s ease-in-out infinite;
 }
 
-.sim-control:active {
-  transform: scale(0.94);
+/* A few extra px of vertical drift per button, each on its own phase
+   offset (via `animation-delay`) so a row of them doesn't bob in unison
+   like a single rigid object — reads as independent floating glass. */
+.sim-controls .glass-btn:nth-child(2) { animation-delay: -1.6s; }
+.sim-controls .glass-btn:nth-child(3) { animation-delay: -3.9s; }
+.sim-controls .glass-btn:nth-child(4) { animation-delay: -5.7s; }
+
+@keyframes glass-btn-float {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -3px; }
 }
 
-.sim-control__badge {
+/* Soft ambient glow in the app's own accent color, extending beyond the
+   disc's own edge (unclipped, unlike the layers below) — brightens on
+   press or while `.is-active`, the "soft glow increase when pressed"
+   spec, reused for a persistent active/selected look. Kept small/quiet at
+   rest — this is a glow, not a second highlight. */
+.glass-btn::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--accent-glow) 0%, transparent 68%);
+  opacity: 0.22;
+  z-index: -1;
+  transition: opacity 0.3s ease;
+}
+
+.glass-btn.is-active::before {
+  opacity: 0.55;
+}
+
+.glass-btn:active::before {
+  opacity: 0.7;
+}
+
+.glass-btn__base,
+.glass-btn__frost,
+.glass-btn__sheen,
+.glass-btn__rim {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.glass-btn__base {
+  inset: 0;
+  /* Barely-there tint — most of the "color" now comes from the real
+     backdrop refraction above, not a painted-on gradient. */
+  background: linear-gradient(165deg, rgba(234, 230, 255, 0.09), rgba(234, 230, 255, 0.015) 65%);
+}
+
+/* Inset "second surface" — a smaller, softer inner pane that reads as the
+   glass having real depth/thickness (light glass objects always show a
+   faint inner glow where the far surface curves away from the near one).
+   Deliberately a soft radial FADE rather than a flat fill + hard edge —
+   a crisp boundary here read as a second, separate ring/rim instead of
+   one continuous pane of glass with subtle depth. */
+.glass-btn__frost {
+  inset: 12%;
+  background: radial-gradient(circle at 50% 46%, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.03) 62%, transparent 100%);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  transition: background 0.3s ease;
+}
+
+.glass-btn.is-active .glass-btn__frost {
+  background: radial-gradient(circle at 50% 46%, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.05) 62%, transparent 100%);
+}
+
+/* Three small, soft highlights instead of one big hotspot — each low-
+   opacity and gently blended (`overlay`, not additive) so light reads as
+   grazing the curved glass in a few places rather than one bright glare.
+   Sizes/positions are deliberately uneven and off-axis, like real
+   incidental light rather than a single studio key light. */
+.glass-btn__sheen {
+  inset: 0;
+  background:
+    radial-gradient(circle at 28% 22%, rgba(255, 255, 255, 0.32), transparent 26%),
+    radial-gradient(circle at 68% 30%, rgba(255, 255, 255, 0.16), transparent 20%),
+    radial-gradient(circle at 40% 78%, rgba(255, 255, 255, 0.1), transparent 24%);
+  mix-blend-mode: overlay;
+  transition: opacity 0.3s ease;
+}
+
+.glass-btn.is-active .glass-btn__sheen {
+  background:
+    radial-gradient(circle at 28% 22%, rgba(255, 255, 255, 0.44), transparent 28%),
+    radial-gradient(circle at 68% 30%, rgba(255, 255, 255, 0.22), transparent 22%),
+    radial-gradient(circle at 40% 78%, rgba(255, 255, 255, 0.14), transparent 26%);
+}
+
+/* Thin bright rim — mostly a clean white/silver hairline (the "thin
+   bright edge" spec), masked down to ~1.1px. A second, MUCH fainter
+   conic-gradient underneath carries just a hint of chromatic dispersion,
+   confined to a short arc near the top rather than smeared around half
+   the circle, and at roughly a third of the previous saturation/opacity —
+   this is what actually reads as "glass" instead of an iridescent soap
+   bubble. */
+.glass-btn__rim {
+  inset: 0;
+  background:
+    conic-gradient(from -150deg, rgba(255, 150, 170, 0.16), rgba(140, 180, 255, 0.16) 12%, transparent 26%, transparent 100%),
+    conic-gradient(from -150deg, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.1) 30%, rgba(255, 255, 255, 0.1) 70%, rgba(255, 255, 255, 0.4) 100%);
+  background-blend-mode: plus-lighter;
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 1.1px), #000 calc(100% - 1.1px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 1.1px), #000 calc(100% - 1.1px));
+  mix-blend-mode: plus-lighter;
+}
+
+.glass-btn__icon {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Slightly translucent and off-white rather than solid/pure-white —
+     "embedded in the glass" instead of floating brightly on top of it —
+     plus a soft, wide, LOW-opacity shadow (glass thickness softening it)
+     instead of the previous crisp 1px drop shadow. */
+  opacity: 0.88;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));
+  scale: 1;
+  translate: 0 0;
+  transition: scale 0.25s ease, translate 0.25s ease, opacity 0.2s ease;
+}
+
+.glass-btn.is-active .glass-btn__icon {
+  opacity: 1;
+}
+
+/* Press state: the disc itself scales down slightly; its INNER layers
+   scale/translate at slightly different rates/directions — a subtle
+   parallax between the glass surface and what's embedded in it, rather
+   than everything moving as one rigid unit. */
+.glass-btn:active {
+  scale: 0.94;
+  box-shadow:
+    0 3px 10px -6px rgba(0, 0, 0, 0.4),
+    0 1px 0 0 rgba(255, 255, 255, 0.04),
+    inset 0 1px 1px rgba(255, 255, 255, 0.16),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.22);
+}
+
+.glass-btn:active .glass-btn__sheen {
+  translate: -1px -1px;
+}
+
+.glass-btn:active .glass-btn__icon {
+  scale: 0.93;
+  translate: 0 0.5px;
+}
+
+/* Play/Pause — sized up via its `size` prop (80px vs. the other
+   controls' 62px, matching the Figma reference's bigger Play export) so
+   it reads as the row's primary action; no extra rule needed here beyond
+   the shared `.glass-btn` styles, kept as a hook for any future
+   primary-only tweak. */
+.glass-btn--primary {
+  color: rgba(245, 246, 250, 0.92);
+}
+
+.glass-btn__badge {
   position: absolute;
   top: -4px;
   right: -4px;
+  z-index: 2;
   font-size: 10px;
   font-weight: 600;
   line-height: 1;
@@ -773,6 +1126,38 @@ button {
   border-radius: 999px;
   background: var(--text-primary);
   color: #0b0b12;
+}
+
+/* Pointer/trackpad devices only — touch taps on iPhone never match
+   `hover: hover`, so this is purely additive there. A subtle lift, no
+   scale-up (a real glass disc doesn't grow when you look at it) — the
+   idle float animation already supplies motion, hover just nudges it up
+   a little further and warms the highlights slightly. */
+@media (hover: hover) and (pointer: fine) {
+  .glass-btn:hover {
+    translate: 0 -2px;
+  }
+
+  .glass-btn:hover .glass-btn__sheen {
+    background:
+      radial-gradient(circle at 28% 22%, rgba(255, 255, 255, 0.4), transparent 27%),
+      radial-gradient(circle at 68% 30%, rgba(255, 255, 255, 0.2), transparent 21%),
+      radial-gradient(circle at 40% 78%, rgba(255, 255, 255, 0.12), transparent 25%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glass-btn {
+    animation: none;
+  }
+
+  .glass-btn,
+  .glass-btn__icon,
+  .glass-btn::before,
+  .glass-btn__frost,
+  .glass-btn__sheen {
+    transition-duration: 0.15s !important;
+  }
 }
 
 /* ---- Reveal progress --------------------------------------------------------- */
@@ -797,6 +1182,16 @@ button {
   border: 1px solid var(--glass-border);
   background: #000;
   aspect-ratio: 1 / 1;
+  /* Without this, a flex column's default flex-shrink:1 has almost no
+     content-based minimum to resist shrinking (the img/placeholder inside
+     has no intrinsic height of its own), so on short mobile viewports
+     where the header+meta+action buttons don't leave enough room, the
+     browser was collapsing this box down to just a few pixels tall
+     (squished the pattern image into an invisible sliver) instead of
+     scrolling. `.screen` already has `overflow-y: auto`, so pinning this
+     box to its real aspect-ratio size and letting the page scroll on
+     short screens is the correct fix — never hide/squish the pattern. */
+  flex-shrink: 0;
 }
 
 .result-frame img,
@@ -859,6 +1254,20 @@ button {
   pointer-events: none;
 }
 
+.loading-stars {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  opacity: 0;
+  transition: opacity 1.4s ease;
+}
+
+.loading-stars.is-ready {
+  opacity: 1;
+}
+
 .loading-canvas {
   position: absolute;
   inset: 0;
@@ -919,6 +1328,15 @@ button {
   text-transform: uppercase;
   color: var(--text-primary);
   text-shadow: 0 0 34px rgba(234, 230, 255, 0.28);
+  /* Two lines ("Orbital" / "Harmony", each its own <span>), centered
+     relative to each other regardless of their differing natural widths —
+     the wrap's own `justify-content: center` only centers the whole block
+     horizontally, not each line individually. */
+  text-align: center;
+}
+
+.loading-title span {
+  display: block;
 }
 
 .loading-subtitle {
@@ -949,6 +1367,7 @@ button {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .loading-stars,
   .loading-canvas,
   .loading-title-wrap,
   .loading-subtitle,
@@ -959,4 +1378,54 @@ button {
 
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
+}
+
+/* ----------------------------------------------------------------------------
+   SHORT MOBILE VIEWPORTS (<= 560px tall — e.g. small/older phones, or any
+   phone rotated to landscape). Every screen already fits comfortably on the
+   common portrait heights (iPhone SE 375×667 and up), verified via
+   screenshot testing — but at genuinely short heights the Planet Select
+   screen's header text and the "PLANET A" swipe-row label (and, at the
+   bottom, the last row's description text and the Back/Continue buttons)
+   were measured to overlap by a few px: `.screen`'s flex column has enough
+   `gap`/padding + two full-size swipe rows to slightly exceed the
+   available height, and since that overflow paints outside each flex
+   item's shrunk box (rather than growing `.screen`'s own scrollHeight),
+   `overflow-y: auto` on `.screen` never kicked in to rescue it — the fix
+   has to be shrinking the content itself, not relying on scroll.
+   ---------------------------------------------------------------------------- */
+@media (max-height: 560px) {
+  .screen {
+    gap: 10px;
+    padding: calc(16px + var(--safe-top)) 22px calc(14px + var(--safe-bottom));
+  }
+
+  .screen__header h1 {
+    font-size: 19px;
+    margin-bottom: 4px;
+  }
+
+  .screen__header .eyebrow {
+    margin-bottom: 4px;
+  }
+
+  .swipe-select {
+    gap: clamp(8px, 3dvh, 96px);
+  }
+
+  .swipe-planet {
+    height: clamp(78px, 15dvh, 176px);
+  }
+
+  .swipe-row__label {
+    margin-bottom: -4px;
+  }
+
+  .swipe-row__name {
+    font-size: 14px;
+  }
+
+  .swipe-row__fact {
+    font-size: 11px;
+  }
 }

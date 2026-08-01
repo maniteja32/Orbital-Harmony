@@ -1,0 +1,364 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		27DC19B27704DA2C2F0B8FF4 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 210599F66C8A7E7E52D9124B /* Assets.xcassets */; };
+		2D78AB0BB81A840FBF11CC3F /* LiquidGlassButtonExamples.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6E766EDFD6D0B738180096E /* LiquidGlassButtonExamples.swift */; };
+		2EC89942FDFD47AC42B34C9E /* www in Resources */ = {isa = PBXBuildFile; fileRef = CD0241871ABBE667F8106600 /* www */; };
+		55663811DFDB3CD56DE5F285 /* LiquidGlassButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCC45DE04EF3A596FF62B966 /* LiquidGlassButton.swift */; };
+		723953BD03649D91F2D4BD98 /* WebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D68C85B271CDD3F8DE5F9B39 /* WebView.swift */; };
+		8BAD78AC57DDCE80B061B1F5 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E127068731892391B2A2FDDE /* ContentView.swift */; };
+		C8F90035DF1F9AE7A2997241 /* LocalFileSchemeHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42E744E794079C9840A3CE55 /* LocalFileSchemeHandler.swift */; };
+		CEDF608200A162AE470A53E0 /* OrbitalHarmonyApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3411FA491EF10A7B4F0E40A3 /* OrbitalHarmonyApp.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		210599F66C8A7E7E52D9124B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		3411FA491EF10A7B4F0E40A3 /* OrbitalHarmonyApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrbitalHarmonyApp.swift; sourceTree = "<group>"; };
+		384D225F71170F7E9072B77E /* OrbitalHarmony.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = OrbitalHarmony.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		42E744E794079C9840A3CE55 /* LocalFileSchemeHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalFileSchemeHandler.swift; sourceTree = "<group>"; };
+		B6E766EDFD6D0B738180096E /* LiquidGlassButtonExamples.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiquidGlassButtonExamples.swift; sourceTree = "<group>"; };
+		BCC45DE04EF3A596FF62B966 /* LiquidGlassButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiquidGlassButton.swift; sourceTree = "<group>"; };
+		CD0241871ABBE667F8106600 /* www */ = {isa = PBXFileReference; lastKnownFileType = folder; name = www; path = OrbitalHarmony/Resources/www; sourceTree = SOURCE_ROOT; };
+		D68C85B271CDD3F8DE5F9B39 /* WebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebView.swift; sourceTree = "<group>"; };
+		E127068731892391B2A2FDDE /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		0B388C1F98A444D2F6490449 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				E127068731892391B2A2FDDE /* ContentView.swift */,
+				42E744E794079C9840A3CE55 /* LocalFileSchemeHandler.swift */,
+				3411FA491EF10A7B4F0E40A3 /* OrbitalHarmonyApp.swift */,
+				D68C85B271CDD3F8DE5F9B39 /* WebView.swift */,
+				9963D3ADC268AED4E2D8DAE8 /* Components */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		221A234C7F21D879C86E767F = {
+			isa = PBXGroup;
+			children = (
+				66EB674A51421139739501C4 /* OrbitalHarmony */,
+				92E26A85749C9A25D8EF4CDB /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		66EB674A51421139739501C4 /* OrbitalHarmony */ = {
+			isa = PBXGroup;
+			children = (
+				0B388C1F98A444D2F6490449 /* App */,
+				F267020243137332456B4B86 /* Resources */,
+			);
+			path = OrbitalHarmony;
+			sourceTree = "<group>";
+		};
+		92E26A85749C9A25D8EF4CDB /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				384D225F71170F7E9072B77E /* OrbitalHarmony.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		9963D3ADC268AED4E2D8DAE8 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				BCC45DE04EF3A596FF62B966 /* LiquidGlassButton.swift */,
+				B6E766EDFD6D0B738180096E /* LiquidGlassButtonExamples.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		F267020243137332456B4B86 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				210599F66C8A7E7E52D9124B /* Assets.xcassets */,
+				CD0241871ABBE667F8106600 /* www */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		DE07CB3090051CFFB1F8B9BF /* OrbitalHarmony */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D5F9CDE4D6B1B3CBCC1F592E /* Build configuration list for PBXNativeTarget "OrbitalHarmony" */;
+			buildPhases = (
+				ADAC86CD11356C98CEE93BB1 /* Sources */,
+				85D12C797735B340568B2A16 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = OrbitalHarmony;
+			packageProductDependencies = (
+			);
+			productName = OrbitalHarmony;
+			productReference = 384D225F71170F7E9072B77E /* OrbitalHarmony.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		0A0D861CBAF7C48B38C1CAA1 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					DE07CB3090051CFFB1F8B9BF = {
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 5C8F208645914A38EF6B0FDC /* Build configuration list for PBXProject "OrbitalHarmony" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 221A234C7F21D879C86E767F;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 92E26A85749C9A25D8EF4CDB /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				DE07CB3090051CFFB1F8B9BF /* OrbitalHarmony */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		85D12C797735B340568B2A16 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				27DC19B27704DA2C2F0B8FF4 /* Assets.xcassets in Resources */,
+				2EC89942FDFD47AC42B34C9E /* www in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		ADAC86CD11356C98CEE93BB1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8BAD78AC57DDCE80B061B1F5 /* ContentView.swift in Sources */,
+				55663811DFDB3CD56DE5F285 /* LiquidGlassButton.swift in Sources */,
+				2D78AB0BB81A840FBF11CC3F /* LiquidGlassButtonExamples.swift in Sources */,
+				C8F90035DF1F9AE7A2997241 /* LocalFileSchemeHandler.swift in Sources */,
+				CEDF608200A162AE470A53E0 /* OrbitalHarmonyApp.swift in Sources */,
+				723953BD03649D91F2D4BD98 /* WebView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		0B5E218B5FE8C4D8D7A63802 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		2800B074B0C3EFAD7DFEDCD0 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = OrbitalHarmony/Resources/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.orbitalharmony.app;
+				PRODUCT_NAME = OrbitalHarmony;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		874152463C9C6434EC8F07E4 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = OrbitalHarmony/Resources/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.orbitalharmony.app;
+				PRODUCT_NAME = OrbitalHarmony;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		E9C12302AC855801066059B3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		5C8F208645914A38EF6B0FDC /* Build configuration list for PBXProject "OrbitalHarmony" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E9C12302AC855801066059B3 /* Debug */,
+				0B5E218B5FE8C4D8D7A63802 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		D5F9CDE4D6B1B3CBCC1F592E /* Build configuration list for PBXNativeTarget "OrbitalHarmony" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				874152463C9C6434EC8F07E4 /* Debug */,
+				2800B074B0C3EFAD7DFEDCD0 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 0A0D861CBAF7C48B38C1CAA1 /* Project object */;
+}

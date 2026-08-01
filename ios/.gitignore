@@ -1,0 +1,11 @@
+# Xcode
+xcuserdata/
+*.xcuserstate
+DerivedData/
+build/
+
+# XcodeGen regenerates this from project.yml — keep it out of git so the
+# YAML spec stays the single source of truth (avoids merge conflicts in
+# the generated pbxproj). Delete this line if you'd rather commit the
+# generated project directly.
+OrbitalHarmony.xcodeproj/project.xcworkspace/xcuserdata/

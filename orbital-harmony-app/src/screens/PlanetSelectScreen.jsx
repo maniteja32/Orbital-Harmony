@@ -1,5 +1,6 @@
 import { PLANETS } from '../data/planets.js';
 import { PlanetSwipeRow } from '../components/PlanetSwipeRow.jsx';
+import { MeteorField } from '../components/MeteorField.jsx';
 import { useAppStore } from '../store/useAppStore.js';
 
 /** Step 1 — pick Planet A then Planet B via two independent swipeable
@@ -23,6 +24,7 @@ export default function PlanetSelectScreen({ onNext, onBack }) {
       </div>
 
       <div className="swipe-select">
+        <MeteorField />
         <PlanetSwipeRow
           label="Planet A"
           planets={PLANETS}

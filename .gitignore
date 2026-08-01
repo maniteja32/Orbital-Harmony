@@ -17,6 +17,11 @@ pnpm-debug.log*
 .idea/
 *.swp
 
+# Xcode (user-specific state / build artifacts)
+*.xcuserstate
+xcuserdata/
+DerivedData/
+
 # Env files (never commit secrets)
 .env
 .env.*
