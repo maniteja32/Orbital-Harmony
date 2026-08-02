@@ -755,6 +755,39 @@ export function createSolarSystemEngine(canvas, opts) {
   let onCompleteCb = null;
   let rafId = null;
 
+  const TWO_PI = Math.PI * 2;
+
+  // Master-clock angle for a planet at an EXACT simulated day. `day` is the
+  // single unified time variable shared by BOTH planets of a chord, so the
+  // angles are locked to the same instant:
+  //   theta = startAngle + 2*PI * day / effectivePeriodDays
+  // where effectivePeriodDays = DAYS_PER_YEAR / revsPerYear (the compressed
+  // trace rate for Explore, or the real orbital period when physicalPattern
+  // is set). Evaluating this per sample — instead of reading the live mesh,
+  // which only ever holds the CURRENT frame's end angle — is what fixes the
+  // chord "bunching": at high speed multipliers several trace steps fall in
+  // one frame, and each MUST use its own `day`, not the frame's single final
+  // angle (which collapsed those steps onto one spot, then jumped).
+  function planetAngleAt(planet, day) {
+    const revsPerYear = physicalPattern
+      ? 365.256 / planet.data.orbitalPeriodDays
+      : (planet.data.traceSpeed ?? (365.256 / planet.data.orbitalPeriodDays));
+    return planet.startAngle + (day / DAYS_PER_YEAR) * revsPerYear * TWO_PI;
+  }
+
+  // Analytic world position of a planet at `day`. Orbits are circular in the
+  // XZ plane centred on the origin, and pivot.rotation.y = theta maps local
+  // (distance,0,0) -> (distance*cos, 0, -distance*sin), so this matches the
+  // live mesh exactly while letting us sample any historical instant.
+  function planetWorldPosAt(planet, day, target) {
+    const theta = planetAngleAt(planet, day);
+    return target.set(
+      planet.data.distance * Math.cos(theta),
+      0,
+      -planet.data.distance * Math.sin(theta),
+    );
+  }
+
   function sampleChordIfDue() {
     if (!patternLines || patternCount >= patternCapacity) return;
     let added = false;
@@ -766,8 +799,8 @@ export function createSolarSystemEngine(canvas, opts) {
       lastSampledDay += traceIntervalDays;
       for (let e = 0; e < edgeCount; e++) {
         const edge = patternEdges[e];
-        planets[edge[0]].mesh.getWorldPosition(posA);
-        planets[edge[1]].mesh.getWorldPosition(posB);
+        planetWorldPosAt(planets[edge[0]], lastSampledDay, posA);
+        planetWorldPosAt(planets[edge[1]], lastSampledDay, posB);
         const base = patternCount * 6;
         patternPositions[base] = posA.x;
         patternPositions[base + 1] = posA.y;
@@ -826,17 +859,16 @@ export function createSolarSystemEngine(canvas, opts) {
     if (!completed) browseElapsedSec += delta;
     planets.forEach((planet) => {
       if (tracePattern) {
-        // Pattern/reveal mode. By default the orbit angle is driven by the
-        // planet's Earth-relative `traceSpeed` (see data/planets.js), which
-        // COMPRESSES every pair into a calm 1-2 lobe rosette. When
-        // `physicalPattern` is set, drive it by the planet's REAL orbital
-        // period instead, so each pair traces its true resonance pattern
-        // (e.g. Earth+Venus's 8:13 => clean 5-petaled rose) — paired with a
-        // resonance-sized span (see utils/resonance.js patternTimeframe).
-        const revsPerYear = physicalPattern
-          ? 365.256 / planet.data.orbitalPeriodDays
-          : (planet.data.traceSpeed ?? (365.256 / planet.data.orbitalPeriodDays));
-        planet.pivot.rotation.y = planet.startAngle + (simDaysElapsed / DAYS_PER_YEAR) * revsPerYear * Math.PI * 2;
+        // Pattern/reveal mode. The orbit angle comes from the shared
+        // master-clock helper (planetAngleAt) driven by `simDaysElapsed`, the
+        // SAME unified time variable the chord sampler uses — so the visible
+        // planet and its traced chord endpoint are always locked to the exact
+        // same instant. By default the rate is the planet's Earth-relative
+        // `traceSpeed` (compresses every pair into a calm 1-2 lobe rosette);
+        // when `physicalPattern` is set it's the REAL orbital period instead,
+        // so each pair traces its true resonance pattern (e.g. Earth+Venus's
+        // 8:13 => clean 5-petaled rose).
+        planet.pivot.rotation.y = planetAngleAt(planet, simDaysElapsed);
       } else {
         // Browse mode: compressed, mobile-friendly ambient speed (see
         // browseAngularSpeed() above) instead of the real linear scale.
