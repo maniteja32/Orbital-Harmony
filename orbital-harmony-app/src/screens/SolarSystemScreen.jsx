@@ -1,5 +1,4 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { Menu, Info, Orbit, Sparkles } from 'lucide-react';
 import SolarSystemCanvas from '../components/SolarSystemCanvas.jsx';
 import { PLANETS } from '../data/planets.js';
 import { useAppStore } from '../store/useAppStore.js';
@@ -46,25 +45,14 @@ export default function SolarSystemScreen({ onExplore, onCosmic }) {
         className="screen__canvas"
       />
 
-      <button type="button" className="system-menu" aria-label="Open menu">
-        <Menu size={22} strokeWidth={2} aria-hidden="true" />
-      </button>
-
-      <button type="button" className="system-info" aria-label="About Orbital Harmony">
-        <Info size={22} strokeWidth={2} aria-hidden="true" />
-      </button>
-
       <div className="system-header">
         <h1>Orbital Harmony</h1>
-        <p>Discover the hidden geometry created by planetary motion.</p>
+        <p>Discover the hidden patterns of planetary motion.</p>
       </div>
 
       <div className="system-cta">
         <div className="system-modes">
           <button type="button" className="mode-card" onClick={onExplore}>
-            <span className="mode-card__icon" aria-hidden="true">
-              <Orbit size={30} strokeWidth={1.6} />
-            </span>
             <span className="mode-card__text">
               <span className="mode-card__title">Explore</span>
               <span className="mode-card__desc">Choose any two planets to create patterns</span>
@@ -72,9 +60,6 @@ export default function SolarSystemScreen({ onExplore, onCosmic }) {
           </button>
 
           <button type="button" className="mode-card" onClick={onCosmic}>
-            <span className="mode-card__icon" aria-hidden="true">
-              <Sparkles size={30} strokeWidth={1.6} />
-            </span>
             <span className="mode-card__text">
               <span className="mode-card__title">Cosmic Signature</span>
               <span className="mode-card__desc">Generate a unique pattern from your birth date</span>

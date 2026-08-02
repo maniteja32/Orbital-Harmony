@@ -433,6 +433,22 @@ button {
   gap: 12px;
 }
 
+/* The landing mode cards have no icon (unlike the standalone Mode screen's
+   cards) — centre their text within the card instead of left-aligning it
+   next to a now-absent icon, and trim the vertical padding so each card is
+   a more compact pill (no icon means the old 20px block padding left too
+   much empty space above/below just two lines of text). */
+.system-modes .mode-card {
+  justify-content: center;
+  text-align: center;
+  padding: 14px 20px;
+}
+
+.system-modes .mode-card__text {
+  align-items: center;
+  text-align: center;
+}
+
 /* Staggered fade-in once the intro settles. Mobile-first: a calm, uniform
    fade with only a tiny upward drift — nothing slides in from opposite
    directions (which reads as "flying around" on a small screen). The
