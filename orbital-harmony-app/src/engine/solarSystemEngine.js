@@ -16,6 +16,7 @@ import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js
 import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
 import { PLANETS_BY_KEY, SUN_TEXTURE, MOON_TEXTURE } from '../data/planets.js';
 import { currentOrbitAngleRad } from '../utils/currentPosition.js';
+import { PATTERN_LINE_WIDTH } from '../utils/resonance.js';
 import { buildStarfield } from './starfieldBackdrop.js';
 
 // Pattern-tracer line style presets, ported from the original vanilla-JS
@@ -246,6 +247,8 @@ export function createSolarSystemEngine(canvas, opts) {
     speedDurationSec = 10,
     totalSimYears = 8,
     traceIntervalDays = 3,
+    patternOpacity = 1,
+    patternRates = null,
     startPaused = false,
     initialSpeedMultiplier = 1,
     patternStartDate = undefined,
@@ -262,18 +265,18 @@ export function createSolarSystemEngine(canvas, opts) {
   const width = parent?.clientWidth || window.innerWidth;
   const height = parent?.clientHeight || window.innerHeight;
 
-  // --- Explore resonance-pattern layout (faithful port of the legacy
-  // prototype's pattern generator; see js/main.js PLANET_DATA/PATTERN_CONFIG).
-  // The two-planet Explore pattern uses the ORIGINAL prototype's TIGHTER orbit
-  // distances (16/21/25/31/42/55/67/78) instead of this app's WIDENED
-  // browse-view distances (16/23/31/40/55/72/90/108). The widened spacing
-  // pushed the two selected orbits far apart, so the traced figure read as a
-  // loose, un-rhythmic pinwheel with a big empty centre; the tighter legacy
-  // spacing — paired with the matching per-planet `traceSpeed` angular rates
-  // and the legacy's dense 3-day / 8-year sampling (set in SimulationScreen)
-  // — reproduces the original's tight, harmonic spiral. Sun + planet sizes
-  // stay at their legacy real values (the large orbits keep them small
-  // relative to the pattern, exactly as in the prototype).
+  // --- Explore resonance-pattern layout. The two-planet Explore pattern
+  // uses TIGHTER orbit distances (16/21/25/31/42/55/67/78) than this app's
+  // WIDENED browse-view distances (16/23/31/40/55/72/90/108). The widened
+  // spacing pushed the two selected orbits far apart, so the traced figure
+  // read as a loose, un-rhythmic pinwheel with a big empty centre; the
+  // tighter spacing fills the frame with a dense, harmonic figure. These
+  // distances only control orbit RADII (layout/framing) — the pattern's
+  // TIMING now comes from each planet's REAL orbital period (physicalPattern
+  // is set for Explore, see SimulationScreen.jsx + computePatternPlan), so
+  // every pair traces its own true resonance geometry, run for exactly the
+  // span its resonance needs to close. Sun + planet sizes stay at their real
+  // values (the large orbits keep them small relative to the pattern).
   const LEGACY_PATTERN_DISTANCE = {
     mercury: 16, venus: 21, earth: 25, mars: 31,
     jupiter: 42, saturn: 55, uranus: 67, neptune: 78,
@@ -524,10 +527,15 @@ export function createSolarSystemEngine(canvas, opts) {
   const earthRefDistance = PLANETS_BY_KEY.earth?.distance ?? maxDistance * 0.35;
   const heroWidePos = heroPosition(dist, HERO_ELEVATION_START_DEG);
   const heroAngledPos = heroPosition(dist, HERO_ELEVATION_END_DEG);
-  // Final resting shot: framed tight on Earth's own orbit (not the whole
-  // system) with just enough margin so Earth/its orbit ring are never
-  // cropped, while sitting noticeably closer than before (was 1.75 — read
-  // as too zoomed-out/loose) for a more intimate Sun+Earth focal point.
+  // Final resting shot: pulled back so more of the system reads in frame and
+  // the Sun sits at roughly HALF its previous on-screen size (was 1.2, which
+  // zoomed in too close — the Sun dominated and only the innermost orbits
+  // were visible). For this orthographic camera on-screen scale is INVERSELY
+  // proportional to the frustum half-height (which scales linearly with this
+  // margin), so doubling the margin 1.2 -> 2.4 halves the apparent size of
+  // everything (Sun included) and reveals ~2x more of the system, while also
+  // making the zoom-IN settle noticeably less close (heroCloseHalf now ends
+  // nearer heroWideHalf, so the frustum shrinks less during the zoom phase).
   // IMPORTANT for the orthographic camera in use here: on-screen scale
   // comes ENTIRELY from the frustum half-height, NOT camera distance
   // (moving an orthographic camera closer/further does nothing visually)
@@ -535,7 +543,7 @@ export function createSolarSystemEngine(canvas, opts) {
   // right` toward `heroCloseHalf` in tick() below, not by moving the
   // camera. The camera position/angle/up stay FROZEN at `heroAngledPos`
   // through the whole zoom phase (no further rotation).
-  const HERO_CLOSE_MARGIN = 1.2;
+  const HERO_CLOSE_MARGIN = 2.4;
   const heroWideHalf = orthoHalfHeight(maxDistance, framingMargin, width / height);
   const heroCloseHalf = orthoHalfHeight(earthRefDistance, HERO_CLOSE_MARGIN, width / height);
   // Perspective fallback only (this engine also supports a plain
@@ -689,8 +697,18 @@ export function createSolarSystemEngine(canvas, opts) {
       // (10-day) sampling, instead rendered as a faint, spiky web: the
       // individual straight chords stayed visible and washed-out instead
       // of blending into a smooth, luminous envelope.
-      opacity: 1,
-      linewidth: 1.3, // in pixels (screen-space), since worldUnits defaults to false
+      //
+      // `patternOpacity` (< 1 only for overcrowded high-loop pairs, see
+      // computePatternPlan in utils/resonance.js) lets the MANY overlapping
+      // chords of an extreme-ratio figure (e.g. Mercury:Neptune) ACCUMULATE
+      // into a legible density gradient that reveals the hidden structure,
+      // instead of saturating to a flat white disc. Low/moderate pairs get
+      // patternOpacity = 1 and stay crisp/opaque as before.
+      opacity: patternOpacity,
+      // Shared with the Pattern Gallery via PATTERN_LINE_WIDTH so every pair
+      // renders at one consistent stroke weight across both surfaces. In
+      // pixels (screen-space), since worldUnits defaults to false.
+      linewidth: PATTERN_LINE_WIDTH,
       depthWrite: false,
       dashed: true,
       dashScale: 1,
@@ -747,9 +765,18 @@ export function createSolarSystemEngine(canvas, opts) {
   // one frame, and each MUST use its own `day`, not the frame's single final
   // angle (which collapsed those steps onto one spot, then jumped).
   function planetAngleAt(planet, day) {
-    const revsPerYear = physicalPattern
-      ? 365.256 / planet.data.orbitalPeriodDays
-      : (planet.data.traceSpeed ?? (365.256 / planet.data.orbitalPeriodDays));
+    // `patternRates` (Explore) overrides with an IDEALIZED whole-loop rate
+    // per planet so the traced figure shuts EXACTLY and is cleanly p-fold
+    // symmetric (see computePatternPlan) — an imperceptible nudge off the
+    // real rate that removes the gap/lopsidedness a fractional final loop
+    // would leave. Falls back to the real orbital rate (physicalPattern) or
+    // the compressed artistic traceSpeed otherwise.
+    const overrideRate = patternRates ? patternRates[planet.data.key] : undefined;
+    const revsPerYear = overrideRate != null
+      ? overrideRate
+      : physicalPattern
+        ? 365.256 / planet.data.orbitalPeriodDays
+        : (planet.data.traceSpeed ?? (365.256 / planet.data.orbitalPeriodDays));
     return planet.startAngle + (day / DAYS_PER_YEAR) * revsPerYear * TWO_PI;
   }
 
