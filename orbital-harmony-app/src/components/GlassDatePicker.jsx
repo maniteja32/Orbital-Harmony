@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { Calendar, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { LiquidGlass } from './ui/glasscn/liquid-glass.jsx';
 
 const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -32,16 +33,21 @@ function sameDay(a, b) {
  * fast navigation across decades (ideal for birth dates). `value` / `onChange`
  * use 'YYYY-MM-DD' strings; `max` optionally caps the latest selectable day. */
 export function GlassDatePicker({ value, onChange, max, placeholder = 'Select date', id }) {
+  const uid = useId().replace(/:/g, '');
+  const dialogId = `gdp-dialog-${uid}`;
+  const headingId = `gdp-heading-${uid}`;
   const selected = useMemo(() => parseYMD(value), [value]);
   const maxDate = useMemo(() => parseYMD(max), [max]);
   const maxYear = maxDate ? maxDate.getFullYear() : new Date().getFullYear();
 
   const [open, setOpen] = useState(false);
+  const [yearMenuOpen, setYearMenuOpen] = useState(false);
   const [view, setView] = useState(() => {
     const base = selected ?? maxDate ?? new Date();
     return { year: base.getFullYear(), month: base.getMonth() };
   });
   const rootRef = useRef(null);
+  const popRef = useRef(null);
 
   // When (re)opening, jump the view to the selected date (or max/today).
   useEffect(() => {
@@ -49,6 +55,18 @@ export function GlassDatePicker({ value, onChange, max, placeholder = 'Select da
     const base = selected ?? maxDate ?? new Date();
     setView({ year: base.getFullYear(), month: base.getMonth() });
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!open) setYearMenuOpen(false);
+  }, [open]);
+
+  // Move focus into the calendar when opened (selected day first, otherwise
+  // first available day) so keyboard users can interact immediately.
+  useEffect(() => {
+    if (!open || !popRef.current) return;
+    const target = popRef.current.querySelector('.gdp__cell.is-selected:not(:disabled), .gdp__cell:not(:disabled)');
+    if (target) target.focus();
+  }, [open, view.year, view.month]);
 
   // Close on outside click / Escape.
   useEffect(() => {
@@ -59,10 +77,10 @@ export function GlassDatePicker({ value, onChange, max, placeholder = 'Select da
     function onKey(e) {
       if (e.key === 'Escape') setOpen(false);
     }
-    document.addEventListener('mousedown', onDown);
+    document.addEventListener('pointerdown', onDown);
     document.addEventListener('keydown', onKey);
     return () => {
-      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('pointerdown', onDown);
       document.removeEventListener('keydown', onKey);
     };
   }, [open]);
@@ -75,19 +93,37 @@ export function GlassDatePicker({ value, onChange, max, placeholder = 'Select da
 
   const firstWeekday = new Date(view.year, view.month, 1).getDay();
   const daysInMonth = new Date(view.year, view.month + 1, 0).getDate();
+  const maxMonth = maxDate ? maxDate.getMonth() : 11;
+  const isAtMaxMonth = Boolean(maxDate && view.year === maxYear && view.month >= maxMonth);
+  const isAtMinMonth = view.year === MIN_YEAR && view.month === 0;
+
   const cells = [];
   for (let i = 0; i < firstWeekday; i += 1) cells.push(null);
   for (let d = 1; d <= daysInMonth; d += 1) cells.push(d);
 
-  const today = new Date();
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0);
+  const canPickToday = !maxDate || today <= maxDate;
 
   function shiftMonth(delta) {
     setView((v) => {
       let m = v.month + delta;
       let y = v.year;
-      if (m < 0) { m = 11; y -= 1; }
-      if (m > 11) { m = 0; y += 1; }
-      return { year: Math.min(Math.max(y, MIN_YEAR), maxYear), month: m };
+      if (m < 0) {
+        m = 11;
+        y -= 1;
+      }
+      if (m > 11) {
+        m = 0;
+        y += 1;
+      }
+
+      if (y < MIN_YEAR) return { year: MIN_YEAR, month: 0 };
+      if (y > maxYear) return { year: maxYear, month: maxMonth };
+      if (maxDate && y === maxYear && m > maxMonth) {
+        return { year: maxYear, month: maxMonth };
+      }
+      return { year: y, month: m };
     });
   }
 
@@ -96,55 +132,119 @@ export function GlassDatePicker({ value, onChange, max, placeholder = 'Select da
     setOpen(false);
   }
 
+  function clearDate() {
+    onChange('');
+    setOpen(false);
+  }
+
+  function pickToday() {
+    if (!canPickToday) return;
+    onChange(toYMD(today.getFullYear(), today.getMonth(), today.getDate()));
+    setOpen(false);
+  }
+
   const label = selected
     ? `${String(selected.getDate()).padStart(2, '0')} ${MONTHS_SHORT[selected.getMonth()]} ${selected.getFullYear()}`
     : placeholder;
 
   return (
-    <div className="gdp" ref={rootRef}>
-      <button
-        type="button"
-        id={id}
-        className={`cosmic-input gdp__trigger${selected ? '' : ' gdp__trigger--empty'}`}
-        onClick={() => setOpen((o) => !o)}
-        aria-haspopup="dialog"
-        aria-expanded={open}
+    <div className={`gdp${open ? ' is-open' : ''}`} ref={rootRef}>
+      <LiquidGlass
+        className="gdp__triggerGlass rounded-[18px] w-full bg-white/[0.03]"
+        style={{
+          '--liquid-glass-rim-width': '0.9px',
+          '--liquid-glass-rim-light': 'rgba(255,255,255,0.28)',
+        }}
       >
-        <span>{label}</span>
-        <Calendar size={18} strokeWidth={1.8} className="cosmic-field__icon" aria-hidden="true" />
-      </button>
+        <button
+          type="button"
+          id={id}
+          className={`cosmic-input gdp__trigger${selected ? '' : ' gdp__trigger--empty'}`}
+          onClick={() => setOpen((o) => !o)}
+          aria-haspopup="dialog"
+          aria-expanded={open}
+          aria-controls={dialogId}
+        >
+          <span>{label}</span>
+          <Calendar size={18} strokeWidth={1.8} className="cosmic-field__icon" aria-hidden="true" />
+        </button>
+      </LiquidGlass>
 
       {open && (
-        <div className="gdp__pop" role="dialog" aria-label="Choose date">
+        <LiquidGlass
+          ref={popRef}
+          id={dialogId}
+          className="gdp__pop rounded-[20px] bg-white/[0.06]"
+          role="dialog"
+          aria-modal="false"
+          aria-labelledby={headingId}
+          style={{
+            '--liquid-glass-rim-width': '0.9px',
+            '--liquid-glass-rim-light': 'rgba(255,255,255,0.22)',
+          }}
+        >
           <div className="gdp__nav">
-            <button type="button" className="gdp__navbtn" onClick={() => shiftMonth(-1)} aria-label="Previous month">
+            <h2 id={headingId} className="sr-only">Choose birth date</h2>
+            <button
+              type="button"
+              className="gdp__navbtn"
+              onClick={() => shiftMonth(-1)}
+              aria-label="Previous month"
+              disabled={isAtMinMonth}
+            >
               <ChevronLeft size={18} strokeWidth={2} aria-hidden="true" />
             </button>
 
-            <div className="gdp__selects">
-              <select
-                className="gdp__select"
-                value={view.month}
-                onChange={(e) => setView((v) => ({ ...v, month: Number(e.target.value) }))}
-                aria-label="Month"
-              >
-                {MONTHS.map((name, i) => (
-                  <option key={name} value={i}>{name}</option>
-                ))}
-              </select>
-              <select
-                className="gdp__select"
-                value={view.year}
-                onChange={(e) => setView((v) => ({ ...v, year: Number(e.target.value) }))}
-                aria-label="Year"
-              >
-                {years.map((y) => (
-                  <option key={y} value={y}>{y}</option>
-                ))}
-              </select>
+            <div className="gdp__period" aria-live="polite" aria-atomic="true">
+              <span>{MONTHS[view.month]}</span>
+              <div className={`gdp__yearPicker${yearMenuOpen ? ' is-open' : ''}`}>
+                <button
+                  type="button"
+                  className="gdp__yearBtn"
+                  aria-haspopup="listbox"
+                  aria-expanded={yearMenuOpen}
+                  aria-controls={`${uid}-year-listbox`}
+                  onClick={() => setYearMenuOpen((v) => !v)}
+                >
+                  <span>{view.year}</span>
+                  <ChevronDown size={14} strokeWidth={2} aria-hidden="true" />
+                </button>
+
+                {yearMenuOpen && (
+                  <div className="gdp__yearMenu" role="listbox" id={`${uid}-year-listbox`} aria-label="Year">
+                    {years.map((y) => {
+                      const isSelected = y === view.year;
+                      return (
+                        <button
+                          key={y}
+                          type="button"
+                          role="option"
+                          aria-selected={isSelected}
+                          className={`gdp__yearOption${isSelected ? ' is-selected' : ''}`}
+                          onClick={() => {
+                            setView((v) => {
+                              const nextMonth = maxDate && y === maxYear && v.month > maxMonth ? maxMonth : v.month;
+                              return { year: y, month: nextMonth };
+                            });
+                            setYearMenuOpen(false);
+                          }}
+                        >
+                          {y}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
 
-            <button type="button" className="gdp__navbtn" onClick={() => shiftMonth(1)} aria-label="Next month">
+            <button
+              type="button"
+              className="gdp__navbtn"
+              onClick={() => shiftMonth(1)}
+              aria-label="Next month"
+              disabled={isAtMaxMonth}
+            >
               <ChevronRight size={18} strokeWidth={2} aria-hidden="true" />
             </button>
           </div>
@@ -155,13 +255,14 @@ export function GlassDatePicker({ value, onChange, max, placeholder = 'Select da
             ))}
           </div>
 
-          <div className="gdp__grid">
+          <div className="gdp__grid" role="grid" aria-label={`${MONTHS[view.month]} ${view.year}`}>
             {cells.map((day, i) => {
               if (day == null) return <span key={`b${i}`} className="gdp__cell gdp__cell--empty" />;
               const dayDate = new Date(view.year, view.month, day, 12, 0, 0);
               const disabled = maxDate ? dayDate > maxDate : false;
               const isSel = sameDay(dayDate, selected);
               const isToday = sameDay(dayDate, today);
+              const weekday = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][dayDate.getDay()];
               return (
                 <button
                   key={day}
@@ -169,13 +270,32 @@ export function GlassDatePicker({ value, onChange, max, placeholder = 'Select da
                   className={`gdp__cell${isSel ? ' is-selected' : ''}${isToday && !isSel ? ' is-today' : ''}`}
                   onClick={() => pick(day)}
                   disabled={disabled}
+                  role="gridcell"
+                  aria-selected={isSel}
+                  aria-current={isToday ? 'date' : undefined}
+                  aria-label={`${weekday}, ${day} ${MONTHS[view.month]} ${view.year}`}
+                  tabIndex={isSel ? 0 : -1}
                 >
                   {day}
                 </button>
               );
             })}
           </div>
-        </div>
+
+          <div className="gdp__footer">
+            <button type="button" className="gdp__footbtn" onClick={clearDate}>
+              Clear
+            </button>
+            <button
+              type="button"
+              className="gdp__footbtn gdp__footbtn--accent"
+              onClick={pickToday}
+              disabled={!canPickToday}
+            >
+              Today
+            </button>
+          </div>
+        </LiquidGlass>
       )}
     </div>
   );
