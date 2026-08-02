@@ -528,14 +528,13 @@ export function createSolarSystemEngine(canvas, opts) {
   const heroWidePos = heroPosition(dist, HERO_ELEVATION_START_DEG);
   const heroAngledPos = heroPosition(dist, HERO_ELEVATION_END_DEG);
   // Final resting shot: pulled back so more of the system reads in frame and
-  // the Sun sits at roughly HALF its previous on-screen size (was 1.2, which
-  // zoomed in too close — the Sun dominated and only the innermost orbits
-  // were visible). For this orthographic camera on-screen scale is INVERSELY
-  // proportional to the frustum half-height (which scales linearly with this
-  // margin), so doubling the margin 1.2 -> 2.4 halves the apparent size of
-  // everything (Sun included) and reveals ~2x more of the system, while also
-  // making the zoom-IN settle noticeably less close (heroCloseHalf now ends
-  // nearer heroWideHalf, so the frustum shrinks less during the zoom phase).
+  // the Sun sits at a comfortable on-screen size. For this orthographic
+  // camera on-screen scale is INVERSELY proportional to the frustum
+  // half-height (which scales linearly with this margin), so a SMALLER
+  // margin = more zoomed in. History: 1.2 was too close (Sun dominated);
+  // 2.4 halved everything and read a touch too far out on mobile; 2.0 zooms
+  // back in ~1.2x (2.4 / 2.0) for a slightly closer, more immersive framing
+  // while still keeping the outer planets in view.
   // IMPORTANT for the orthographic camera in use here: on-screen scale
   // comes ENTIRELY from the frustum half-height, NOT camera distance
   // (moving an orthographic camera closer/further does nothing visually)
@@ -543,7 +542,7 @@ export function createSolarSystemEngine(canvas, opts) {
   // right` toward `heroCloseHalf` in tick() below, not by moving the
   // camera. The camera position/angle/up stay FROZEN at `heroAngledPos`
   // through the whole zoom phase (no further rotation).
-  const HERO_CLOSE_MARGIN = 2.4;
+  const HERO_CLOSE_MARGIN = 2.0;
   const heroWideHalf = orthoHalfHeight(maxDistance, framingMargin, width / height);
   const heroCloseHalf = orthoHalfHeight(earthRefDistance, HERO_CLOSE_MARGIN, width / height);
   // Perspective fallback only (this engine also supports a plain
