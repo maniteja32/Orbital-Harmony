@@ -2256,6 +2256,18 @@ button {
   opacity: 1;
 }
 
+/* During the transition phase (the ~1.7s BEFORE the crossfade to the landing)
+   fade the 2D orrery + vignette out, leaving ONLY the shared starfield. The
+   loading -> landing crossfade is then a seamless star-to-star dissolve and
+   the real 3D solar system simply fades in over the matched stars — with no
+   compact-orrery-vs-big-3D-system overlap, which was the "jump". Placed after
+   `.is-ready` so it wins the opacity (equal specificity, later in source). */
+.loading-canvas.is-dimming,
+.loading-vignette.is-dimming {
+  opacity: 0;
+  transition: opacity 1.1s ease;
+}
+
 .loading-vignette {
   position: absolute;
   inset: 0;

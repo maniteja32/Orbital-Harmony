@@ -257,8 +257,11 @@ export default function LoadingScreen({ onDone, onExited }) {
   return (
     <div className={`loading-screen${leaving ? ' is-leaving' : ''}`}>
       <canvas ref={starCanvasRef} className={`loading-stars${ready ? ' is-ready' : ''}`} />
-      <canvas ref={canvasRef} className={`loading-canvas${ready ? ' is-ready' : ''}`} />
-      <div className="loading-vignette" />
+      <canvas
+        ref={canvasRef}
+        className={`loading-canvas${ready ? ' is-ready' : ''}${transitioning ? ' is-dimming' : ''}`}
+      />
+      <div className={`loading-vignette${transitioning ? ' is-dimming' : ''}`} />
     </div>
   );
 }
