@@ -113,17 +113,18 @@ export default function LoadingScreen({ onDone, onExited }) {
     // handoff reading as one smooth fade-to-black.
     const FADE_MS = reducedMotion ? 300 : 850;
     const SPEED_MULT = reducedMotion ? 0.15 : 1;
+    // The orrery spins fast at the start of loading and eases down to a slow,
+    // calm pace (close to the real planets') by the hand-off — see the draw
+    // loop. FAST_SPIN is the initial multiplier, SLOW_SPIN the settled one.
+    const FAST_SPIN = 2.6;
+    const SLOW_SPIN = 0.32;
 
-    let phase = 'hold'; // 'hold' -> 'transition' -> 'done'
-    let transitionStart = null;
+    let sequenceStart = null;
     let holdTimer, transitionTimer, doneTimer;
 
     function beginTransition() {
-      phase = 'transition';
-      transitionStart = performance.now();
       setTransitioning(true);
       transitionTimer = setTimeout(() => {
-        phase = 'done';
         setLeaving(true);
         // Fire `onDone` IMMEDIATELY (not after the fade finishes) so the
         // parent can swap to the next screen and start ITS fade-in right
@@ -142,6 +143,7 @@ export default function LoadingScreen({ onDone, onExited }) {
     // canvas still have a "from" state to animate out of).
     const readyRaf = requestAnimationFrame(() => {
       setReady(true);
+      sequenceStart = performance.now();
       holdTimer = setTimeout(beginTransition, HOLD_MS);
     });
 
@@ -154,29 +156,28 @@ export default function LoadingScreen({ onDone, onExited }) {
       const dt = Math.min((now - lastTime) / 1000, 0.05);
       lastTime = now;
 
-      let accel = 0;
-      if (phase === 'transition' && transitionStart != null) {
-        accel = Math.min(1, (now - transitionStart) / TRANSITION_MS);
-      } else if (phase === 'done') {
-        accel = 1;
-      }
-      const eased = easeInOutCubic(accel);
-      // Keep the orrery rotating steadily in its simple circular orbits the
-      // whole time — no acceleration, deceleration, or scaling. While the
-      // dots keep spinning, the real Solar System screen fades in underneath
-      // and this loading screen (orrery + stars) crossfades out over it, so
-      // the two overlap smoothly (the dots hand off to the real planets
-      // rather than stopping and restarting).
-      const speedScale = SPEED_MULT;
+      // The orrery starts spinning fast and SMOOTHLY DECELERATES over the
+      // whole loading sequence (hold + transition), easing down to a slow,
+      // calm pace close to the real planets' orbital speed by the time the
+      // crossfade hands off to the landing — so the motion settles INTO the
+      // real system instead of stopping and restarting. `progress` runs 0->1
+      // across HOLD_MS + TRANSITION_MS; easeInOutCubic holds the fast speed
+      // briefly, then bleeds it off and gently settles at SLOW_SPIN.
+      const spinDuration = HOLD_MS + TRANSITION_MS;
+      const progress = sequenceStart == null
+        ? 0
+        : Math.min(1, (now - sequenceStart) / spinDuration);
+      const decel = easeInOutCubic(progress);
+      const speedScale = SPEED_MULT * (FAST_SPIN + (SLOW_SPIN - FAST_SPIN) * decel);
 
       // ---- Step 1: fade the previous frame toward transparent ----
       // This single low-alpha rect is the entire trail mechanism — see the
       // file header comment for why no point-history buffer is needed.
-      // Slightly slower fade than earlier (was 0.085) so the now much
-      // faster orbital speed still reads as a smooth, continuous arc
-      // rather than choppy, disconnected dots.
+      // A low-alpha fade so the trail reads as a smooth continuous arc: the
+      // trail is naturally longest while the orrery spins fast at the start
+      // and shortens on its own as the spin decelerates.
       ctx.globalCompositeOperation = 'destination-out';
-      ctx.fillStyle = `rgba(0, 0, 0, ${0.06 + eased * 0.04})`;
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.07)';
       ctx.fillRect(0, 0, width, height);
       ctx.globalCompositeOperation = 'source-over';
 
