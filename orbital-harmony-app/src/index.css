@@ -2256,15 +2256,12 @@ button {
   opacity: 1;
 }
 
-/* During the transition phase fade the 2D orrery + vignette out so that by
-   the time the loading -> landing crossfade begins ONLY the shared starfield
-   remains (clean star-to-star dissolve, no compact-orrery-vs-big-3D-system
-   overlap = no "jump"). The fade duration is matched to the transition phase
-   length (TRANSITION_MS = 1.7s in LoadingScreen.jsx) so the orrery keeps
-   smoothly fading — with its planets still accelerating — RIGHT UP TO the
-   crossfade instead of finishing early and leaving a dead, static-stars gap
-   between the two screens. Placed after `.is-ready` so it wins the opacity. */
-.loading-canvas.is-dimming,
+/* During the transition phase the edge vignette fades out so the frame opens
+   up as the orrery expands + decelerates and settles into the real system.
+   The orrery canvas itself is NOT dimmed here — it stays fully visible through
+   the transition and fades out WITH the loading screen during the crossfade,
+   so the loading planets visibly overlap and hand off to the real planets
+   (continuous motion) instead of disappearing before the system appears. */
 .loading-vignette.is-dimming {
   opacity: 0;
   transition: opacity 1.7s ease;
