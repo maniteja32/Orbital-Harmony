@@ -355,18 +355,51 @@ export function createSolarSystemEngine(canvas, opts) {
     scene.add(sprite);
   });
 
-  const planets = planetKeys
-    .map((key) => PLANETS_BY_KEY[key])
-    .filter(Boolean)
-    .map((data) => {
-      const planet = buildPlanet(data, patternStartDate);
-      scene.add(planet.pivot);
-      if (showOrbitRings) scene.add(makeOrbitRing(data.distance, data.color));
-      return planet;
-    });
+  // Resolve the planet data. For the TWO-planet Explore pattern, NORMALIZE
+  // the orbit radii to fixed screen targets (inner ~0.50, outer ~0.95 of the
+  // framed view) so the spacing + framing are identical for every pair,
+  // completely decoupled from real AU distances — otherwise wide pairs (e.g.
+  // Mercury+Neptune) space the two orbits wildly unevenly and the pattern
+  // reads as cramped/off-centre. The Cosmic all-planets signature
+  // (connectAllPlanets) keeps real distances so the whole system stays
+  // recognizable.
+  const NORM_INNER_DISTANCE = 8.0; // inner planet orbit radius (world units)
+  const NORM_OUTER_DISTANCE = 15.2; // outer planet orbit radius (world units)
+  const normalizedDuo = tracePattern && !connectAllPlanets;
 
-  const maxDistance = Math.max(...planets.map((p) => p.data.distance), 20);
-  const framingMargin = planets.length <= 2 ? 1.4 : 1.18;
+  let planetDatas = planetKeys.map((key) => PLANETS_BY_KEY[key]).filter(Boolean);
+  const useNormalized = normalizedDuo && planetDatas.length === 2;
+  if (useNormalized) {
+    const inner =
+      planetDatas[0].orbitalPeriodDays <= planetDatas[1].orbitalPeriodDays
+        ? planetDatas[0]
+        : planetDatas[1];
+    planetDatas = planetDatas.map((d) => ({
+      ...d,
+      distance: d === inner ? NORM_INNER_DISTANCE : NORM_OUTER_DISTANCE,
+    }));
+  }
+
+  const planets = planetDatas.map((data) => {
+    const planet = buildPlanet(data, patternStartDate);
+    scene.add(planet.pivot);
+    if (showOrbitRings) scene.add(makeOrbitRing(data.distance, data.color));
+    return planet;
+  });
+
+  const maxDistance = useNormalized
+    ? NORM_OUTER_DISTANCE
+    : Math.max(...planets.map((p) => p.data.distance), 20);
+  // For the normalized duo, size the frame so the outer planet's ORBIT sits
+  // near the edge (~0.9) with its sphere just touching the boundary (never
+  // clipped, even for a large body like Jupiter). Inner orbit then lands at
+  // ~0.47 and the Sun (~0.22) stays comfortably clear of the inner orbit —
+  // consistent, generous framing for every pair.
+  const framingMargin = useNormalized
+    ? (NORM_OUTER_DISTANCE + (planetDatas.find((d) => d.distance === NORM_OUTER_DISTANCE)?.radius ?? 1.6)) / NORM_OUTER_DISTANCE
+    : planets.length <= 2
+      ? 1.4
+      : 1.18;
 
   // Same "fixed vertical extent, adaptive horizontal extent" convention as
   // the perspective path below, but for an orthographic camera the FRUSTUM
