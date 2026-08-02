@@ -261,7 +261,7 @@ export function PlanetSwipeRow({ label, planets, selectedKey, initialKey, onSele
 
   return (
     <div className={`swipe-row${compact ? ' swipe-row--compact' : ''}`}>
-      {!hideLabel && <span className="swipe-row__label">{label}</span>}
+      {!hideLabel && <span className="swipe-row__label">{centered?.name ?? label}</span>}
       <div className="swipe-row__viewport">
         <canvas className="swipe-row__canvas" ref={canvasRef} aria-hidden="true" />
         <div className="swipe-row__track" ref={trackRef}>

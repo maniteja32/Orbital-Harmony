@@ -35,7 +35,7 @@ export default function ResultScreen({ onGenerateNew, onBack }) {
   const planetAData = PLANETS_BY_KEY[planetA];
   const planetBData = PLANETS_BY_KEY[planetB];
   const resonance = findResonance(planetAData.orbitalPeriodDays, planetBData.orbitalPeriodDays);
-  const title = `${planetAData.name} × ${planetBData.name} — Orbital Harmony`;
+  const title = `${planetAData.name} × ${planetBData.name}`;
 
   function handleGenerateNew() {
     resetForNewPattern();

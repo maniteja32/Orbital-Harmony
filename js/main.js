@@ -1404,7 +1404,16 @@ function restoreMaterial(obj) {
 function animate() {
   requestAnimationFrame(animate);
 
-  const delta = clock.getDelta();
+  // Clamp the raw frame delta. Browsers suspend requestAnimationFrame while
+  // the tab/window is backgrounded, so the whole sim (and the pattern tracer
+  // driven off Earth's orbital angle) freezes while you're away. On return,
+  // THREE.Clock.getDelta() reports the ENTIRE elapsed real time as one giant
+  // delta — which would teleport the planets far along their orbits and blow
+  // a discontinuous gap into the traced pattern (the tracer draws at most one
+  // chord per frame, so a huge jump collapses the whole gap into a single
+  // line). Capping at ~3 frames' worth lets the simulation simply resume
+  // smoothly from where it froze and keep tracing chord-by-chord.
+  const delta = Math.min(clock.getDelta(), 0.05);
   // Simulation speed/pause affect orbital motion & pattern tracing only —
   // the camera fly-in and OrbitControls damping keep running regardless,
   // so pausing the simulation never freezes the viewer's own navigation.
