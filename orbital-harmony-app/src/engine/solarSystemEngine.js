@@ -262,6 +262,31 @@ export function createSolarSystemEngine(canvas, opts) {
   const width = parent?.clientWidth || window.innerWidth;
   const height = parent?.clientHeight || window.innerHeight;
 
+  // --- Explore resonance-pattern layout constants + marker sizing --------
+  // In the two-planet Explore pattern the geometric resonance web is the
+  // subject; the Sun and planets are demoted to minimalist MARKERS so they
+  // never clip into, overlay, or wash out the inner "flower" loops and
+  // negative spaces woven by the resonance lines. The two orbits are
+  // normalized to fixed radii (see the planet-build section) and the frame
+  // is sized so the outer orbit sits at ~0.95 of the framed dimension.
+  const NORM_INNER_DISTANCE = 8.0; // inner planet orbit radius (world units)
+  const NORM_OUTER_DISTANCE = 15.2; // outer planet orbit radius (world units)
+  const PATTERN_FRAMING_MARGIN = 1.05; // outer orbit ~0.95 of framed dimension
+  const validPatternKeys = (planetKeys || []).filter((k) => PLANETS_BY_KEY[k]);
+  const usePatternMarkers = tracePattern && !connectAllPlanets && validPatternKeys.length === 2;
+  // Visible screen HEIGHT expressed in world units at the pattern's fixed
+  // framing. For the 45° perspective camera, distanceToFit() fits the outer
+  // orbit within the SMALLER of the vertical/horizontal half-extents, so the
+  // vertical half-extent = (outer * margin) / min(1, aspect); the FOV cancels
+  // out. Marker sizes are then a flat percentage of this height.
+  const patternScreenHeightWorld = usePatternMarkers
+    ? (2 * NORM_OUTER_DISTANCE * PATTERN_FRAMING_MARGIN) / Math.min(1, width / height)
+    : 0;
+  // Sun diameter <= 6% of screen height -> radius = 3%. Planet diameter ~2%
+  // of screen height -> radius = 1% (tiny pinpoint indicators).
+  const patternSunRadius = usePatternMarkers ? 0.03 * patternScreenHeightWorld : null;
+  const patternPlanetRadius = usePatternMarkers ? 0.01 * patternScreenHeightWorld : null;
+
   // Orthographic = a true top-down projection with ZERO perspective
   // foreshortening — every orbit ring renders as a mathematically perfect
   // circle and a planet's on-screen size never changes just because the
@@ -319,10 +344,12 @@ export function createSolarSystemEngine(canvas, opts) {
   const fillLight = new THREE.HemisphereLight(0xfff7ea, 0x2a2f45, 0.28);
   scene.add(fillLight);
 
-  // Sun radius — kept at the mobile app's existing value (4.2) so the Sun's
-  // on-screen size is unchanged; only its texture/shading/glow are ported
-  // from the legacy prototype below.
-  const SUN_RADIUS = 4.2;
+  // Sun radius — normally 4.2 (mobile app's existing on-screen size). In the
+  // Explore resonance pattern the Sun is shrunk to a minimalist marker
+  // (<=6% of screen height in diameter) so it can't blind the inner flower
+  // loops; its glow/corona sprites below scale off SUN_RADIUS, so they shrink
+  // with it automatically.
+  const SUN_RADIUS = patternSunRadius ?? 4.2;
   const sunGeo = new THREE.SphereGeometry(SUN_RADIUS, 64, 64);
   const sunMat = makeSunMaterial();
   const sunMesh = new THREE.Mesh(sunGeo, sunMat);
@@ -362,21 +389,23 @@ export function createSolarSystemEngine(canvas, opts) {
   // Mercury+Neptune) space the two orbits wildly unevenly and the pattern
   // reads as cramped/off-centre. The Cosmic all-planets signature
   // (connectAllPlanets) keeps real distances so the whole system stays
-  // recognizable.
-  const NORM_INNER_DISTANCE = 8.0; // inner planet orbit radius (world units)
-  const NORM_OUTER_DISTANCE = 15.2; // outer planet orbit radius (world units)
-  const normalizedDuo = tracePattern && !connectAllPlanets;
-
+  // recognizable. (NORM_INNER_DISTANCE / NORM_OUTER_DISTANCE /
+  // PATTERN_FRAMING_MARGIN are defined once near the top of this function.)
   let planetDatas = planetKeys.map((key) => PLANETS_BY_KEY[key]).filter(Boolean);
-  const useNormalized = normalizedDuo && planetDatas.length === 2;
+  const useNormalized = usePatternMarkers && planetDatas.length === 2;
   if (useNormalized) {
     const inner =
       planetDatas[0].orbitalPeriodDays <= planetDatas[1].orbitalPeriodDays
         ? planetDatas[0]
         : planetDatas[1];
+    // Override BOTH the orbit radius (normalized spacing) and the sphere
+    // radius (shrunk to a ~2%-of-screen-height pinpoint marker) so the body
+    // never overlays the resonance web. Uses a shallow clone — the shared
+    // PLANETS_BY_KEY data is never mutated.
     planetDatas = planetDatas.map((d) => ({
       ...d,
       distance: d === inner ? NORM_INNER_DISTANCE : NORM_OUTER_DISTANCE,
+      radius: patternPlanetRadius ?? d.radius,
     }));
   }
 
@@ -390,13 +419,12 @@ export function createSolarSystemEngine(canvas, opts) {
   const maxDistance = useNormalized
     ? NORM_OUTER_DISTANCE
     : Math.max(...planets.map((p) => p.data.distance), 20);
-  // For the normalized duo, size the frame so the outer planet's ORBIT sits
-  // near the edge (~0.9) with its sphere just touching the boundary (never
-  // clipped, even for a large body like Jupiter). Inner orbit then lands at
-  // ~0.47 and the Sun (~0.22) stays comfortably clear of the inner orbit —
-  // consistent, generous framing for every pair.
+  // For the normalized duo the planets are tiny pinpoint markers (no sphere
+  // to clip), so the frame simply sizes the outer orbit to ~0.95 of the
+  // framed dimension — matching the screen-height figure used for marker
+  // sizing near the top of this function.
   const framingMargin = useNormalized
-    ? (NORM_OUTER_DISTANCE + (planetDatas.find((d) => d.distance === NORM_OUTER_DISTANCE)?.radius ?? 1.6)) / NORM_OUTER_DISTANCE
+    ? PATTERN_FRAMING_MARGIN
     : planets.length <= 2
       ? 1.4
       : 1.18;
