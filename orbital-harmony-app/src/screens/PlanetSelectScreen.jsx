@@ -27,12 +27,6 @@ export default function PlanetSelectScreen({ onNext, onBack }) {
 
   return (
     <div className="screen screen--select">
-      <div className="mode-topbar">
-        <button type="button" className="back-button back-button--icon" onClick={onBack} aria-label="Back to Orbital Harmony">
-          <ArrowLeft size={18} strokeWidth={2} aria-hidden="true" />
-        </button>
-      </div>
-
       <div className="screen__header screen__header--mode">
         <h1>Explore</h1>
         <p>Choose any two planets</p>
@@ -82,9 +76,17 @@ export default function PlanetSelectScreen({ onNext, onBack }) {
       )}
 
       <div className="screen__actions">
-        <GlassButton tone="primary" className="w-full h-12 text-base font-semibold" disabled={!canContinue} onClick={onNext}>
-          Generate Pattern
-        </GlassButton>
+        <div className="select-actions__button">
+          <GlassButton tone="secondary" className="w-full h-12 text-base font-semibold" onClick={onBack}>
+            <ArrowLeft size={18} strokeWidth={2} aria-hidden="true" />
+            Back
+          </GlassButton>
+        </div>
+        <div className="select-actions__button">
+          <GlassButton tone="primary" className="w-full h-12 text-base font-semibold" disabled={!canContinue} onClick={onNext}>
+            Generate Pattern
+          </GlassButton>
+        </div>
       </div>
     </div>
   );

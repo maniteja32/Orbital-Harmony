@@ -2198,10 +2198,32 @@ button {
   margin-top: auto;
 }
 
-.screen--select .screen__actions,
 .screen--details .screen__actions,
 .screen--share .screen__actions {
   flex-direction: column;
+}
+
+.screen--select .screen__actions {
+  flex-direction: row;
+}
+
+.screen--select .select-actions__button {
+  flex: 1;
+  min-width: 0;
+}
+
+.screen--select .select-actions__button:first-child {
+  flex: 1;
+}
+
+.screen--select .select-actions__button:last-child {
+  flex: 3;
+}
+
+@media (max-width: 390px) {
+  .screen--select .select-actions__button:last-child {
+    flex: 4;
+  }
 }
 
 /* ============================================================================
