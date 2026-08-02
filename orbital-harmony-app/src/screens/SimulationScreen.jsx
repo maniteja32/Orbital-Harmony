@@ -2,7 +2,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import SolarSystemCanvas from '../components/SolarSystemCanvas.jsx';
 import LiquidGlassIconButton from '../components/LiquidGlassIconButton.jsx';
-import { PLANETS, PLANETS_BY_KEY } from '../data/planets.js';
+import { PLANETS } from '../data/planets.js';
 import { useAppStore, SPEED_PRESETS } from '../store/useAppStore.js';
 
 // Tap-cycled live playback-rate multiplier steps for the rocket button
@@ -14,16 +14,15 @@ import { useAppStore, SPEED_PRESETS } from '../store/useAppStore.js';
 const SPEED_STEPS = [1, 2, 3, 5];
 const DEFAULT_SPEED_MULTIPLIER = 3;
 
-// Explore pattern shaping. Every pair is drawn with the planets' COMPRESSED
-// `traceSpeed` values (see data/planets.js), which keep every combination a
-// clean, elegant ~TARGET_LOBES-lobe rosette — real orbital periods instead
-// give high-ratio pairs (e.g. Mercury:Earth) a dense, chaotic scribble. A
-// fixed target chord count keeps line density consistent; near-equal-speed
-// pairs clamp the span rather than exploding to hundreds of years.
-const TARGET_LOBES = 6;
-const TARGET_CHORDS = 260;
-const MIN_SPAN_YEARS = 5;
-const MAX_SPAN_YEARS = 22;
+// Explore pattern shaping — faithful to the legacy prototype (js/main.js
+// PATTERN_CONFIG): a fixed 8-simulated-year span sampled every 3 simulated
+// days (~974 chords) traces the original's dense, smooth, harmonic spiral.
+// Angular rates come from each planet's COMPRESSED `traceSpeed` (= legacy
+// speed / 0.5), and the engine remaps the pair to the legacy's tighter orbit
+// distances — together these reproduce the legacy figure exactly, instead of
+// the previous sparse, spaced-out pinwheel.
+const LEGACY_SIM_YEARS = 8;
+const LEGACY_TRACE_INTERVAL_DAYS = 3;
 
 // Cosmic Signature — connects ALL planets (positioned at their real birth
 // date/time locations) in a closed loop and sweeps the wired figure over a
@@ -57,23 +56,17 @@ export default function SimulationScreen({ onComplete, onBack }) {
     [isCosmic, planetA, planetB],
   );
   const speedCfg = SPEED_PRESETS[speed];
-  const planetAData = PLANETS_BY_KEY[planetA];
-  const planetBData = PLANETS_BY_KEY[planetB];
 
   // Run length + chord density. Cosmic mode sweeps the all-planets figure
-  // over a fixed span; Explore uses the pair's COMPRESSED `traceSpeed` ratio
-  // to trace a clean ~TARGET_LOBES-lobe rosette (real periods make high-ratio
-  // pairs a chaotic scribble, so they are deliberately NOT used here).
+  // over a fixed span; Explore replicates the legacy prototype exactly — a
+  // fixed 8-year span sampled every 3 simulated days (dense, harmonic
+  // spiral). traceSpeed + the engine's legacy distance remap do the rest.
   const { totalSimYears, traceIntervalDays } = useMemo(() => {
     if (isCosmic) {
       return { totalSimYears: SIGNATURE_YEARS, traceIntervalDays: (SIGNATURE_YEARS * 365.25) / SIGNATURE_SAMPLES };
     }
-    const sA = planetAData?.traceSpeed ?? 1;
-    const sB = planetBData?.traceSpeed ?? 1;
-    const rel = Math.max(Math.abs(sA - sB), 0.04); // guard near-equal speeds
-    const span = Math.min(Math.max(TARGET_LOBES / rel, MIN_SPAN_YEARS), MAX_SPAN_YEARS);
-    return { totalSimYears: span, traceIntervalDays: (span * 365.25) / TARGET_CHORDS };
-  }, [isCosmic, planetAData, planetBData]);
+    return { totalSimYears: LEGACY_SIM_YEARS, traceIntervalDays: LEGACY_TRACE_INTERVAL_DAYS };
+  }, [isCosmic]);
 
   const handleEngineComplete = useCallback(() => {
     if (doneRef.current) return;
