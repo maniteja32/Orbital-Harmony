@@ -11,6 +11,10 @@ import { useAppStore } from '../store/useAppStore.js';
 export default function GeneratingScreen({ onDone, onBack }) {
   const { planetA, planetB, patternMode } = useAppStore();
   const isCosmic = patternMode === 'cosmic';
+  const planetAData = PLANETS_BY_KEY[planetA];
+  const planetBData = PLANETS_BY_KEY[planetB];
+  const hasPair = Boolean(planetAData && planetBData);
+  const pairTitle = hasPair ? `${planetAData.name} × ${planetBData.name}` : '';
   const colorA = PLANETS_BY_KEY[planetA]?.color ?? '#ffb07a';
   const colorB = PLANETS_BY_KEY[planetB]?.color ?? '#8fb7ff';
 
@@ -54,6 +58,7 @@ export default function GeneratingScreen({ onDone, onBack }) {
 
       <div className="gen-body">
         <h1 className="gen-title">{isCosmic ? 'Creating your cosmic signature…' : 'Creating your pattern…'}</h1>
+        {!isCosmic && hasPair && <p className="gen-pair-title">{pairTitle}</p>}
 
         <div className="gen-orbit" aria-hidden="true">
           <span className="gen-orbit__ring gen-orbit__ring--outer" />

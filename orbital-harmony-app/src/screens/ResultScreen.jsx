@@ -2,11 +2,10 @@ import { ArrowLeft, Heart, Share2 } from 'lucide-react';
 import { PlanetChip } from '../components/PlanetCard.jsx';
 import { GlassButton } from '../components/ui/glasscn/glass-button.jsx';
 import { PLANETS_BY_KEY } from '../data/planets.js';
-import { findResonance } from '../utils/resonance.js';
 import { formatCosmicSignatureDate } from '../utils/cosmicSignature.js';
 import { useAppStore } from '../store/useAppStore.js';
 
-/** Screen 6 — final pattern with its selected planets and resonance ratio.
+/** Screen 6 — final pattern with selected planets.
  *  Save/Share live as top-bar icons; "View Details" opens the info/controls
  *  screen and "Generate New Pattern" restarts the flow. */
 export default function ResultScreen({ onGenerateNew, onBack, onViewDetails, onShare, onSave }) {
@@ -15,9 +14,6 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails, onS
   const planetAData = PLANETS_BY_KEY[planetA];
   const planetBData = PLANETS_BY_KEY[planetB];
   const hasPair = Boolean(planetAData && planetBData);
-  const resonance = hasPair
-    ? findResonance(planetAData.orbitalPeriodDays, planetBData.orbitalPeriodDays)
-    : null;
   const title = hasPair ? `${planetAData.name} × ${planetBData.name}` : 'Cosmic Signature';
   const cosmicDateLabel = formatCosmicSignatureDate(cosmicDate);
 
@@ -90,15 +86,6 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails, onS
               <span className="reveal-chips__and">&amp;</span>
               <PlanetChip planet={planetBData} />
             </div>
-          )}
-          {resonance ? (
-            <span className="resonance-badge">
-              {resonance.longer} : {resonance.shorter} orbital resonance
-            </span>
-          ) : (
-            <span className="resonance-badge resonance-badge--muted">
-              {hasPair ? 'No simple resonance' : 'Unique signature'}
-            </span>
           )}
         </div>
       )}

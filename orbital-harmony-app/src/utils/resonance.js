@@ -195,9 +195,9 @@ const DAYS_PER_YEAR = 365.25;
 // (solarSystemEngine.js LineMaterial.linewidth) and the static Pattern
 // Gallery (pattern-gallery.html canvas lineWidth), so every pair renders
 // at the EXACT same stroke weight and the two surfaces never drift apart.
-// Note: the per-pair ADAPTIVE opacity (lineOpacity, see computePatternPlan)
-// is intentionally left untouched — only the thickness is unified here.
-export const PATTERN_LINE_WIDTH = 1.3;
+// Kept intentionally fine so dense resonances stay airy instead of reading
+// like a filled white mesh on mobile.
+export const PATTERN_LINE_WIDTH = 1.05;
 
 const PLAN = {
   // Caps on each planet's whole-loop count within one window. The inner cap

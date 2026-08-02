@@ -27,7 +27,7 @@ export const DENSITY_PRESETS = {
   complex: { label: 'Complex', years: 16, targetChords: 420 },
 };
 
-const initialSelection = { planetA: null, planetB: null, speed: 'medium', density: 'detailed' };
+const initialSelection = { planetA: null, planetB: null, speed: 'medium', density: 'detailed', detailLevel: 5 };
 
 export const useAppStore = create((set) => ({
   screen: 'loading', // loading | system | mode | select | cosmic | settings | result | details | knowledge | collection | share | profile
@@ -43,6 +43,7 @@ export const useAppStore = create((set) => ({
   setPlanetB: (planetB) => set({ planetB }),
   setSpeed: (speed) => set({ speed }),
   setDensity: (density) => set({ density }),
+  setDetailLevel: (detailLevel) => set({ detailLevel }),
   setSnapshot: (snapshot) => set({ snapshot }),
   setPatternMode: (patternMode) => set({ patternMode }),
   setCosmicDate: (cosmicDate) => set({ cosmicDate }),

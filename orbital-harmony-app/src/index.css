@@ -211,6 +211,11 @@ button {
   color: var(--text-primary);
 }
 
+.back-button.is-active {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.12);
+}
+
 /* Icon-only variant — a circular pill with just the back arrow (no "Back"
    label). The aria-label still names the destination for screen readers. */
 .back-button--icon {
@@ -1168,7 +1173,7 @@ button {
 /* ---- Simulation screen (merges live preview + playback controls into
    the old Simulation Settings step) ------------------------------------------ */
 .screen--simulation {
-  padding-top: calc(16px + var(--safe-top));
+  padding-top: 0;
   padding-left: 0;
   padding-right: 0;
   padding-bottom: 0;
@@ -1193,9 +1198,11 @@ button {
   position: relative;
   display: grid;
   margin: 0 22px;
+  min-height: 56px;
+  align-items: center;
 }
 
-.screen--simulation .back-button {
+.screen--simulation .screen__topbar .back-button {
   grid-area: 1 / 1;
   align-self: start;
   justify-self: start;
@@ -1221,6 +1228,10 @@ button {
   margin: 0;
 }
 
+.screen--simulation .screen__header h1 {
+  margin-bottom: 0;
+}
+
 .sim-canvas-wrap {
   position: relative;
   flex: 1;
@@ -1232,6 +1243,172 @@ button {
   background: #000;
 }
 
+/* Selected-pair label, retained on the LIVE generation screen (not just the
+   Result screen) so the user always knows what they're watching get
+   traced. Kept as a subtle floating overlay (not a full header) to stay
+   consistent with this screen's immersive, chrome-free layout. */
+.sim-pair-title {
+  position: absolute;
+  top: calc(14px + var(--safe-top));
+  left: 0;
+  right: 0;
+  z-index: 1;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  color: var(--text-primary);
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.65);
+  pointer-events: none;
+}
+
+.sim-tune-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0 22px;
+}
+
+/* Reuses the same card language as `.settings-card`/`.detail-card`
+   (var(--glass-bg) + var(--glass-border), same radius) instead of a
+   one-off dark panel, so this control group reads as part of the same
+   design system as every other settings surface in the app. Kept
+   deliberately compact (tight padding/gap) since this sits ABOVE the
+   playback transport row within an already-tall immersive screen. */
+.sim-tune-panel__section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+}
+
+.sim-tune-panel__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sim-tune-panel__label {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+.sim-tune-panel__value {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.sim-speed-slider {
+  position: relative;
+  display: block;
+  height: 18px;
+}
+
+.sim-speed-slider--detail {
+  margin-top: 0;
+}
+
+.sim-speed-slider__track,
+.sim-speed-slider__fill {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  height: 4px;
+  border-radius: 999px;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.sim-speed-slider__track {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.sim-speed-slider__fill {
+  background: linear-gradient(90deg, #ff5a2c, #ffb07a);
+}
+
+.sim-speed-slider input {
+  -webkit-appearance: none;
+  appearance: none;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  background: transparent;
+  cursor: pointer;
+}
+
+.sim-speed-slider input::-webkit-slider-runnable-track {
+  height: 18px;
+  background: transparent;
+}
+
+.sim-speed-slider input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: #1f2029;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.42);
+}
+
+.sim-speed-slider input::-moz-range-track {
+  height: 18px;
+  background: transparent;
+}
+
+.sim-speed-slider input::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  background: #1f2029;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.42);
+}
+
+.sim-tune-panel__segmented {
+  padding: 3px;
+}
+
+.sim-tune-panel__segmented .segmented__option {
+  min-height: 38px;
+}
+
+.sim-slider-labels {
+  position: relative;
+  height: 13px;
+  padding-inline: 9px;
+  margin-top: -2px;
+}
+
+.sim-slider-labels__item {
+  position: absolute;
+  top: 0;
+  font-size: 10px;
+  font-weight: 500;
+  text-align: center;
+  color: var(--text-tertiary);
+  transform: translateX(-50%);
+  white-space: nowrap;
+  transition: color 0.18s ease;
+}
+
+.sim-slider-labels__item.is-active {
+  color: var(--text-primary);
+}
+
 .sim-controls {
   display: flex;
   align-items: center;
@@ -1239,6 +1416,34 @@ button {
   gap: 18px;
   flex-shrink: 0;
   padding: 6px 22px calc(10px + var(--safe-bottom));
+}
+
+.sim-controls--transport {
+  align-items: center;
+  gap: 12px;
+  margin: 0 22px;
+  padding: 0 0 max(40px, calc(24px + var(--safe-bottom)));
+}
+
+.sim-controls--transport .back-button {
+  align-self: center;
+}
+
+.sim-controls__toggle {
+  color: var(--text-secondary);
+  width: calc(var(--back-button-size) * 1.2);
+  height: calc(var(--back-button-size) * 1.2);
+  min-height: calc(var(--back-button-size) * 1.2);
+  flex: 0 0 calc(var(--back-button-size) * 1.2);
+}
+
+.sim-controls__toggle svg {
+  width: calc(18px * 1.2);
+  height: calc(18px * 1.2);
+}
+
+.sim-controls__toggle.is-active {
+  color: var(--text-primary);
 }
 
 /* ---- Liquid Glass icon buttons (Simulation screen controls) --------------
@@ -1562,6 +1767,16 @@ button {
   font-size: clamp(20px, 5.6vw, 26px);
 }
 
+.gen-pair-title {
+  margin-top: -12px;
+  font-family: var(--font-display);
+  font-size: clamp(17px, 5vw, 21px);
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+  color: var(--text-primary);
+}
+
 .gen-orbit {
   position: relative;
   width: 200px;
@@ -1715,14 +1930,7 @@ button {
 }
 
 .resonance-badge {
-  align-self: flex-start;
-  padding: 7px 12px;
-  border-radius: 999px;
-  background: var(--glass-bg-strong);
-  border: 1px solid var(--glass-border);
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--accent);
+  display: none;
 }
 
 .resonance-badge--muted {

@@ -100,6 +100,7 @@ export default function App() {
         {screen === 'settings' && (
           <SimulationScreen
             onComplete={() => goTo('result')}
+            onBack={() => goTo(patternMode === 'cosmic' ? 'cosmic' : 'select')}
           />
         )}
         {screen === 'result' && (

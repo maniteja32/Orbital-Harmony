@@ -268,6 +268,11 @@ export function createSolarSystemEngine(canvas, opts) {
     patternRates = null,
     startPaused = false,
     initialSpeedMultiplier = 1,
+    miniBodiesIntro = false,
+    miniSunScale = 0.5,
+    miniPlanetScale = 0.58,
+    miniIntroDurationSec = 1.15,
+    miniMotionRampSec = 2.6,
     patternStartDate = undefined,
     cosmicSnapshotDate = undefined,
   } = opts;
@@ -367,6 +372,7 @@ export function createSolarSystemEngine(canvas, opts) {
   const sunMat = makeSunMaterial();
   const sunMesh = new THREE.Mesh(sunGeo, sunMat);
   scene.add(sunMesh);
+  const sunGlowSprites = [];
 
   // Sun corona — three additive glow-sprite layers in a warm cream (#fff2cf)
   // -> orange (#ffb347) -> soft haze (#ff7a3d) gradient, ported from the
@@ -392,6 +398,8 @@ export function createSolarSystemEngine(canvas, opts) {
     }));
     const s = SUN_RADIUS * scale;
     sprite.scale.set(s, s, 1);
+    sprite.userData.baseScale = s;
+    sunGlowSprites.push(sprite);
     scene.add(sprite);
   });
 
@@ -416,6 +424,28 @@ export function createSolarSystemEngine(canvas, opts) {
     if (showOrbitRings) scene.add(makeOrbitRing(data.distance, data.color));
     return planet;
   });
+
+  const miniBodiesEnabled = miniBodiesIntro && planets.length > 0;
+  let miniBodiesElapsed = 0;
+  let miniBodiesDone = !miniBodiesEnabled;
+  let miniMotionElapsed = 0;
+
+  function applyMiniBodyScale(t) {
+    const easedT = THREE.MathUtils.clamp(t, 0, 1);
+    const sunScale = THREE.MathUtils.lerp(1, miniSunScale, easedT);
+    const planetScale = THREE.MathUtils.lerp(1, miniPlanetScale, easedT);
+
+    sunMesh.scale.setScalar(sunScale);
+    sunGlowSprites.forEach((sprite) => {
+      const baseScale = sprite.userData.baseScale;
+      sprite.scale.set(baseScale * sunScale, baseScale * sunScale, 1);
+    });
+    planets.forEach((planet) => {
+      planet.axialTilt.scale.setScalar(planetScale);
+    });
+  }
+
+  if (miniBodiesEnabled) applyMiniBodyScale(0);
 
   const maxDistance = Math.max(...planets.map((p) => p.data.distance), 20);
   const cosmicSnapshotEnabled = cosmicSnapshotDate instanceof Date && !Number.isNaN(cosmicSnapshotDate.getTime());
@@ -1001,6 +1031,22 @@ export function createSolarSystemEngine(canvas, opts) {
   function tick() {
     rafId = requestAnimationFrame(tick);
     const delta = Math.min(clock.getDelta(), 0.05);
+
+    if (!miniBodiesDone) {
+      miniBodiesElapsed += delta;
+      const t = Math.min(miniBodiesElapsed / Math.max(0.01, miniIntroDurationSec), 1);
+      applyMiniBodyScale(smootherStep(t));
+      if (t >= 1) miniBodiesDone = true;
+    }
+
+    if (miniBodiesEnabled && miniBodiesDone) {
+      miniMotionElapsed = Math.min(miniMotionElapsed + delta, Math.max(0.01, miniMotionRampSec));
+    }
+
+    const motionRamp = miniBodiesEnabled
+      ? (miniBodiesDone ? THREE.MathUtils.clamp(miniMotionElapsed / Math.max(0.01, miniMotionRampSec), 0, 1) : 0)
+      : 1;
+
     if (paused) {
       renderScene();
       return;
@@ -1015,8 +1061,8 @@ export function createSolarSystemEngine(canvas, opts) {
       if (layer.material.uniforms?.uTime) layer.material.uniforms.uTime.value += delta;
     });
 
-    if (!completed) simDaysElapsed += delta * baseSimDaysPerRealSecond * speedMultiplier;
-    if (!completed) browseElapsedSec += delta;
+    if (!completed) simDaysElapsed += delta * baseSimDaysPerRealSecond * speedMultiplier * motionRamp;
+    if (!completed) browseElapsedSec += delta * motionRamp;
 
     if (cosmicSnapshotEnabled && !cosmicOverviewDone) {
       cosmicOverviewElapsed += delta;
@@ -1088,8 +1134,11 @@ export function createSolarSystemEngine(canvas, opts) {
       });
 
       planets.forEach((planet) => {
-        planet.mesh.rotation.y += delta * 60 * planet.data.rotationSpeed * (planet.data.spinDirection ?? 1);
-        if (planet.clouds) planet.clouds.rotation.y += delta * 60 * planet.data.rotationSpeed * 1.4 * (planet.data.spinDirection ?? 1);
+        planet.mesh.rotation.y += delta * 60 * planet.data.rotationSpeed * (planet.data.spinDirection ?? 1) * motionRamp;
+        if (planet.clouds) {
+          planet.clouds.rotation.y +=
+            delta * 60 * planet.data.rotationSpeed * 1.4 * (planet.data.spinDirection ?? 1) * motionRamp;
+        }
         if (planet.moonPivot) planet.moonPivot.rotation.y += delta * 1.4;
       });
     }
@@ -1301,6 +1350,10 @@ export function createSolarSystemEngine(canvas, opts) {
       lastSampledDay = 0;
       patternCount = 0;
       completed = false;
+      miniBodiesElapsed = 0;
+      miniBodiesDone = !miniBodiesEnabled;
+      miniMotionElapsed = 0;
+      if (miniBodiesEnabled) applyMiniBodyScale(0);
       if (patternLines) {
         patternLines.geometry.instanceCount = 0;
       }
