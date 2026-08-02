@@ -8,6 +8,11 @@ import PlanetSelectScreen from './screens/PlanetSelectScreen.jsx';
 import GeneratingScreen from './screens/GeneratingScreen.jsx';
 import SimulationScreen from './screens/SimulationScreen.jsx';
 import ResultScreen from './screens/ResultScreen.jsx';
+import PatternDetailsScreen from './screens/PatternDetailsScreen.jsx';
+import KnowledgeCardScreen from './screens/KnowledgeCardScreen.jsx';
+import CollectionScreen from './screens/CollectionScreen.jsx';
+import SharePatternScreen from './screens/SharePatternScreen.jsx';
+import ProfileScreen from './screens/ProfileScreen.jsx';
 import { useAppStore } from './store/useAppStore.js';
 import { createStarfieldBackdrop } from './engine/starfieldBackdrop.js';
 import { preloadPlanetTextures } from './engine/planetFactory.js';
@@ -105,7 +110,26 @@ export default function App() {
             onBack={() => goTo(patternMode === 'cosmic' ? 'cosmic' : 'select')}
           />
         )}
-        {screen === 'result' && <ResultScreen onGenerateNew={() => goTo('system')} onBack={() => goTo('settings')} />}
+        {screen === 'result' && (
+          <ResultScreen
+            onGenerateNew={() => goTo('system')}
+            onBack={() => goTo('settings')}
+            onViewDetails={() => goTo('details')}
+            onShare={() => goTo('share')}
+            onSave={() => goTo('collection')}
+          />
+        )}
+        {screen === 'details' && (
+          <PatternDetailsScreen
+            onBack={() => goTo('result')}
+            onRegenerate={() => goTo('generating')}
+            onKnowledge={() => goTo('knowledge')}
+          />
+        )}
+        {screen === 'knowledge' && <KnowledgeCardScreen onClose={() => goTo('details')} />}
+        {screen === 'collection' && <CollectionScreen onOpen={() => goTo('result')} />}
+        {screen === 'share' && <SharePatternScreen onBack={() => goTo('result')} />}
+        {screen === 'profile' && <ProfileScreen onBack={() => goTo('system')} />}
       </ScreenTransition>
       {showLoading && (
         <div className="loading-screen-slot">

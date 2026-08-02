@@ -30,7 +30,7 @@ export const DENSITY_PRESETS = {
 const initialSelection = { planetA: null, planetB: null, speed: 'medium', density: 'detailed' };
 
 export const useAppStore = create((set) => ({
-  screen: 'loading', // loading | system | mode | select | cosmic | generating | settings | result
+  screen: 'loading', // loading | system | mode | select | cosmic | generating | settings | result | details | knowledge | collection | share | profile
   ...initialSelection,
   patternMode: 'explore', // 'explore' (pick two planets) | 'cosmic' (birth-date signature)
   cosmicDate: null, // Date the Cosmic Signature pattern is anchored to (null = Explore flow)

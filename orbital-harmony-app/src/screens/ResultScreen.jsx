@@ -1,41 +1,22 @@
+import { ArrowLeft, Heart, Share2 } from 'lucide-react';
 import { PlanetChip } from '../components/PlanetCard.jsx';
 import { GlassButton } from '../components/ui/glasscn/glass-button.jsx';
 import { PLANETS_BY_KEY } from '../data/planets.js';
 import { findResonance } from '../utils/resonance.js';
 import { useAppStore } from '../store/useAppStore.js';
 
-function downloadDataUrl(dataUrl, filename) {
-  const link = document.createElement('a');
-  link.href = dataUrl;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-}
-
-async function shareSnapshot(dataUrl, title) {
-  try {
-    const res = await fetch(dataUrl);
-    const blob = await res.blob();
-    const file = new File([blob], 'orbital-harmony.png', { type: 'image/png' });
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({ files: [file], title, text: title });
-      return;
-    }
-  } catch {
-    // fall through to download
-  }
-  downloadDataUrl(dataUrl, 'orbital-harmony.png');
-}
-
-/** Step 6/7 — final pattern, selected planets, resonance ratio, and export
- * actions (Download PNG / Share / Generate New Pattern). */
-export default function ResultScreen({ onGenerateNew, onBack }) {
+/** Screen 6 — final pattern with its selected planets and resonance ratio.
+ *  Save/Share live as top-bar icons; "View Details" opens the info/controls
+ *  screen and "Generate New Pattern" restarts the flow. */
+export default function ResultScreen({ onGenerateNew, onBack, onViewDetails, onShare, onSave }) {
   const { planetA, planetB, snapshot, resetForNewPattern } = useAppStore();
   const planetAData = PLANETS_BY_KEY[planetA];
   const planetBData = PLANETS_BY_KEY[planetB];
-  const resonance = findResonance(planetAData.orbitalPeriodDays, planetBData.orbitalPeriodDays);
-  const title = `${planetAData.name} × ${planetBData.name}`;
+  const hasPair = Boolean(planetAData && planetBData);
+  const resonance = hasPair
+    ? findResonance(planetAData.orbitalPeriodDays, planetBData.orbitalPeriodDays)
+    : null;
+  const title = hasPair ? `${planetAData.name} × ${planetBData.name}` : 'Cosmic Signature';
 
   function handleGenerateNew() {
     resetForNewPattern();
@@ -44,15 +25,40 @@ export default function ResultScreen({ onGenerateNew, onBack }) {
 
   return (
     <div className="screen screen--result">
-      {onBack && (
-        <button type="button" className="back-button" onClick={onBack} aria-label="Back to simulation settings">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          Back
-        </button>
-      )}
-      <div className="screen__header">
+      <div className="mode-topbar">
+        {onBack ? (
+          <button
+            type="button"
+            className="back-button back-button--icon"
+            onClick={onBack}
+            aria-label="Back"
+          >
+            <ArrowLeft size={18} strokeWidth={2} aria-hidden="true" />
+          </button>
+        ) : (
+          <span />
+        )}
+        <div className="result-topbar__actions">
+          <button
+            type="button"
+            className="back-button back-button--icon"
+            onClick={onSave}
+            aria-label="Save to collection"
+          >
+            <Heart size={18} strokeWidth={2} aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            className="back-button back-button--icon"
+            onClick={onShare}
+            aria-label="Share this pattern"
+          >
+            <Share2 size={18} strokeWidth={2} aria-hidden="true" />
+          </button>
+        </div>
+      </div>
+
+      <div className="screen__header screen__header--mode">
         <span className="eyebrow">Your pattern</span>
         <h1>{title}</h1>
       </div>
@@ -62,40 +68,35 @@ export default function ResultScreen({ onGenerateNew, onBack }) {
       </div>
 
       <div className="result-meta">
-        <div className="reveal-chips">
-          <PlanetChip planet={planetAData} />
-          <span className="reveal-chips__and">&amp;</span>
-          <PlanetChip planet={planetBData} />
-        </div>
+        {hasPair && (
+          <div className="reveal-chips">
+            <PlanetChip planet={planetAData} />
+            <span className="reveal-chips__and">&amp;</span>
+            <PlanetChip planet={planetBData} />
+          </div>
+        )}
         {resonance ? (
           <span className="resonance-badge">
             {resonance.longer} : {resonance.shorter} orbital resonance
           </span>
         ) : (
-          <span className="resonance-badge resonance-badge--muted">No simple resonance</span>
+          <span className="resonance-badge resonance-badge--muted">
+            {hasPair ? 'No simple resonance' : 'Unique signature'}
+          </span>
         )}
       </div>
 
       <div className="result-actions">
         <GlassButton
-          tone="secondary"
-          className="w-full h-12"
-          onClick={() => downloadDataUrl(snapshot, 'orbital-harmony.png')}
+          tone="primary"
+          className="w-full h-12 text-base font-semibold"
+          onClick={onViewDetails}
         >
-          Download PNG
+          View Details
         </GlassButton>
-        <GlassButton
-          tone="secondary"
-          className="w-full h-12"
-          onClick={() => shareSnapshot(snapshot, title)}
-        >
-          Share
+        <GlassButton tone="secondary" className="w-full h-12" onClick={handleGenerateNew}>
+          Generate New Pattern
         </GlassButton>
-        <div>
-          <GlassButton tone="primary" className="w-full h-12 text-base font-semibold" onClick={handleGenerateNew}>
-            Generate New Pattern
-          </GlassButton>
-        </div>
       </div>
     </div>
   );
