@@ -394,7 +394,7 @@ button {
 
 .system-header p {
   color: var(--text-secondary);
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.5;
   max-width: 320px;
   margin: 0 auto;
@@ -413,7 +413,7 @@ button {
      chrome. env(safe-area-inset-bottom) covers the iPhone home indicator, but
      it reports 0 while Safari's bottom address bar is SHOWING — so `max()`
      also guarantees a firm ~40px gap in that state. */
-  padding: 28px 22px max(40px, calc(24px + var(--safe-bottom)));
+  padding: 28px 24px max(40px, calc(24px + var(--safe-bottom)));
 }
 
 /* Keep the CTA to a readable centred column, matched to the "Orbital Harmony"
@@ -441,7 +441,7 @@ button {
 .system-modes .mode-card {
   justify-content: center;
   text-align: center;
-  padding: 14px 20px;
+  padding: 12px 20px;
 }
 
 .system-modes .mode-card__text {
@@ -1861,14 +1861,14 @@ button {
 
 .mode-card__title {
   font-family: var(--font-ui);
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 500;
   letter-spacing: 0.01em;
 }
 
 .mode-card__desc {
   color: var(--text-secondary);
-  font-size: 13.5px;
+  font-size: 12px;
   line-height: 1.45;
 }
 

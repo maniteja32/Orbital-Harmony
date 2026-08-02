@@ -55,7 +55,7 @@ export default function SolarSystemScreen({ onExplore, onCosmic }) {
           <button type="button" className="mode-card" onClick={onExplore}>
             <span className="mode-card__text">
               <span className="mode-card__title">Explore</span>
-              <span className="mode-card__desc">Choose any two planets to create patterns</span>
+              <span className="mode-card__desc">Create patterns with any two planets</span>
             </span>
           </button>
 
