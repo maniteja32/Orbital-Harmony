@@ -1,5 +1,4 @@
 import { ArrowLeft, Heart, Share2 } from 'lucide-react';
-import { PlanetChip } from '../components/PlanetCard.jsx';
 import { GlassButton } from '../components/ui/glasscn/glass-button.jsx';
 import { PLANETS_BY_KEY } from '../data/planets.js';
 import { formatCosmicSignatureDate } from '../utils/cosmicSignature.js';
@@ -77,18 +76,6 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails, onS
       <div className="result-frame">
         {snapshot ? <img src={snapshot} alt={title} /> : <div className="result-frame__placeholder" />}
       </div>
-
-      {!isCosmic && (
-        <div className="result-meta">
-          {hasPair && (
-            <div className="reveal-chips">
-              <PlanetChip planet={planetAData} />
-              <span className="reveal-chips__and">&amp;</span>
-              <PlanetChip planet={planetBData} />
-            </div>
-          )}
-        </div>
-      )}
 
       {isCosmic ? (
         <div className="result-actions result-actions--cosmic">

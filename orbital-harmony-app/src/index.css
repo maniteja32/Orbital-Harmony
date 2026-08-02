@@ -1245,22 +1245,24 @@ button {
 
 /* Selected-pair label, retained on the LIVE generation screen (not just the
    Result screen) so the user always knows what they're watching get
-   traced. Kept as a subtle floating overlay (not a full header) to stay
-   consistent with this screen's immersive, chrome-free layout. */
+   traced. Sits IN-FLOW as a compact header line above the canvas (not an
+   absolutely-positioned overlay floating over the pattern). Sized to
+   EXACTLY match `.screen__header--mode h1` (Result screen's own pair
+   title) so the same "Planet × Planet" text reads at the same size
+   wherever it appears. Vertical position also matches every other
+   screen's header (e.g. "Explore" on Planet Select, measured top: 68px)
+   instead of hugging the very top edge, so it reads as a consistent
+   header position across the whole app. */
 .sim-pair-title {
-  position: absolute;
-  top: calc(14px + var(--safe-top));
-  left: 0;
-  right: 0;
-  z-index: 1;
+  flex-shrink: 0;
+  margin: calc(68px + var(--safe-top)) 22px 0;
   text-align: center;
   font-family: var(--font-display);
-  font-size: 15px;
+  font-size: clamp(19px, 5.6vw, 22px);
   font-weight: 400;
-  letter-spacing: 0.02em;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
   color: var(--text-primary);
-  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.65);
-  pointer-events: none;
 }
 
 .sim-tune-panel {
@@ -1284,6 +1286,21 @@ button {
   border-radius: var(--radius-md);
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
+}
+
+/* Liquid-refract variant — the wrapping <LiquidGlass> (see SimulationScreen,
+   same technique as the mode cards' MODE_RIM) provides the actual glass
+   surface, SVG-displacement refraction, and specular rim; strip the flat
+   CSS-frosted background/border here so the two don't stack (mirrors
+   `.mode-card--liquid`). */
+.sim-tune-panel__section--liquid {
+  background: none;
+  border: none;
+}
+
+/* The LiquidGlass wrapper itself is the sized/shaped card. */
+.sim-tune-glass {
+  display: block;
 }
 
 .sim-tune-panel__row {

@@ -1,9 +1,19 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, Pause, Play, RotateCcw } from 'lucide-react';
 import SolarSystemCanvas from '../components/SolarSystemCanvas.jsx';
+import { LiquidGlass } from '../components/ui/glasscn/liquid-glass.jsx';
 import { PLANETS, PLANETS_BY_KEY } from '../data/planets.js';
 import { computePatternPlan } from '../utils/resonance.js';
 import { useAppStore, SPEED_PRESETS } from '../store/useAppStore.js';
+
+// Rim tuning for the tuning-panel cards' LiquidGlass surface — matches the
+// mode cards' MODE_RIM (SolarSystemScreen.jsx) so every glass surface in the
+// app shares the same specular-edge look, just a touch subtler since these
+// sit over an already-busy live pattern rather than a calm starfield.
+const TUNE_RIM = {
+  '--liquid-glass-rim-width': '0.8px',
+  '--liquid-glass-rim-light': 'rgba(255, 255, 255, 0.4)',
+};
 
 const DEFAULT_SPEED_MULTIPLIER = 3;
 const DETAIL_LEVEL_MIN = 0;
@@ -146,8 +156,8 @@ export default function SimulationScreen({ onComplete, onBack }) {
 
   return (
     <div className="screen screen--simulation">
+      {pairTitle && <p className="sim-pair-title">{pairTitle}</p>}
       <div className="sim-canvas-wrap">
-        {pairTitle && <p className="sim-pair-title">{pairTitle}</p>}
         <SolarSystemCanvas
           key={`${planetKeys.join(',')}:${detailLevel}`}
           ref={canvasRef}
@@ -175,7 +185,8 @@ export default function SimulationScreen({ onComplete, onBack }) {
       </div>
 
       <div className="sim-tune-panel" aria-label="Simulation tuning controls">
-        <div className="sim-tune-panel__section">
+        <LiquidGlass className="sim-tune-glass rounded-[18px] w-full bg-white/[0.05]" style={TUNE_RIM}>
+        <div className="sim-tune-panel__section sim-tune-panel__section--liquid">
           <div className="sim-tune-panel__row">
             <span className="sim-tune-panel__label">Simulation Speed</span>
             <span className="sim-tune-panel__value">{speedFactor.toFixed(1)}×</span>
@@ -193,9 +204,11 @@ export default function SimulationScreen({ onComplete, onBack }) {
             />
           </label>
         </div>
+        </LiquidGlass>
 
         {!isCosmic && (
-          <div className="sim-tune-panel__section">
+          <LiquidGlass className="sim-tune-glass rounded-[18px] w-full bg-white/[0.05]" style={TUNE_RIM}>
+          <div className="sim-tune-panel__section sim-tune-panel__section--liquid">
             <div className="sim-tune-panel__row">
               <span className="sim-tune-panel__label">Pattern Detail</span>
               <span className="sim-tune-panel__value">{detailLevel}</span>
@@ -224,6 +237,7 @@ export default function SimulationScreen({ onComplete, onBack }) {
               ))}
             </div>
           </div>
+          </LiquidGlass>
         )}
       </div>
 
