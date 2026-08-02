@@ -562,20 +562,44 @@ export function createSolarSystemEngine(canvas, opts) {
   let introCompleteCb = null;
 
   let controls = null;
+  let onKeyZoom = null;
   function attachOrbitControls(target) {
     controls = new OrbitControls(camera, renderer.domElement);
     controls.target.copy(target ?? new THREE.Vector3(0, 0, 0));
     controls.enableDamping = true;
     controls.dampingFactor = 0.06;
-    // Zoom removed per request — the camera should stay at the same
-    // settled establishing-shot distance rather than letting the user
-    // scroll/pinch closer.
-    controls.enableZoom = false;
+    // Zoom ENABLED — pinch-to-zoom with two fingers on mobile, mouse wheel on
+    // web. For the orthographic camera OrbitControls scales `camera.zoom`
+    // (bounded below), NOT the camera distance. minZoom 1 = the settled
+    // establishing shot is the most zoomed-OUT view (can't pull back into
+    // empty space); maxZoom lets the user push in up to 3.5x for a close look.
+    controls.enableZoom = true;
+    controls.zoomSpeed = 0.9;
+    controls.minZoom = 1;
+    controls.maxZoom = 3.5;
     controls.enablePan = false;
     // Calm/settled after a scripted cinematic move — no lingering ambient
     // auto-orbit fighting the composition the intro just settled into.
     controls.autoRotate = !cinematicIntro;
     controls.autoRotateSpeed = 0.35;
+
+    // Keyboard zoom for web (+ / = to zoom in, - / _ to zoom out). OrbitControls
+    // has no built-in keyboard zoom (its arrow keys pan), so nudge camera.zoom
+    // directly — safe because OrbitControls only rewrites camera.zoom on an
+    // actual wheel/pinch dolly, leaving a manual set untouched otherwise.
+    if (!onKeyZoom) {
+      onKeyZoom = (e) => {
+        if (!controls || !controls.enableZoom || !camera.isOrthographicCamera) return;
+        let factor;
+        if (e.key === '+' || e.key === '=') factor = 1.12;
+        else if (e.key === '-' || e.key === '_') factor = 1 / 1.12;
+        else return;
+        camera.zoom = THREE.MathUtils.clamp(camera.zoom * factor, controls.minZoom, controls.maxZoom);
+        camera.updateProjectionMatrix();
+        e.preventDefault();
+      };
+      window.addEventListener('keydown', onKeyZoom);
+    }
   }
 
   if (cinematicIntro) {
@@ -1091,6 +1115,7 @@ export function createSolarSystemEngine(canvas, opts) {
     destroy() {
       if (rafId != null) cancelAnimationFrame(rafId);
       window.removeEventListener('resize', resize);
+      if (onKeyZoom) window.removeEventListener('keydown', onKeyZoom);
       resizeObserver.disconnect();
       if (controls) controls.dispose();
       renderer.dispose();
