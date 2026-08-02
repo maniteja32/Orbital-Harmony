@@ -117,7 +117,7 @@ export default function LoadingScreen({ onDone, onExited }) {
     // calm pace (close to the real planets') by the hand-off — see the draw
     // loop. FAST_SPIN is the initial multiplier, SLOW_SPIN the settled one.
     const FAST_SPIN = 2.6;
-    const SLOW_SPIN = 0.32;
+    const SLOW_SPIN = 0.72;
 
     let sequenceStart = null;
     let holdTimer, transitionTimer, doneTimer;
