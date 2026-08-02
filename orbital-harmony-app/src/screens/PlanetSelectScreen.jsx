@@ -28,7 +28,7 @@ export default function PlanetSelectScreen({ onNext, onBack }) {
   return (
     <div className="screen screen--select">
       <div className="mode-topbar">
-        <button type="button" className="back-button" onClick={onBack} aria-label="Back to Choose an Experience">
+        <button type="button" className="back-button" onClick={onBack} aria-label="Back to Orbital Harmony">
           <ArrowLeft size={18} strokeWidth={2} aria-hidden="true" />
           Back
         </button>

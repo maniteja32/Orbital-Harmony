@@ -246,14 +246,43 @@ button {
   line-height: 1.5;
 }
 
-/* Planet Select's header ("Step 1 of 2" / "Choose two planets") reads
+/* Planet Select's header ("Explore" / "Choose any two planets") reads
    better centered above the two symmetric Planet A/Planet B carousels
    below it — scoped to just this screen since other screens using the
    same `.screen__header` (Result, Simulation) keep their left-aligned
    title sitting next to a back button/canvas, which centering would
-   throw off. */
+   throw off.
+
+   For a SEAMLESS landing -> select transition, the title + subtitle are
+   pinned to the EXACT same position and type scale as the landing's
+   `.system-header` (title top ~76px / clamp 22-30px, subtitle 16px), so
+   crossing between the screens keeps them visually anchored and only the
+   words change. The Back button is floated out of flow (see .mode-topbar
+   override below) so it no longer pushes this header down. */
 .screen--select .screen__header {
   text-align: center;
+  /* Screen padding-top is calc(28px + safe); +48px lands the title at
+     ~76px from the top, matching the landing title exactly. */
+  margin-top: 48px;
+}
+
+.screen--select .screen__header--mode h1 {
+  font-size: clamp(22px, 6.4vw, 30px);
+}
+
+.screen--select .screen__header--mode p {
+  font-size: 16px;
+}
+
+/* Back button floats as a top-left chrome pill at the SAME 16px corner
+   inset the landing chrome uses, instead of sitting in flow and pushing
+   the centered header down. */
+.screen--select .mode-topbar {
+  position: absolute;
+  top: calc(16px + var(--safe-top));
+  left: 16px;
+  z-index: 4;
+  margin: 0;
 }
 
 .eyebrow {

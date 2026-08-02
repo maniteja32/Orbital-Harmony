@@ -55,14 +55,14 @@ export default function SolarSystemScreen({ onExplore, onCosmic }) {
           <button type="button" className="mode-card" onClick={onExplore}>
             <span className="mode-card__text">
               <span className="mode-card__title">Explore</span>
-              <span className="mode-card__desc">Create patterns with any two planets</span>
+              <span className="mode-card__desc">Create patterns using any two planets.</span>
             </span>
           </button>
 
           <button type="button" className="mode-card" onClick={onCosmic}>
             <span className="mode-card__text">
               <span className="mode-card__title">Cosmic Signature</span>
-              <span className="mode-card__desc">Generate a unique pattern from your birth date</span>
+              <span className="mode-card__desc">Generate a unique pattern using your birthdate.</span>
             </span>
           </button>
         </div>
