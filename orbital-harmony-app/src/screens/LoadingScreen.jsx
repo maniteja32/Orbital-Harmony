@@ -161,17 +161,13 @@ export default function LoadingScreen({ onDone, onExited }) {
         accel = 1;
       }
       const eased = easeInOutCubic(accel);
-      // During the completion transition the orrery SLOWS from its fast
-      // "loading spinner" pace DOWN toward the calm orbital speed of the
-      // real solar system it's about to hand off to, and simultaneously
-      // GROWS so its compact rings spread out to roughly the real system's
-      // on-screen footprint. Combined with the crossfade overlap (the
-      // orrery stays visible and fades WITH the loading screen while the
-      // real planets fade in), the loading planets read as decelerating
-      // and settling INTO the real planets — one continuous motion, not a
-      // stop-and-restart.
-      const speedScale = SPEED_MULT * (1 - eased * 0.82);
-      const scaledMaxOrbit = maxOrbitPx * (1 + eased * 1.4);
+      // Keep the orrery rotating steadily in its simple circular orbits the
+      // whole time — no acceleration, deceleration, or scaling. While the
+      // dots keep spinning, the real Solar System screen fades in underneath
+      // and this loading screen (orrery + stars) crossfades out over it, so
+      // the two overlap smoothly (the dots hand off to the real planets
+      // rather than stopping and restarting).
+      const speedScale = SPEED_MULT;
 
       // ---- Step 1: fade the previous frame toward transparent ----
       // This single low-alpha rect is the entire trail mechanism — see the
@@ -192,7 +188,7 @@ export default function LoadingScreen({ onDone, onExited }) {
       ctx.lineWidth = 0.3;
       ctx.strokeStyle = 'rgba(150, 150, 150, 0.02)';
       for (const p of planets) {
-        const r = p.distanceFrac * scaledMaxOrbit;
+        const r = p.distanceFrac * maxOrbitPx;
         ctx.beginPath();
         ctx.arc(centerX, centerY, r, 0, Math.PI * 2);
         ctx.stroke();
@@ -206,7 +202,7 @@ export default function LoadingScreen({ onDone, onExited }) {
       // app's warm orange accent; a warm-bright centre fading to orange) ----
       sunPulseT += dt;
       const pulseScale = 1 + Math.sin(sunPulseT * 1.4) * 0.04;
-      const sunRadius = Math.max(7, scaledMaxOrbit * 0.035) * pulseScale;
+      const sunRadius = Math.max(7, maxOrbitPx * 0.035) * pulseScale;
 
       const core = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, sunRadius);
       core.addColorStop(0, '#ffd9b8');
@@ -225,7 +221,7 @@ export default function LoadingScreen({ onDone, onExited }) {
       // convention every real solar-system diagram uses.
       for (const p of planets) {
         p.angle -= p.speed * speedScale * dt;
-        const r = p.distanceFrac * scaledMaxOrbit;
+        const r = p.distanceFrac * maxOrbitPx;
         const x = centerX + Math.cos(p.angle) * r;
         const y = centerY + Math.sin(p.angle) * r;
 
