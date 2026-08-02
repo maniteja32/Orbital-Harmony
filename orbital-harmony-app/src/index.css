@@ -423,6 +423,16 @@ button {
   max-width: 360px;
 }
 
+/* The two mode choices (Explore / Cosmic Signature) now live directly on the
+   landing screen in place of the old single "Begin Exploring" CTA — stacked
+   in the bottom column. Uses the shared `.mode-card` styling (see below), so
+   they look identical to the standalone Mode-select screen's cards. */
+.system-modes {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 /* Staggered fade-in once the intro settles. Mobile-first: a calm, uniform
    fade with only a tiny upward drift — nothing slides in from opposite
    directions (which reads as "flying around" on a small screen). The

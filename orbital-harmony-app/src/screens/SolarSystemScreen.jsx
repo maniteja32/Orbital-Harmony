@@ -1,28 +1,31 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { Menu, Info } from 'lucide-react';
+import { Menu, Info, Orbit, Sparkles } from 'lucide-react';
 import SolarSystemCanvas from '../components/SolarSystemCanvas.jsx';
-import { GlassButton } from '../components/ui/glasscn/glass-button.jsx';
 import { PLANETS } from '../data/planets.js';
 import { useAppStore } from '../store/useAppStore.js';
 
 /** Step 2 — cinematic NASA-inspired opening: a distant establishing shot of
  * the whole system holds briefly, then the camera eases inward to a
  * Sun-dominant hero framing near Earth's orbit (see the engine's
- * `cinematicIntro` camera path). Title/subtitle/CTA stay hidden until the
- * camera settles, then fade in with a staggered delay. Gently interactive
+ * `cinematicIntro` camera path). Title/subtitle/mode cards stay hidden until
+ * the camera settles, then fade in with a staggered delay. Gently interactive
  * (drag/zoom) once settled.
  *
+ * The two mode cards (Explore / Cosmic Signature) live directly on this
+ * landing screen — picking one jumps straight into that flow, so there's no
+ * separate intermediate "Choose an Experience" screen to tap through.
+ *
  * The zoom-in intro only plays the FIRST time the screen is shown; on
- * return visits (e.g. Back from Mode select) it jumps straight to the
+ * return visits (e.g. Back from a pattern flow) it jumps straight to the
  * settled zoomed framing so the animation never replays. */
-export default function SolarSystemScreen({ onNext }) {
+export default function SolarSystemScreen({ onExplore, onCosmic }) {
   const canvasRef = useRef(null);
   const planetKeys = useMemo(() => PLANETS.map((p) => p.key), []);
   const systemIntroPlayed = useAppStore((s) => s.systemIntroPlayed);
   const markSystemIntroPlayed = useAppStore((s) => s.markSystemIntroPlayed);
   const playIntro = !systemIntroPlayed;
   // When skipping the intro the camera is already settled, so treat the
-  // screen as ready immediately (title/CTA/chrome shown from the first frame).
+  // screen as ready immediately (title/cards/chrome shown from the first frame).
   const [introDone, setIntroDone] = useState(!playIntro);
   const handleIntroComplete = useCallback(() => {
     setIntroDone(true);
@@ -57,9 +60,27 @@ export default function SolarSystemScreen({ onNext }) {
       </div>
 
       <div className="system-cta">
-        <GlassButton tone="primary" className="w-full h-12 text-base font-semibold" onClick={onNext}>
-          Begin Exploring
-        </GlassButton>
+        <div className="system-modes">
+          <button type="button" className="mode-card" onClick={onExplore}>
+            <span className="mode-card__icon" aria-hidden="true">
+              <Orbit size={30} strokeWidth={1.6} />
+            </span>
+            <span className="mode-card__text">
+              <span className="mode-card__title">Explore</span>
+              <span className="mode-card__desc">Choose any two planets to create patterns</span>
+            </span>
+          </button>
+
+          <button type="button" className="mode-card" onClick={onCosmic}>
+            <span className="mode-card__icon" aria-hidden="true">
+              <Sparkles size={30} strokeWidth={1.6} />
+            </span>
+            <span className="mode-card__text">
+              <span className="mode-card__title">Cosmic Signature</span>
+              <span className="mode-card__desc">Generate a unique pattern from your birth date</span>
+            </span>
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -10,6 +10,7 @@ import SimulationScreen from './screens/SimulationScreen.jsx';
 import ResultScreen from './screens/ResultScreen.jsx';
 import { useAppStore } from './store/useAppStore.js';
 import { createStarfieldBackdrop } from './engine/starfieldBackdrop.js';
+import { preloadPlanetTextures } from './engine/planetFactory.js';
 
 export default function App() {
   const screen = useAppStore((s) => s.screen);
@@ -17,6 +18,17 @@ export default function App() {
   const patternMode = useAppStore((s) => s.patternMode);
   const setPatternMode = useAppStore((s) => s.setPatternMode);
   const setCosmicDate = useAppStore((s) => s.setCosmicDate);
+
+  // Warm the shared planet-texture cache the moment the app mounts, while the
+  // ~5s loading sequence is on screen. The Solar System engine is only built
+  // at the loading -> landing handoff, so without this every planet texture
+  // would fetch + decode + run its per-pixel saturation boost on the main
+  // thread right as the crossfade plays — the cause of the "start/stop" lag
+  // and planets popping in untextured on mobile/iPad. Doing it here means the
+  // landing appears already fully textured and the handoff stays smooth.
+  useEffect(() => {
+    preloadPlanetTextures();
+  }, []);
   // Kept mounted independently of `screen` (not one of the ScreenTransition
   // branches below) so it can sit on top of the Solar System screen and
   // fade out WHILE that screen fades in underneath — a real overlapping
@@ -58,7 +70,16 @@ export default function App() {
     <div className="app-shell" data-screen={screen}>
       <canvas ref={ambientRef} className="ambient-stars" aria-hidden="true" />
       <ScreenTransition key={screen}>
-        {screen === 'system' && <SolarSystemScreen onNext={() => goTo('mode')} />}
+        {screen === 'system' && (
+          <SolarSystemScreen
+            onExplore={() => {
+              setPatternMode('explore');
+              setCosmicDate(null);
+              goTo('select');
+            }}
+            onCosmic={() => goTo('cosmic')}
+          />
+        )}
         {screen === 'mode' && (
           <ModeSelectScreen
             onExplore={() => {
@@ -70,8 +91,8 @@ export default function App() {
             onBack={() => goTo('system')}
           />
         )}
-        {screen === 'select' && <PlanetSelectScreen onNext={() => goTo('generating')} onBack={() => goTo('mode')} />}
-        {screen === 'cosmic' && <CosmicSignatureScreen onReveal={() => goTo('generating')} onBack={() => goTo('mode')} />}
+        {screen === 'select' && <PlanetSelectScreen onNext={() => goTo('generating')} onBack={() => goTo('system')} />}
+        {screen === 'cosmic' && <CosmicSignatureScreen onReveal={() => goTo('generating')} onBack={() => goTo('system')} />}
         {screen === 'generating' && (
           <GeneratingScreen
             onDone={() => goTo('settings')}
@@ -84,7 +105,7 @@ export default function App() {
             onBack={() => goTo(patternMode === 'cosmic' ? 'cosmic' : 'select')}
           />
         )}
-        {screen === 'result' && <ResultScreen onGenerateNew={() => goTo('mode')} onBack={() => goTo('settings')} />}
+        {screen === 'result' && <ResultScreen onGenerateNew={() => goTo('system')} onBack={() => goTo('settings')} />}
       </ScreenTransition>
       {showLoading && (
         <div className="loading-screen-slot">

@@ -17,6 +17,7 @@
 // still exactly the same regardless of which axis is used.
 // ============================================================================
 import * as THREE from 'three';
+import { PLANETS, SUN_TEXTURE, MOON_TEXTURE } from '../data/planets.js';
 
 const textureLoader = new THREE.TextureLoader();
 const textureCache = new Map();
@@ -33,6 +34,36 @@ export function loadPlanetTexture(path, { srgb = true, saturate = false } = {}) 
   tex.anisotropy = 16;
   textureCache.set(cacheKey, tex);
   return tex;
+}
+
+let planetTexturesPreloaded = false;
+
+/**
+ * Warm the shared `textureCache` with EVERY texture the Solar System engine
+ * needs (all planet surface maps + clouds + rings + the Sun and Moon),
+ * using the exact same load options the engine uses so the cache keys line
+ * up and the engine's first build reuses these ready textures instead of
+ * creating new ones.
+ *
+ * WHY: the engine is only created at the loading -> landing handoff, so
+ * without this every texture would fetch, decode, AND run its per-pixel
+ * saturation boost (an ~8M-iteration main-thread loop for a 4K image) right
+ * as the crossfade plays — that's what caused the visible "start/stop"
+ * stutter and planets popping in untextured on mobile/iPad. Calling this at
+ * app start moves all that work into the ~5s loading sequence (hidden behind
+ * the loading screen), so the landing appears already fully textured and the
+ * crossfade stays smooth. Idempotent — safe to call more than once.
+ */
+export function preloadPlanetTextures() {
+  if (planetTexturesPreloaded) return;
+  planetTexturesPreloaded = true;
+  loadPlanetTexture(SUN_TEXTURE);
+  loadPlanetTexture(MOON_TEXTURE);
+  for (const p of PLANETS) {
+    if (p.texture) loadPlanetTexture(p.texture, { saturate: true });
+    if (p.cloudTexture) loadPlanetTexture(p.cloudTexture, { srgb: false });
+    if (p.ringTexture) loadPlanetTexture(p.ringTexture, { srgb: false });
+  }
 }
 
 // Redraws a loaded texture's image through a canvas so planets read as more
