@@ -1869,34 +1869,46 @@ button {
   text-align: left;
   border: none;
   border-radius: var(--radius-lg);
-  /* Self-sufficient frosted-glass look that reads CONSISTENTLY on every
-     device + framing. A translucent white fill + a top-down sheen give the
-     card real "glass" presence even over pure black (the mobile bottom) or
-     when iOS Safari can't blur the WebGL canvas behind it — so the look no
-     longer depends on bright content sitting behind the card. The
-     backdrop-filter then adds genuine refraction as a BONUS when content
-     IS behind it (e.g. the wider desktop framing). */
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.025) 46%, rgba(255, 255, 255, 0.05) 100%),
-    rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(18px) saturate(150%) brightness(1.12);
-  -webkit-backdrop-filter: blur(18px) saturate(150%) brightness(1.12);
-  box-shadow:
-    inset 0 1px 0.5px rgba(255, 255, 255, 0.22),
-    inset 0 -1px 2px rgba(0, 0, 0, 0.28),
-    0 10px 26px -14px rgba(0, 0, 0, 0.6);
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
   color: var(--text-primary);
   scale: 1;
   transition: scale 0.2s ease, background 0.2s ease, border-color 0.2s ease;
 }
 
 .mode-card:hover {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.05) 46%, rgba(255, 255, 255, 0.08) 100%),
-    rgba(255, 255, 255, 0.09);
+  background: var(--glass-bg-strong);
 }
 
 .mode-card:active { scale: 0.98; }
+
+/* Liquid-refract variant — the wrapping <LiquidGlass> (see SolarSystemScreen)
+   provides the glass surface, refraction and specular rim, so the inner
+   button is just a transparent, full-size hit area. Strips the CSS-frosted
+   glass so the two don't stack. */
+.mode-card--liquid,
+.mode-card--liquid:hover {
+  background: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: none;
+}
+
+.mode-card--liquid::after {
+  display: none;
+}
+
+/* The LiquidGlass wrapper is the sized card; let it fill the column and lift
+   slightly on press to match the other glass CTAs. */
+.system-modes .mode-glass {
+  scale: 1;
+  transition: scale 0.2s ease;
+}
+
+.system-modes .mode-glass:active {
+  scale: 0.98;
+}
 
 .mode-card__icon {
   flex-shrink: 0;

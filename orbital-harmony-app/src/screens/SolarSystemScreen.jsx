@@ -1,7 +1,15 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import SolarSystemCanvas from '../components/SolarSystemCanvas.jsx';
+import { LiquidGlass } from '../components/ui/glasscn/liquid-glass.jsx';
 import { PLANETS } from '../data/planets.js';
 import { useAppStore } from '../store/useAppStore.js';
+
+// Rim tuning for the mode cards' LiquidGlass surface — a soft specular edge
+// (matches the app's CTA buttons' liquid-refract look).
+const MODE_RIM = {
+  '--liquid-glass-rim-width': '0.9px',
+  '--liquid-glass-rim-light': 'rgba(255, 255, 255, 0.5)',
+};
 
 /** Step 2 — cinematic NASA-inspired opening: a distant establishing shot of
  * the whole system holds briefly, then the camera eases inward to a
@@ -52,19 +60,23 @@ export default function SolarSystemScreen({ onExplore, onCosmic }) {
 
       <div className="system-cta">
         <div className="system-modes">
-          <button type="button" className="mode-card" onClick={onExplore}>
-            <span className="mode-card__text">
-              <span className="mode-card__title">Explore</span>
-              <span className="mode-card__desc">Create patterns using any two planets.</span>
-            </span>
-          </button>
+          <LiquidGlass className="mode-glass rounded-[24px] w-full bg-white/[0.05]" style={MODE_RIM}>
+            <button type="button" className="mode-card mode-card--liquid" onClick={onExplore}>
+              <span className="mode-card__text">
+                <span className="mode-card__title">Explore</span>
+                <span className="mode-card__desc">Create patterns using any two planets.</span>
+              </span>
+            </button>
+          </LiquidGlass>
 
-          <button type="button" className="mode-card" onClick={onCosmic}>
-            <span className="mode-card__text">
-              <span className="mode-card__title">Cosmic Signature</span>
-              <span className="mode-card__desc">Generate a unique pattern using your birthdate.</span>
-            </span>
-          </button>
+          <LiquidGlass className="mode-glass rounded-[24px] w-full bg-white/[0.05]" style={MODE_RIM}>
+            <button type="button" className="mode-card mode-card--liquid" onClick={onCosmic}>
+              <span className="mode-card__text">
+                <span className="mode-card__title">Cosmic Signature</span>
+                <span className="mode-card__desc">Generate a unique pattern using your birthdate.</span>
+              </span>
+            </button>
+          </LiquidGlass>
         </div>
       </div>
     </div>
