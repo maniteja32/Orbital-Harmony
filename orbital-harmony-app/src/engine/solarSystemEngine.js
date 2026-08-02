@@ -31,6 +31,7 @@ const LINE_STYLES = {
 import { loadPlanetTexture, buildPlanetBody } from './planetFactory.js';
 
 const DAYS_PER_YEAR = 365.25;
+const TWO_PI = Math.PI * 2;
 // The cinematic browse-screen camera path holds on a true top-down shot
 // (matching the loading screen's overview), then slowly ROTATES down to a
 // more angled, dimensional view — see HERO_ELEVATION_START_DEG/
@@ -217,6 +218,22 @@ function buildPlanet(data, startDate) {
   };
 }
 
+function computeRewindTurns(periodDays, minPeriodDays, maxPeriodDays) {
+  const safePeriod = Math.max(periodDays, 1);
+  const minLog = Math.log(Math.max(minPeriodDays, 1));
+  const maxLog = Math.log(Math.max(maxPeriodDays, minPeriodDays + 1));
+  const pLog = Math.log(safePeriod);
+  const denom = Math.max(maxLog - minLog, 1e-6);
+  const fastPlanetBias = (maxLog - pLog) / denom;
+  const minTurns = 0.65;
+  const maxTurns = 2.35;
+  return minTurns + (maxTurns - minTurns) * fastPlanetBias;
+}
+
+function orbitDirection(data) {
+  return data.orbitDirection ?? 1;
+}
+
 /**
  * @param {HTMLCanvasElement} canvas
  * @param {object} opts
@@ -252,6 +269,7 @@ export function createSolarSystemEngine(canvas, opts) {
     startPaused = false,
     initialSpeedMultiplier = 1,
     patternStartDate = undefined,
+    cosmicSnapshotDate = undefined,
   } = opts;
 
   const scene = new THREE.Scene();
@@ -400,6 +418,122 @@ export function createSolarSystemEngine(canvas, opts) {
   });
 
   const maxDistance = Math.max(...planets.map((p) => p.data.distance), 20);
+  const cosmicSnapshotEnabled = cosmicSnapshotDate instanceof Date && !Number.isNaN(cosmicSnapshotDate.getTime());
+  const COSMIC_OVERVIEW_HOLD_SEC = 2.2;
+  const COSMIC_SNAPSHOT_SETTLE_SEC = 7.2;
+  const COSMIC_PRE_DRAW_HOLD_SEC = 0.7;
+  const COSMIC_SIGNATURE_DRAW_SEC = 2.8;
+  const COSMIC_ARTIFACT_FORM_SEC = 4.2;
+  const COSMIC_ARTIFACT_COPIES = 36;
+
+  const cosmicTargetAngles = cosmicSnapshotEnabled
+    ? planets.map((planet) => currentOrbitAngleRad(planet.data, cosmicSnapshotDate))
+    : null;
+  const cosmicStartAngles = planets.map((planet) => planet.startAngle);
+  const minPeriodDays = Math.min(...planets.map((planet) => planet.data.orbitalPeriodDays));
+  const maxPeriodDays = Math.max(...planets.map((planet) => planet.data.orbitalPeriodDays));
+  const cosmicReverseArcs = cosmicSnapshotEnabled
+    ? cosmicStartAngles.map((startAngle, index) => {
+        const targetAngle = cosmicTargetAngles[index];
+        const isRetrogradeOrbit = orbitDirection(planets[index].data) < 0;
+        const baseReverseArc = isRetrogradeOrbit
+          ? ((targetAngle - startAngle) % TWO_PI + TWO_PI) % TWO_PI
+          : ((startAngle - targetAngle) % TWO_PI + TWO_PI) % TWO_PI;
+        const extraTurns = computeRewindTurns(
+          planets[index].data.orbitalPeriodDays,
+          minPeriodDays,
+          maxPeriodDays,
+        );
+        return baseReverseArc + extraTurns * TWO_PI;
+      })
+    : null;
+  let cosmicOverviewElapsed = 0;
+  let cosmicOverviewDone = !cosmicSnapshotEnabled;
+  let cosmicSettleElapsed = 0;
+  let cosmicPreDrawElapsed = 0;
+  let cosmicDrawElapsed = 0;
+  let cosmicArtifactElapsed = 0;
+  let cosmicSettled = !cosmicSnapshotEnabled;
+  let cosmicReadyToDraw = !cosmicSnapshotEnabled;
+  let cosmicBaseLinesDone = !cosmicSnapshotEnabled;
+  let cosmicArtifactDone = !cosmicSnapshotEnabled;
+
+  let cosmicSignatureLines = [];
+  let cosmicArtifactLines = [];
+  let cosmicSignatureVertexCount = 0;
+  if (cosmicSnapshotEnabled && planets.length >= 2) {
+    const order = ['mercury', 'venus', 'earth', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune'];
+    const byKey = new Map(planets.map((planet) => [planet.data.key, planet]));
+    const ordered = order.map((key) => byKey.get(key)).filter(Boolean);
+
+    if (ordered.length >= 2) {
+      const anchorPoints = [new THREE.Vector3(0, 0, 0)];
+      ordered.forEach((planet) => {
+        const planetIndex = planets.indexOf(planet);
+        const angle = cosmicTargetAngles?.[planetIndex] ?? planet.startAngle;
+        anchorPoints.push(new THREE.Vector3(
+          planet.data.distance * Math.cos(angle),
+          0,
+          -planet.data.distance * Math.sin(angle),
+        ));
+      });
+
+      // Keep the cosmic geometry strictly straight: connect anchors directly
+      // in sequence, then close the loop by returning to the starting point.
+      const signaturePoints = [...anchorPoints, anchorPoints[0].clone()];
+      cosmicSignatureVertexCount = signaturePoints.length;
+
+      const makeSignatureLine = (opacity) => {
+        const geometry = new THREE.BufferGeometry().setFromPoints(signaturePoints);
+        geometry.setDrawRange(0, 2);
+        const material = new THREE.LineBasicMaterial({
+          color: 0xffffff,
+          transparent: true,
+          opacity,
+        });
+        const line = new THREE.Line(geometry, material);
+        line.visible = false;
+        return line;
+      };
+
+      cosmicSignatureLines = [
+        makeSignatureLine(0.18),
+        makeSignatureLine(0.66),
+      ];
+      cosmicSignatureLines.forEach((line) => scene.add(line));
+
+      const createArtifactLinePair = (rotationY) => {
+        const makeArtifactLine = (opacity) => {
+          const geometry = new THREE.BufferGeometry().setFromPoints(signaturePoints);
+          geometry.setDrawRange(0, 2);
+          const material = new THREE.LineBasicMaterial({
+            color: 0xffffff,
+            transparent: true,
+            opacity: 0,
+          });
+          const line = new THREE.Line(geometry, material);
+          line.rotation.y = rotationY;
+          line.visible = false;
+          line.userData.baseOpacity = opacity;
+          return line;
+        };
+
+        return [
+          makeArtifactLine(0.08),
+          makeArtifactLine(0.24),
+        ];
+      };
+
+      for (let i = 0; i < COSMIC_ARTIFACT_COPIES; i++) {
+        const rotationY = (i / COSMIC_ARTIFACT_COPIES) * TWO_PI;
+        const pair = createArtifactLinePair(rotationY);
+        pair.forEach((line) => {
+          cosmicArtifactLines.push(line);
+          scene.add(line);
+        });
+      }
+    }
+  }
   // Legacy pattern: frame the outer selected orbit to ~0.83 of the smaller
   // viewport dimension (margin 1.2) — the whole spiral lives within the outer
   // orbit, so this fills the frame while leaving a little breathing room for
@@ -774,8 +908,6 @@ export function createSolarSystemEngine(canvas, opts) {
   let onCompleteCb = null;
   let rafId = null;
 
-  const TWO_PI = Math.PI * 2;
-
   // Master-clock angle for a planet at an EXACT simulated day. `day` is the
   // single unified time variable shared by BOTH planets of a chord, so the
   // angles are locked to the same instant:
@@ -800,7 +932,7 @@ export function createSolarSystemEngine(canvas, opts) {
       : physicalPattern
         ? 365.256 / planet.data.orbitalPeriodDays
         : (planet.data.traceSpeed ?? (365.256 / planet.data.orbitalPeriodDays));
-    return planet.startAngle + (day / DAYS_PER_YEAR) * revsPerYear * TWO_PI;
+    return planet.startAngle + orbitDirection(planet.data) * (day / DAYS_PER_YEAR) * revsPerYear * TWO_PI;
   }
 
   // Analytic world position of a planet at `day`. Orbits are circular in the
@@ -885,8 +1017,48 @@ export function createSolarSystemEngine(canvas, opts) {
 
     if (!completed) simDaysElapsed += delta * baseSimDaysPerRealSecond * speedMultiplier;
     if (!completed) browseElapsedSec += delta;
-    planets.forEach((planet) => {
-      if (tracePattern) {
+
+    if (cosmicSnapshotEnabled && !cosmicOverviewDone) {
+      cosmicOverviewElapsed += delta;
+      planets.forEach((planet, index) => {
+        const angle = cosmicStartAngles[index];
+        planet.pivot.rotation.y = angle;
+        planet.tiltAnchor.rotation.y = -angle;
+      });
+      if (cosmicOverviewElapsed >= COSMIC_OVERVIEW_HOLD_SEC) {
+        cosmicOverviewDone = true;
+      }
+    } else if (cosmicSnapshotEnabled && !cosmicSettled) {
+      cosmicSettleElapsed += delta;
+      const t = Math.min(cosmicSettleElapsed / COSMIC_SNAPSHOT_SETTLE_SEC, 1);
+      const eased = easeInOutCubic(t);
+      planets.forEach((planet, index) => {
+        const angle = orbitDirection(planet.data) < 0
+          ? cosmicStartAngles[index] + cosmicReverseArcs[index] * eased
+          : cosmicStartAngles[index] - cosmicReverseArcs[index] * eased;
+        planet.pivot.rotation.y = angle;
+        planet.tiltAnchor.rotation.y = -angle;
+      });
+      if (t >= 1) cosmicSettled = true;
+    } else if (cosmicSnapshotEnabled && !cosmicReadyToDraw) {
+      planets.forEach((planet, index) => {
+        const angle = cosmicTargetAngles[index];
+        planet.pivot.rotation.y = angle;
+        planet.tiltAnchor.rotation.y = -angle;
+      });
+      cosmicPreDrawElapsed += delta;
+      if (cosmicPreDrawElapsed >= COSMIC_PRE_DRAW_HOLD_SEC) {
+        cosmicReadyToDraw = true;
+      }
+    } else if (cosmicSnapshotEnabled) {
+      planets.forEach((planet, index) => {
+        const angle = cosmicTargetAngles[index];
+        planet.pivot.rotation.y = angle;
+        planet.tiltAnchor.rotation.y = -angle;
+      });
+    } else {
+      planets.forEach((planet) => {
+        if (tracePattern) {
         // Pattern/reveal mode. The orbit angle comes from the shared
         // master-clock helper (planetAngleAt) driven by `simDaysElapsed`, the
         // SAME unified time variable the chord sampler uses — so the visible
@@ -900,30 +1072,75 @@ export function createSolarSystemEngine(canvas, opts) {
       } else {
         // Browse mode: compressed, mobile-friendly ambient speed (see
         // browseAngularSpeed() above) instead of the real linear scale.
-        planet.pivot.rotation.y = planet.startAngle + browseElapsedSec * planet.browseSpeed;
-      }
-      // Counter-rotate tiltAnchor by the exact same amount so the axial
-      // tilt's WORLD orientation stays fixed as the planet orbits, instead
-      // of precessing/sweeping around once per orbit (tiltAnchor has no
-      // rotation of its own otherwise, so without this its child axialTilt
-      // would inherit pivot's spin and the "north pole direction" would
-      // visibly rotate together with orbital position — real planets keep
-      // their axis pointed the same way in space throughout their orbit,
-      // e.g. Earth's axis always points toward Polaris regardless of where
-      // Earth is along its orbit, which is what causes the seasons).
-      planet.tiltAnchor.rotation.y = -planet.pivot.rotation.y;
-    });
+          planet.pivot.rotation.y =
+            planet.startAngle + browseElapsedSec * planet.browseSpeed * orbitDirection(planet.data);
+        }
+        // Counter-rotate tiltAnchor by the exact same amount so the axial
+        // tilt's WORLD orientation stays fixed as the planet orbits, instead
+        // of precessing/sweeping around once per orbit (tiltAnchor has no
+        // rotation of its own otherwise, so without this its child axialTilt
+        // would inherit pivot's spin and the "north pole direction" would
+        // visibly rotate together with orbital position — real planets keep
+        // their axis pointed the same way in space throughout their orbit,
+        // e.g. Earth's axis always points toward Polaris regardless of where
+        // Earth is along its orbit, which is what causes the seasons).
+        planet.tiltAnchor.rotation.y = -planet.pivot.rotation.y;
+      });
 
-    planets.forEach((planet) => {
-      planet.mesh.rotation.y += delta * 60 * planet.data.rotationSpeed * (planet.data.spinDirection ?? 1);
-      if (planet.clouds) planet.clouds.rotation.y += delta * 60 * planet.data.rotationSpeed * 1.4 * (planet.data.spinDirection ?? 1);
-      if (planet.moonPivot) planet.moonPivot.rotation.y += delta * 1.4;
-    });
+      planets.forEach((planet) => {
+        planet.mesh.rotation.y += delta * 60 * planet.data.rotationSpeed * (planet.data.spinDirection ?? 1);
+        if (planet.clouds) planet.clouds.rotation.y += delta * 60 * planet.data.rotationSpeed * 1.4 * (planet.data.spinDirection ?? 1);
+        if (planet.moonPivot) planet.moonPivot.rotation.y += delta * 1.4;
+      });
+    }
 
     scene.updateMatrixWorld(true);
     if (tracePattern) sampleChordIfDue();
 
+    if (cosmicSnapshotEnabled && cosmicSettled && cosmicReadyToDraw && cosmicSignatureLines.length > 0 && !cosmicBaseLinesDone) {
+      cosmicDrawElapsed += delta;
+      const t = Math.min(cosmicDrawElapsed / COSMIC_SIGNATURE_DRAW_SEC, 1);
+      const eased = smootherStep(t);
+      const drawCount = Math.max(2, Math.floor(2 + eased * (cosmicSignatureVertexCount - 2)));
+      cosmicSignatureLines.forEach((line) => {
+        line.visible = true;
+        line.geometry.setDrawRange(0, drawCount);
+      });
+      if (t >= 1) cosmicBaseLinesDone = true;
+    }
+
+    if (cosmicSnapshotEnabled && cosmicBaseLinesDone && cosmicArtifactLines.length > 0 && !cosmicArtifactDone) {
+      cosmicArtifactElapsed += delta;
+      const t = Math.min(cosmicArtifactElapsed / COSMIC_ARTIFACT_FORM_SEC, 1);
+      const eased = smootherStep(t);
+
+      cosmicSignatureLines.forEach((line) => {
+        line.material.opacity = line.material.opacity * (1 - eased * 0.9);
+      });
+
+      const pairCount = COSMIC_ARTIFACT_COPIES;
+      for (let i = 0; i < pairCount; i++) {
+        const stagger = i / Math.max(1, pairCount - 1);
+        const local = THREE.MathUtils.clamp((eased - stagger * 0.5) / 0.5, 0, 1);
+        const drawCount = Math.max(2, Math.floor(2 + smootherStep(local) * (cosmicSignatureVertexCount - 2)));
+
+        const glowLine = cosmicArtifactLines[i * 2];
+        const coreLine = cosmicArtifactLines[i * 2 + 1];
+        [glowLine, coreLine].forEach((line) => {
+          line.visible = local > 0;
+          line.geometry.setDrawRange(0, drawCount);
+          line.material.opacity = line.userData.baseOpacity * local;
+        });
+      }
+
+      if (t >= 1) cosmicArtifactDone = true;
+    }
+
     if (tracePattern && !completed && simDaysElapsed >= totalSimYears * DAYS_PER_YEAR) {
+      completed = true;
+      if (onCompleteCb) onCompleteCb();
+    }
+    if (cosmicSnapshotEnabled && cosmicArtifactDone && !completed) {
       completed = true;
       if (onCompleteCb) onCompleteCb();
     }

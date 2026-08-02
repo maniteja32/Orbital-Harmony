@@ -65,6 +65,9 @@ export const PLANETS = [
     rotationSpeed: 0.0045,
     tilt: 3,
     spinDirection: -1,
+    // Retrograde orbital direction for this visualization pass: moves
+    // opposite to the default prograde path used by most planets.
+    orbitDirection: -1,
     texture: '/textures/venus.jpg',
     traceSpeed: 1.6254,
     orbitalPeriodDays: 224.701,
@@ -169,6 +172,8 @@ export const PLANETS = [
     // a retrograde rotator, same category as Venus (just for a different
     // physical reason — extreme tilt vs. a fully flipped-over spin).
     spinDirection: -1,
+    // Retrograde orbital direction for this visualization pass.
+    orbitDirection: -1,
     texture: '/textures/uranus.jpg',
     traceSpeed: 0.22,
     orbitalPeriodDays: 30688.5,

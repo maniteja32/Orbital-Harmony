@@ -28,6 +28,7 @@ const SolarSystemCanvas = forwardRef(function SolarSystemCanvas(
     startPaused,
     initialSpeedMultiplier,
     patternStartDate,
+    cosmicSnapshotDate,
     onComplete,
     onIntroComplete,
     className,
@@ -56,6 +57,7 @@ const SolarSystemCanvas = forwardRef(function SolarSystemCanvas(
       startPaused,
       initialSpeedMultiplier,
       patternStartDate,
+      cosmicSnapshotDate,
     });
     engineRef.current = engine;
     if (onComplete) engine.onComplete(onComplete);

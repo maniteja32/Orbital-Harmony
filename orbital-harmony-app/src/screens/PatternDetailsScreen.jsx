@@ -147,7 +147,7 @@ export default function PatternDetailsScreen({ onBack, onRegenerate, onKnowledge
       </div>
 
       <div className="screen__actions">
-        <GlassButton tone="primary" className="w-full h-12 text-base font-semibold" onClick={onRegenerate}>
+        <GlassButton tone="primary" className="w-full h-12 text-base font-medium" onClick={onRegenerate}>
           Regenerate
         </GlassButton>
       </div>

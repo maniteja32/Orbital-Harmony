@@ -12,21 +12,21 @@
 const J2000_EPOCH_MS = Date.UTC(2000, 0, 1, 12, 0, 0); // 2000-01-01 12:00 UTC
 
 /**
- * @param {{ orbitalPeriodDays: number, meanLongitudeDeg?: number }} data
+ * @param {{ orbitalPeriodDays: number, meanLongitudeDeg?: number, orbitDirection?: number }} data
  * @param {Date} [now] defaults to the real current time
  * @returns {number} current orbital angle in RADIANS, for direct use as
  *   `pivot.rotation.y`
  */
 export function currentOrbitAngleRad(data, now = new Date()) {
-  // Falls back to a random angle for any planet missing real orbital
-  // elements, rather than throwing — keeps this usable even if new planet
-  // data is ever added without `meanLongitudeDeg` filled in yet.
+  // Deterministic fallback when orbital elements are missing. We avoid a
+  // random fallback so repeated renders stay reproducible.
   if (data.meanLongitudeDeg == null || !data.orbitalPeriodDays) {
-    return Math.random() * Math.PI * 2;
+    return 0;
   }
   const daysSinceEpoch = (now.getTime() - J2000_EPOCH_MS) / 86400000;
   const meanMotionDegPerDay = 360 / data.orbitalPeriodDays;
-  const longitudeDeg = data.meanLongitudeDeg + meanMotionDegPerDay * daysSinceEpoch;
+  const orbitDirection = data.orbitDirection ?? 1;
+  const longitudeDeg = data.meanLongitudeDeg + orbitDirection * meanMotionDegPerDay * daysSinceEpoch;
   const normalizedDeg = ((longitudeDeg % 360) + 360) % 360;
   return (normalizedDeg * Math.PI) / 180;
 }

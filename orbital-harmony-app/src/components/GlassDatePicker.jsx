@@ -9,6 +9,10 @@ const MONTHS = [
 const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const MIN_YEAR = 1900;
+const NAV_ICON_RIM = {
+  '--liquid-glass-rim-width': '0.8px',
+  '--liquid-glass-rim-light': 'rgba(255,255,255,0.52)',
+};
 
 /** Parse a 'YYYY-MM-DD' string into a local Date (noon, so the calendar day
  * is timezone-stable). Returns null for empty/invalid input. */
@@ -41,6 +45,7 @@ export function GlassDatePicker({ value, onChange, max, placeholder = 'Select da
   const maxYear = maxDate ? maxDate.getFullYear() : new Date().getFullYear();
 
   const [open, setOpen] = useState(false);
+  const [monthMenuOpen, setMonthMenuOpen] = useState(false);
   const [yearMenuOpen, setYearMenuOpen] = useState(false);
   const [view, setView] = useState(() => {
     const base = selected ?? maxDate ?? new Date();
@@ -57,7 +62,10 @@ export function GlassDatePicker({ value, onChange, max, placeholder = 'Select da
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (!open) setYearMenuOpen(false);
+    if (!open) {
+      setMonthMenuOpen(false);
+      setYearMenuOpen(false);
+    }
   }, [open]);
 
   // Move focus into the calendar when opened (selected day first, otherwise
@@ -185,18 +193,65 @@ export function GlassDatePicker({ value, onChange, max, placeholder = 'Select da
         >
           <div className="gdp__nav">
             <h2 id={headingId} className="sr-only">Choose birth date</h2>
-            <button
-              type="button"
-              className="gdp__navbtn"
-              onClick={() => shiftMonth(-1)}
-              aria-label="Previous month"
-              disabled={isAtMinMonth}
+            <LiquidGlass
+              className={`gdp__navGlass rounded-full bg-white/[0.12]${isAtMinMonth ? ' is-disabled' : ''}`}
+              style={NAV_ICON_RIM}
             >
-              <ChevronLeft size={18} strokeWidth={2} aria-hidden="true" />
-            </button>
+              <button
+                type="button"
+                className="gdp__navbtn"
+                onClick={() => shiftMonth(-1)}
+                aria-label="Previous month"
+                disabled={isAtMinMonth}
+              >
+                <ChevronLeft size={18} strokeWidth={2} aria-hidden="true" />
+              </button>
+            </LiquidGlass>
 
             <div className="gdp__period" aria-live="polite" aria-atomic="true">
-              <span>{MONTHS[view.month]}</span>
+              <div className={`gdp__monthPicker${monthMenuOpen ? ' is-open' : ''}`}>
+                <button
+                  type="button"
+                  className="gdp__monthBtn"
+                  aria-haspopup="listbox"
+                  aria-expanded={monthMenuOpen}
+                  aria-controls={`${uid}-month-listbox`}
+                  onClick={() => {
+                    setMonthMenuOpen((v) => !v);
+                    setYearMenuOpen(false);
+                  }}
+                >
+                  <span>{MONTHS[view.month]}</span>
+                  <ChevronDown size={14} strokeWidth={2} aria-hidden="true" />
+                </button>
+
+                {monthMenuOpen && (
+                  <div className="gdp__monthMenu" role="listbox" id={`${uid}-month-listbox`} aria-label="Month">
+                    {MONTHS.map((m, i) => {
+                      const isSelected = i === view.month;
+                      const isDisabled = Boolean(maxDate && view.year === maxYear && i > maxMonth);
+                      return (
+                        <button
+                          key={m}
+                          type="button"
+                          role="option"
+                          aria-selected={isSelected}
+                          className={`gdp__monthOption${isSelected ? ' is-selected' : ''}`}
+                          disabled={isDisabled}
+                          onClick={() => {
+                            if (isDisabled) return;
+                            setView((v) => ({ ...v, month: i }));
+                            setMonthMenuOpen(false);
+                          }}
+                        >
+                          {m}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
               <div className={`gdp__yearPicker${yearMenuOpen ? ' is-open' : ''}`}>
                 <button
                   type="button"
@@ -204,7 +259,10 @@ export function GlassDatePicker({ value, onChange, max, placeholder = 'Select da
                   aria-haspopup="listbox"
                   aria-expanded={yearMenuOpen}
                   aria-controls={`${uid}-year-listbox`}
-                  onClick={() => setYearMenuOpen((v) => !v)}
+                  onClick={() => {
+                    setYearMenuOpen((v) => !v);
+                    setMonthMenuOpen(false);
+                  }}
                 >
                   <span>{view.year}</span>
                   <ChevronDown size={14} strokeWidth={2} aria-hidden="true" />
@@ -238,15 +296,20 @@ export function GlassDatePicker({ value, onChange, max, placeholder = 'Select da
               </div>
             </div>
 
-            <button
-              type="button"
-              className="gdp__navbtn"
-              onClick={() => shiftMonth(1)}
-              aria-label="Next month"
-              disabled={isAtMaxMonth}
+            <LiquidGlass
+              className={`gdp__navGlass rounded-full bg-white/[0.12]${isAtMaxMonth ? ' is-disabled' : ''}`}
+              style={NAV_ICON_RIM}
             >
-              <ChevronRight size={18} strokeWidth={2} aria-hidden="true" />
-            </button>
+              <button
+                type="button"
+                className="gdp__navbtn"
+                onClick={() => shiftMonth(1)}
+                aria-label="Next month"
+                disabled={isAtMaxMonth}
+              >
+                <ChevronRight size={18} strokeWidth={2} aria-hidden="true" />
+              </button>
+            </LiquidGlass>
           </div>
 
           <div className="gdp__dow">

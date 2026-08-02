@@ -9,7 +9,8 @@ import { useAppStore } from '../store/useAppStore.js';
  * off (`onDone`) to the live pattern reveal. Purely presentational — no
  * heavy WebGL; the real simulation runs on the next screen. */
 export default function GeneratingScreen({ onDone, onBack }) {
-  const { planetA, planetB } = useAppStore();
+  const { planetA, planetB, patternMode } = useAppStore();
+  const isCosmic = patternMode === 'cosmic';
   const colorA = PLANETS_BY_KEY[planetA]?.color ?? '#ffb07a';
   const colorB = PLANETS_BY_KEY[planetB]?.color ?? '#8fb7ff';
 
@@ -38,7 +39,7 @@ export default function GeneratingScreen({ onDone, onBack }) {
     }
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, []);
+  }, [isCosmic]);
 
   return (
     <div className="screen screen--generating">
@@ -52,7 +53,7 @@ export default function GeneratingScreen({ onDone, onBack }) {
       </div>
 
       <div className="gen-body">
-        <h1 className="gen-title">Creating your pattern…</h1>
+        <h1 className="gen-title">{isCosmic ? 'Creating your cosmic signature…' : 'Creating your pattern…'}</h1>
 
         <div className="gen-orbit" aria-hidden="true">
           <span className="gen-orbit__ring gen-orbit__ring--outer" />
@@ -66,7 +67,11 @@ export default function GeneratingScreen({ onDone, onBack }) {
           </span>
         </div>
 
-        <p className="gen-hint">Please wait while we simulate planetary motion.</p>
+        <p className="gen-hint">
+          {isCosmic
+            ? 'Please wait while we calculate the planetary arrangement for your birth moment.'
+            : 'Please wait while we simulate planetary motion.'}
+        </p>
 
         <div className="gen-progress">
           <div className="progress-bar">

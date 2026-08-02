@@ -5,7 +5,6 @@ import SolarSystemScreen from './screens/SolarSystemScreen.jsx';
 import ModeSelectScreen from './screens/ModeSelectScreen.jsx';
 import CosmicSignatureScreen from './screens/CosmicSignatureScreen.jsx';
 import PlanetSelectScreen from './screens/PlanetSelectScreen.jsx';
-import GeneratingScreen from './screens/GeneratingScreen.jsx';
 import SimulationScreen from './screens/SimulationScreen.jsx';
 import ResultScreen from './screens/ResultScreen.jsx';
 import PatternDetailsScreen from './screens/PatternDetailsScreen.jsx';
@@ -96,24 +95,17 @@ export default function App() {
             onBack={() => goTo('system')}
           />
         )}
-        {screen === 'select' && <PlanetSelectScreen onNext={() => goTo('generating')} onBack={() => goTo('system')} />}
-        {screen === 'cosmic' && <CosmicSignatureScreen onReveal={() => goTo('generating')} onBack={() => goTo('system')} />}
-        {screen === 'generating' && (
-          <GeneratingScreen
-            onDone={() => goTo('settings')}
-            onBack={() => goTo(patternMode === 'cosmic' ? 'cosmic' : 'select')}
-          />
-        )}
+        {screen === 'select' && <PlanetSelectScreen onNext={() => goTo('settings')} onBack={() => goTo('system')} />}
+        {screen === 'cosmic' && <CosmicSignatureScreen onReveal={() => goTo('settings')} onBack={() => goTo('system')} />}
         {screen === 'settings' && (
           <SimulationScreen
             onComplete={() => goTo('result')}
-            onBack={() => goTo(patternMode === 'cosmic' ? 'cosmic' : 'select')}
           />
         )}
         {screen === 'result' && (
           <ResultScreen
-            onGenerateNew={() => goTo('system')}
-            onBack={() => goTo('settings')}
+            onGenerateNew={() => goTo(patternMode === 'cosmic' ? 'cosmic' : 'select')}
+            onBack={() => goTo(patternMode === 'cosmic' ? 'cosmic' : 'settings')}
             onViewDetails={() => goTo('details')}
             onShare={() => goTo('share')}
             onSave={() => goTo('collection')}
@@ -122,7 +114,7 @@ export default function App() {
         {screen === 'details' && (
           <PatternDetailsScreen
             onBack={() => goTo('result')}
-            onRegenerate={() => goTo('generating')}
+            onRegenerate={() => goTo('settings')}
             onKnowledge={() => goTo('knowledge')}
           />
         )}

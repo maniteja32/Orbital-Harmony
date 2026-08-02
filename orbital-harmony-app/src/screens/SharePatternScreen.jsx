@@ -4,6 +4,7 @@ import { GlassButton } from '../components/ui/glasscn/glass-button.jsx';
 import { PatternGlyph } from '../components/PatternGlyph.jsx';
 import { PLANETS_BY_KEY } from '../data/planets.js';
 import { useAppStore } from '../store/useAppStore.js';
+import { formatCosmicSignatureDate } from '../utils/cosmicSignature.js';
 
 function downloadDataUrl(dataUrl, filename) {
   if (!dataUrl) return;
@@ -18,10 +19,16 @@ function downloadDataUrl(dataUrl, filename) {
 /** Screen 10 — Share Pattern. Preview of the current figure plus quick
  *  share targets and a copy-link action. */
 export default function SharePatternScreen({ onBack }) {
-  const { planetA, planetB, snapshot } = useAppStore();
+  const { planetA, planetB, snapshot, patternMode, cosmicDate } = useAppStore();
+  const isCosmic = patternMode === 'cosmic';
   const a = planetA ? PLANETS_BY_KEY[planetA] : null;
   const b = planetB ? PLANETS_BY_KEY[planetB] : null;
-  const title = a && b ? `${a.name} · ${b.name}` : 'Cosmic Signature';
+  const cosmicDateLabel = formatCosmicSignatureDate(cosmicDate);
+  const title = isCosmic
+    ? `Cosmic Signature${cosmicDateLabel ? ` · ${cosmicDateLabel}` : ''}`
+    : a && b
+      ? `${a.name} · ${b.name}`
+      : 'Cosmic Signature';
 
   const [copied, setCopied] = useState(false);
 
@@ -93,7 +100,7 @@ export default function SharePatternScreen({ onBack }) {
       </div>
 
       <div className="screen__actions">
-        <GlassButton tone="primary" className="w-full h-12 text-base font-semibold" onClick={copyLink}>
+        <GlassButton tone="primary" className="w-full h-12 text-base font-medium" onClick={copyLink}>
           {copied ? (
             <span className="share-copied">
               <Check size={18} strokeWidth={2.4} aria-hidden="true" /> Link copied
