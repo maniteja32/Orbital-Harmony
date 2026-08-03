@@ -56,6 +56,11 @@ export default function GeneratingScreen({ onDone, onBack }) {
         )}
       </div>
 
+      <div className="screen__header">
+        <h1 className="screen__title">Orbital Harmony</h1>
+        <p className="screen__subtitle">Discover the hidden patterns of planetary motion.</p>
+      </div>
+
       <div className="gen-body">
         <h1 className="gen-title">{isCosmic ? 'Creating your cosmic signature…' : 'Creating your pattern…'}</h1>
         {!isCosmic && hasPair && <p className="gen-pair-title">{pairTitle}</p>}
