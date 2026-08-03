@@ -2893,7 +2893,7 @@ button {
    elegantly unobtrusive, complementing the motion rather than competing. */
 .loading-message {
   position: absolute;
-  bottom: calc(25% + var(--safe-bottom));
+  bottom: 18%;
   left: 0;
   right: 0;
   text-align: center;
@@ -3601,7 +3601,7 @@ button {
 
 .loading-header {
   position: absolute;
-  top: calc(76px + var(--safe-top));
+  top: 12%;
   left: 0;
   right: 0;
   z-index: 2;
