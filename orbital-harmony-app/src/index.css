@@ -517,6 +517,8 @@ button {
   margin: 0 !important;
   width: 24px !important;
   height: 24px !important;
+  color: #ff9d5c;
+  stroke: #ff9d5c;
 }
 
 .system-modes .mode-card__text {
