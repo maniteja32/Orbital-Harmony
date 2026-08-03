@@ -1027,7 +1027,7 @@ button {
   margin-bottom: -8px;
   text-transform: uppercase;
   letter-spacing: 0.14em;
-  color: var(--text-primary);
+  color: #ff6a3d;
 }
 
 .swipe-row__viewport {
