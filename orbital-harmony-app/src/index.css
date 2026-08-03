@@ -1222,6 +1222,15 @@ button {
      a real mobile viewport. */
   height: 100dvh;
   overflow: hidden;
+  position: relative;
+}
+
+.screen--simulation .screen__actions--top {
+  position: absolute;
+  top: calc(14px + var(--safe-top));
+  left: 22px;
+  z-index: 10;
+  margin: 0;
 }
 
 /* Back button + header used to stack vertically (button above the
