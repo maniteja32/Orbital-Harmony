@@ -156,6 +156,18 @@ export default function SimulationScreen({ onComplete, onBack }) {
 
   return (
     <div className="screen screen--simulation">
+      <div className="screen__actions screen__actions--top">
+        {onBack && (
+          <button
+            type="button"
+            className="back-button back-button--icon"
+            onClick={onBack}
+            aria-label="Back"
+          >
+            <ArrowLeft size={18} strokeWidth={2} aria-hidden="true" />
+          </button>
+        )}
+      </div>
       {pairTitle && <p className="sim-pair-title">{pairTitle}</p>}
       <div className="sim-canvas-wrap">
         <SolarSystemCanvas
@@ -242,16 +254,6 @@ export default function SimulationScreen({ onComplete, onBack }) {
       </div>
 
       <div className="sim-controls sim-controls--transport" aria-label="Pattern playback controls">
-        {onBack && (
-          <button
-            type="button"
-            className="back-button back-button--icon"
-            onClick={onBack}
-            aria-label="Back"
-          >
-            <ArrowLeft size={18} strokeWidth={2} aria-hidden="true" />
-          </button>
-        )}
         <button
           type="button"
           className={`back-button back-button--icon sim-controls__toggle${!isPaused ? ' is-active' : ''}`}
