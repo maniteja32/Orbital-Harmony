@@ -270,6 +270,9 @@ export default function LoadingScreen({ onDone, onExited }) {
         <h1 className="loading-title">Orbital Harmony</h1>
         <p className="loading-subtitle">Discover the hidden patterns of planetary motion.</p>
       </div>
+      <div className={`loading-message${ready ? ' is-visible' : ''}`}>
+        <p>The cosmos is aligning<span className="loading-ellipsis">.</span><span className="loading-ellipsis">.</span><span className="loading-ellipsis">.</span></p>
+      </div>
       <div className={`loading-vignette${transitioning ? ' is-dimming' : ''}`} />
     </div>
   );
