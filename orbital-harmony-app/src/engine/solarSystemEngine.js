@@ -428,10 +428,16 @@ export function createSolarSystemEngine(canvas, opts) {
     return planet;
   });
 
-  const miniBodiesEnabled = miniBodiesIntro && planets.length > 0;
+  // For pattern mode with startPaused=true, we want planets at FULL SIZE on load,
+  // then scale down AFTER Play is clicked. Track this separately from the
+  // miniBodiesIntro logic (which is used elsewhere).
+  const shouldScaleAfterPlay = tracePattern && startPaused;
+  const miniBodiesEnabled = (miniBodiesIntro && planets.length > 0) || shouldScaleAfterPlay;
   let miniBodiesElapsed = 0;
-  let miniBodiesDone = !miniBodiesEnabled;
+  let miniBodiesDone = !miniBodiesEnabled && !shouldScaleAfterPlay;
   let miniMotionElapsed = 0;
+  let playInitiated = false;
+  let scaleAnimationDelaySec = 0.3; // Delay before scale-down begins after Play
 
   function applyMiniBodyScale(t) {
     const easedT = THREE.MathUtils.clamp(t, 0, 1);
@@ -1035,11 +1041,30 @@ export function createSolarSystemEngine(canvas, opts) {
     rafId = requestAnimationFrame(tick);
     const delta = Math.min(clock.getDelta(), 0.05);
 
+    // Detect when Play is first clicked (paused changes from true to false)
+    if (shouldScaleAfterPlay && !playInitiated && !paused) {
+      playInitiated = true;
+      miniBodiesElapsed = 0;
+    }
+
     if (!miniBodiesDone) {
       miniBodiesElapsed += delta;
-      const t = Math.min(miniBodiesElapsed / Math.max(0.01, miniIntroDurationSec), 1);
-      applyMiniBodyScale(smootherStep(t));
-      if (t >= 1) miniBodiesDone = true;
+      let scaleProgress = 0;
+      
+      if (shouldScaleAfterPlay && playInitiated) {
+        // Scale-down animation: starts after a small delay, then animates over miniIntroDurationSec
+        const delayedElapsed = Math.max(0, miniBodiesElapsed - scaleAnimationDelaySec);
+        scaleProgress = Math.min(delayedElapsed / Math.max(0.01, miniIntroDurationSec), 1);
+      } else if (miniBodiesIntro) {
+        // Original mini-bodies intro (used on browse screen, etc.)
+        scaleProgress = Math.min(miniBodiesElapsed / Math.max(0.01, miniIntroDurationSec), 1);
+      }
+      
+      applyMiniBodyScale(smootherStep(scaleProgress));
+      
+      if (scaleProgress >= 1) {
+        miniBodiesDone = true;
+      }
     }
 
     if (miniBodiesEnabled && miniBodiesDone) {
@@ -1147,7 +1172,10 @@ export function createSolarSystemEngine(canvas, opts) {
     }
 
     scene.updateMatrixWorld(true);
-    if (tracePattern) sampleChordIfDue();
+    
+    // Delay pattern tracing until scale-down animation completes (if applicable)
+    const scaleAnimationComplete = !shouldScaleAfterPlay || miniBodiesDone;
+    if (tracePattern && scaleAnimationComplete) sampleChordIfDue();
 
     if (cosmicSnapshotEnabled && cosmicSettled && cosmicReadyToDraw && cosmicSignatureLines.length > 0 && !cosmicBaseLinesDone) {
       cosmicDrawElapsed += delta;
@@ -1354,8 +1382,9 @@ export function createSolarSystemEngine(canvas, opts) {
       patternCount = 0;
       completed = false;
       miniBodiesElapsed = 0;
-      miniBodiesDone = !miniBodiesEnabled;
+      miniBodiesDone = !miniBodiesEnabled && !shouldScaleAfterPlay;
       miniMotionElapsed = 0;
+      playInitiated = false;
       if (miniBodiesEnabled) applyMiniBodyScale(0);
       if (patternLines) {
         patternLines.geometry.instanceCount = 0;
