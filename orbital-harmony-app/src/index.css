@@ -450,10 +450,7 @@ button {
   letter-spacing: 0.01em;
   line-height: 1.15;
   margin-bottom: 12px;
-  /* Warm orange accent — echoes the Sun at the centre of the scene. Held at
-     ~85% (accent #ff6a3d over black) so it reads as a softened tint rather
-     than the full-strength accent. */
-  color: rgba(255, 106, 61, 0.85);
+  color: var(--text-primary);
   text-shadow: 0 2px 16px rgba(0, 0, 0, 0.9), 0 1px 4px rgba(0, 0, 0, 0.95);
 }
 
