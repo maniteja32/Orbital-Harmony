@@ -6,9 +6,9 @@ export const SPEED_PRESETS = {
   // default rocket speed is 3× (see SimulationScreen SPEED_STEPS), so the
   // default reveal lands around a graceful ~15s rather than the old rushed
   // few-second sprint that read as a "mess" on mobile.
-  slow: { label: 'Slow', durationSec: 90 },
-  medium: { label: 'Medium', durationSec: 67 },
-  fast: { label: 'Fast', durationSec: 45 },
+  slow: { label: 'Slow', durationSec: 150 },
+  medium: { label: 'Medium', durationSec: 120 },
+  fast: { label: 'Fast', durationSec: 90 },
 };
 
 // `targetChords` = roughly how many chords the FULL pattern should end up
