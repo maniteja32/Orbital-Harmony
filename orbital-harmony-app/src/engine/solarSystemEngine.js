@@ -32,6 +32,12 @@ import { loadPlanetTexture, buildPlanetBody } from './planetFactory.js';
 
 const DAYS_PER_YEAR = 365.25;
 const TWO_PI = Math.PI * 2;
+// Scale factor to convert real AU distances to scene units. Real AU distances
+// (0.39..30.07) are multiplied by this factor (~0.3) to keep distances
+// manageable while maintaining scientifically accurate planet-to-planet ratios.
+// This ensures patterns traced between any two planets are geometrically true
+// to real astronomical resonances, not just visually appealing.
+const DISTANCE_SCALE_FACTOR = 0.3;
 // The cinematic browse-screen camera path holds on a true top-down shot
 // (matching the loading screen's overview), then slowly ROTATES down to a
 // more angled, dimensional view — see HERO_ELEVATION_START_DEG/
@@ -288,22 +294,6 @@ export function createSolarSystemEngine(canvas, opts) {
   const width = parent?.clientWidth || window.innerWidth;
   const height = parent?.clientHeight || window.innerHeight;
 
-  // --- Explore resonance-pattern layout. The two-planet Explore pattern
-  // uses TIGHTER orbit distances (16/21/25/31/42/55/67/78) than this app's
-  // WIDENED browse-view distances (16/23/31/40/55/72/90/108). The widened
-  // spacing pushed the two selected orbits far apart, so the traced figure
-  // read as a loose, un-rhythmic pinwheel with a big empty centre; the
-  // tighter spacing fills the frame with a dense, harmonic figure. These
-  // distances only control orbit RADII (layout/framing) — the pattern's
-  // TIMING now comes from each planet's REAL orbital period (physicalPattern
-  // is set for Explore, see SimulationScreen.jsx + computePatternPlan), so
-  // every pair traces its own true resonance geometry, run for exactly the
-  // span its resonance needs to close. Sun + planet sizes stay at their real
-  // values (the large orbits keep them small relative to the pattern).
-  const LEGACY_PATTERN_DISTANCE = {
-    mercury: 16, venus: 21, earth: 25, mars: 31,
-    jupiter: 42, saturn: 55, uranus: 67, neptune: 78,
-  };
   const validPatternKeys = (planetKeys || []).filter((k) => PLANETS_BY_KEY[k]);
   const useLegacyPattern = tracePattern && !connectAllPlanets && validPatternKeys.length === 2;
 
@@ -403,18 +393,28 @@ export function createSolarSystemEngine(canvas, opts) {
     scene.add(sprite);
   });
 
-  // Resolve the planet data. For the TWO-planet Explore pattern, remap each
-  // selected planet's orbit distance to the legacy prototype's TIGHTER value
-  // (see LEGACY_PATTERN_DISTANCE near the top of this function) so the two
-  // orbits sit close together and the traced chords weave the original's
-  // tight, harmonic spiral instead of a loose, spaced-out pinwheel. Uses a
-  // shallow clone — the shared PLANETS_BY_KEY data is never mutated; radii
-  // and every other field stay at their legacy real values.
-  let planetDatas = planetKeys.map((key) => PLANETS_BY_KEY[key]).filter(Boolean);
+  // Resolve the planet data. Calculate orbit distances from real AU values
+  // multiplied by DISTANCE_SCALE_FACTOR to maintain scientifically accurate
+  // proportions (e.g., Earth:Jupiter = 1:5.2 remains exact after scaling).
+  // This ensures patterns traced between any two planets are geometrically
+  // true resonances, not just visually pleasing spirals.
+  let planetDatas = planetKeys
+    .map((key) => PLANETS_BY_KEY[key])
+    .filter(Boolean)
+    .map((d) => ({
+      ...d,
+      distance: (d.realDistanceAU || d.distance) * DISTANCE_SCALE_FACTOR,
+    }));
+  
+  // For the TWO-planet Explore pattern, compress distances further (legacy
+  // tighter spacing) so the two orbits sit close together and traced chords
+  // weave a tight, harmonic spiral instead of a loose pinwheel. Multiplies
+  // the already-scaled distance by an additional compression factor.
   if (useLegacyPattern) {
+    const LEGACY_COMPRESSION_FACTOR = 0.5; // Compress to ~50% of scaled AU distance
     planetDatas = planetDatas.map((d) => ({
       ...d,
-      distance: LEGACY_PATTERN_DISTANCE[d.key] ?? d.distance,
+      distance: d.distance * LEGACY_COMPRESSION_FACTOR,
     }));
   }
 
