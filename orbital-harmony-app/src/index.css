@@ -519,6 +519,8 @@ button {
   height: 24px !important;
   color: #ff9d5c;
   stroke: #ff9d5c;
+  position: relative;
+  z-index: 10;
 }
 
 .system-modes .mode-card__text {
