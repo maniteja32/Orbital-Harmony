@@ -239,13 +239,15 @@ export default function SimulationScreen({ onComplete, onBack }) {
             </label>
             <div className="sim-slider-labels" aria-hidden="true">
               {Array.from({ length: DETAIL_LEVEL_MAX - DETAIL_LEVEL_MIN + 1 }, (_, index) => DETAIL_LEVEL_MIN + index).map((value) => (
-                <span
-                  key={value}
-                  className={`sim-slider-labels__item${detailLevel === value ? ' is-active' : ''}`}
-                  style={{ left: `${((value - DETAIL_LEVEL_MIN) / (DETAIL_LEVEL_MAX - DETAIL_LEVEL_MIN)) * 100}%` }}
-                >
-                  {value}
-                </span>
+                value > 0 && (
+                  <span
+                    key={value}
+                    className={`sim-slider-labels__item${detailLevel === value ? ' is-active' : ''}`}
+                    style={{ left: `${((value - DETAIL_LEVEL_MIN) / (DETAIL_LEVEL_MAX - DETAIL_LEVEL_MIN)) * 100}%` }}
+                  >
+                    {value}
+                  </span>
+                )
               ))}
             </div>
           </div>
