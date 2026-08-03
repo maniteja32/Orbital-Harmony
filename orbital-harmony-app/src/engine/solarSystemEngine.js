@@ -393,28 +393,31 @@ export function createSolarSystemEngine(canvas, opts) {
     scene.add(sprite);
   });
 
-  // Resolve the planet data. Calculate orbit distances from real AU values
-  // multiplied by DISTANCE_SCALE_FACTOR to maintain scientifically accurate
-  // proportions (e.g., Earth:Jupiter = 1:5.2 remains exact after scaling).
-  // This ensures patterns traced between any two planets are geometrically
-  // true resonances, not just visually pleasing spirals.
+  // Resolve the planet data. Calculate orbit distances based on mode:
+  // - For 2-planet PATTERN mode: outer planet = reference frame (100%), inner
+  //   planet scaled proportionally by real AU ratio. Ensures scientific accuracy
+  //   while maintaining consistent visual framing (e.g., Earth–Jupiter: outer=50,
+  //   inner=50*(1.0/5.2)=9.6, preserving the 1:5.2 AU ratio).
+  // - For BROWSE/COSMIC mode: uniform scaling (realDistanceAU * DISTANCE_SCALE_FACTOR)
+  //   to show all planets in one view.
   let planetDatas = planetKeys
     .map((key) => PLANETS_BY_KEY[key])
-    .filter(Boolean)
-    .map((d) => ({
-      ...d,
-      distance: (d.realDistanceAU || d.distance) * DISTANCE_SCALE_FACTOR,
-    }));
-  
-  // For the TWO-planet Explore pattern, compress distances further (legacy
-  // tighter spacing) so the two orbits sit close together and traced chords
-  // weave a tight, harmonic spiral instead of a loose pinwheel. Multiplies
-  // the already-scaled distance by an additional compression factor.
-  if (useLegacyPattern) {
-    const LEGACY_COMPRESSION_FACTOR = 0.5; // Compress to ~50% of scaled AU distance
+    .filter(Boolean);
+
+  if (useLegacyPattern && planetDatas.length === 2) {
+    // Two-planet pattern mode: use outer planet as reference orbit (100% radius).
+    // Inner planet scales proportionally by real AU ratio.
+    const PATTERN_REFERENCE_DISTANCE = 50; // Outer planet orbit size (frame reference)
+    const maxAU = Math.max(...planetDatas.map((p) => p.realDistanceAU));
     planetDatas = planetDatas.map((d) => ({
       ...d,
-      distance: d.distance * LEGACY_COMPRESSION_FACTOR,
+      distance: (d.realDistanceAU / maxAU) * PATTERN_REFERENCE_DISTANCE,
+    }));
+  } else {
+    // Browse/Cosmic mode: uniform scaling from real AU distances.
+    planetDatas = planetDatas.map((d) => ({
+      ...d,
+      distance: (d.realDistanceAU || d.distance) * DISTANCE_SCALE_FACTOR,
     }));
   }
 
