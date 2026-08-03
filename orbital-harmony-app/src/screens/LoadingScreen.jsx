@@ -266,6 +266,10 @@ export default function LoadingScreen({ onDone, onExited }) {
         ref={canvasRef}
         className={`loading-canvas${ready ? ' is-ready' : ''}`}
       />
+      <div className="loading-header">
+        <h1 className="loading-title">Orbital Harmony</h1>
+        <p className="loading-subtitle">Discover the hidden patterns of planetary motion.</p>
+      </div>
       <div className={`loading-vignette${transitioning ? ' is-dimming' : ''}`} />
     </div>
   );

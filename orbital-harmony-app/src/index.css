@@ -3546,21 +3546,30 @@ button {
 }
 
 /* ============================================================================
-   Generating Screen — orange Orbital Harmony title to match landing
+   Loading Screen — orange Orbital Harmony title with cinematic fade-in
    ============================================================================ */
 
-.screen--generating .screen__header {
-  position: relative;
+.loading-header {
+  position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  z-index: 3;
-  padding: 40px 28px 20px;
+  z-index: 10;
+  padding: calc(60px + var(--safe-top)) 28px 20px;
   text-align: center;
   pointer-events: none;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.3s,
+              transform 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.3s;
 }
 
-.screen--generating .screen__title {
+.loading-screen.is-ready .loading-header {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.loading-title {
   font-family: var(--font-display);
   font-size: clamp(22px, 6.4vw, 30px);
   letter-spacing: 0.01em;
@@ -3571,7 +3580,7 @@ button {
   font-weight: 400;
 }
 
-.screen__subtitle {
+.loading-subtitle {
   color: var(--text-secondary);
   font-size: 16px;
   line-height: 1.5;
