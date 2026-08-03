@@ -522,8 +522,8 @@ button {
   margin: 0 !important;
   width: 24px !important;
   height: 24px !important;
-  color: #ff9d5c;
-  stroke: #ff9d5c;
+  color: #ff6a3d;
+  stroke: #ff6a3d;
   position: relative;
   z-index: 10;
 }
@@ -2816,10 +2816,10 @@ button {
 }
 
 .screen--cosmic .screen__actions > .back-button--icon {
-  width: 48px;
-  height: 48px;
-  min-height: 48px;
-  flex: 0 0 48px;
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+  flex: 0 0 44px;
 }
 
 .screen--select .select-actions__button:first-child,

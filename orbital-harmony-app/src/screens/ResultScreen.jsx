@@ -83,7 +83,7 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails, onS
             <div className="select-actions__button">
               <GlassButton
                 tone="secondary"
-                className="w-full h-12 text-base font-medium"
+                className="w-full h-11 text-base font-medium"
                 onClick={onSave}
                 aria-label="Save signature"
               >
@@ -94,7 +94,7 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails, onS
             <div className="select-actions__button">
               <GlassButton
                 tone="secondary"
-                className="w-full h-12 text-base font-medium"
+                className="w-full h-11 text-base font-medium"
                 onClick={onShare}
                 aria-label="Share signature"
               >
@@ -105,7 +105,7 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails, onS
           </div>
 
           <div className="result-actions__primary-row">
-            <GlassButton tone="primary" className="w-full h-12 text-base font-medium" onClick={handleGenerateNew}>
+            <GlassButton tone="primary" className="w-full h-11 text-base font-medium" onClick={handleGenerateNew}>
               Generate New Signature
             </GlassButton>
           </div>
@@ -114,12 +114,12 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails, onS
         <div className="result-actions">
           <GlassButton
             tone="primary"
-            className="w-full h-12 text-base font-medium"
+            className="w-full h-11 text-base font-medium"
             onClick={onViewDetails}
           >
             View Details
           </GlassButton>
-          <GlassButton tone="secondary" className="w-full h-12" onClick={handleGenerateNew}>
+          <GlassButton tone="secondary" className="w-full h-11" onClick={handleGenerateNew}>
             Generate New Pattern
           </GlassButton>
         </div>
