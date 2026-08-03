@@ -277,25 +277,33 @@ button {
    words change. The Back button is floated out of flow (see .mode-topbar
    override below) so it no longer pushes this header down. */
 .screen--select .screen__header {
+  position: absolute;
+  top: calc(76px + var(--safe-top));
+  left: 0;
+  right: 0;
+  z-index: 10;
+  padding: 0 28px;
   text-align: center;
-  /* With back navigation moved to the bottom action row, the select title
-     can sit a touch higher while preserving balanced space above the card
-     stack and below toward the action buttons. */
-  margin-top: 40px;
 }
 
 .screen--cosmic .screen__header {
+  position: absolute;
+  top: calc(76px + var(--safe-top));
+  left: 0;
+  right: 0;
+  z-index: 10;
+  padding: 0 28px;
   text-align: center;
-  margin-top: 40px;
 }
 
 .screen--select .screen__header--mode h1 {
   font-size: clamp(20px, 6.4vw, 24px);
-  color: rgba(255, 106, 61, 0.85);
+  color: var(--text-primary);
 }
 
 .screen--cosmic .screen__header--mode h1 {
   font-size: clamp(20px, 6.4vw, 24px);
+  color: var(--text-primary);
 }
 
 .screen--select .screen__header--mode p {
