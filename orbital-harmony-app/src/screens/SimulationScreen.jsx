@@ -51,7 +51,7 @@ export default function SimulationScreen({ onComplete, onBack }) {
   const { planetA, planetB, speed, detailLevel, setDetailLevel, setSnapshot, cosmicDate, patternMode } = useAppStore();
   const canvasRef = useRef(null);
   const doneRef = useRef(false);
-  const [isPaused, setIsPaused] = useState(false);
+  const [isPaused, setIsPaused] = useState(true);
   const [speedFactor, setSpeedFactor] = useState(1);
   const isCosmic = patternMode === 'cosmic';
   const planetAData = PLANETS_BY_KEY[planetA];
@@ -146,12 +146,12 @@ export default function SimulationScreen({ onComplete, onBack }) {
   }, [detailLevel, setDetailLevel]);
 
   const resetPattern = useCallback(() => {
-    // Reset rewinds to the beginning and resumes immediately.
+    // Reset rewinds to the beginning and pauses (ready to play again).
     doneRef.current = false;
     canvasRef.current?.reset();
     canvasRef.current?.setSpeedMultiplier(DEFAULT_SPEED_MULTIPLIER * speedFactor);
-    canvasRef.current?.setPaused(false);
-    setIsPaused(false);
+    canvasRef.current?.setPaused(true);
+    setIsPaused(true);
   }, [speedFactor]);
 
   return (
@@ -178,7 +178,7 @@ export default function SimulationScreen({ onComplete, onBack }) {
           physicalPattern={physicalPattern}
           connectAllPlanets={false}
           cosmicSnapshotDate={isCosmic ? (cosmicDate ?? undefined) : undefined}
-          startPaused={false}
+          startPaused={true}
           miniBodiesIntro
           miniSunScale={0.26}
           miniPlanetScale={0.58}
