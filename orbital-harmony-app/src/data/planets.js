@@ -28,10 +28,12 @@ export const PLANETS = [
     // just makes it legible without touching its orbit distance or any of
     // the larger planets.
     radius: 0.95,
-    // Real heliocentric distance in AU (Astronomical Units). The engine
-    // multiplies this by a global scale factor (currently ~0.3) to keep
-    // distances manageable while maintaining scientifically accurate
-    // proportions between planets.
+    // Hand-tuned visual orbit distance for the Browse/Cosmic views (widened
+    // 16/23/31/40/55/72/90/108 spacing so inner planets' bumped-up radii
+    // don't crowd/merge visually) — NOT physically to-scale, purely layout.
+    distance: 16,
+    // Real heliocentric distance in AU (Astronomical Units). Used only for
+    // the 2-planet pattern's scientifically-accurate AU-ratio geometry.
     realDistanceAU: 0.39,
     rotationSpeed: 0.004,
     tilt: 0.03,
@@ -56,8 +58,9 @@ export const PLANETS = [
     // Bumped up from 1.1 — same "small inner planet, easier to see" bump as
     // Mercury/Earth/Mars, orbit distance untouched.
     radius: 1.5,
-    // Real heliocentric distance in AU. Maintains scientifically accurate
-    // proportions with other planets when scaled.
+    // Hand-tuned visual orbit distance for Browse/Cosmic (see Mercury note).
+    distance: 23,
+    // Real heliocentric distance in AU — used only for pattern geometry.
     realDistanceAU: 0.72,
     rotationSpeed: 0.0045,
     tilt: 3,
@@ -78,7 +81,10 @@ export const PLANETS = [
     // Bumped up from 1.2 — same "small inner planet, easier to see" bump as
     // the other terrestrials, orbit distance untouched.
     radius: 1.6,
-    // Real heliocentric distance in AU (1 AU = Earth-Sun distance).
+    // Hand-tuned visual orbit distance for Browse/Cosmic (see Mercury note).
+    distance: 31,
+    // Real heliocentric distance in AU (1 AU = Earth-Sun distance) — used
+    // only for pattern geometry.
     realDistanceAU: 1.0,
     rotationSpeed: 0.02,
     tilt: 23.4,
@@ -109,7 +115,9 @@ export const PLANETS = [
     // Bumped up from 0.8 — same "small inner planet, easier to see" bump as
     // the other terrestrials, orbit distance untouched.
     radius: 1.1,
-    // Real heliocentric distance in AU.
+    // Hand-tuned visual orbit distance for Browse/Cosmic (see Mercury note).
+    distance: 40,
+    // Real heliocentric distance in AU — used only for pattern geometry.
     realDistanceAU: 1.52,
     rotationSpeed: 0.018,
     tilt: 25,
@@ -125,7 +133,9 @@ export const PLANETS = [
     name: 'Jupiter',
     color: '#d9a066',
     radius: 3.6,
-    // Real heliocentric distance in AU.
+    // Hand-tuned visual orbit distance for Browse/Cosmic (see Mercury note).
+    distance: 55,
+    // Real heliocentric distance in AU — used only for pattern geometry.
     realDistanceAU: 5.2,
     rotationSpeed: 0.045,
     tilt: 3,
@@ -141,7 +151,9 @@ export const PLANETS = [
     name: 'Saturn',
     color: '#e3c16f',
     radius: 3.0,
-    // Real heliocentric distance in AU.
+    // Hand-tuned visual orbit distance for Browse/Cosmic (see Mercury note).
+    distance: 72,
+    // Real heliocentric distance in AU — used only for pattern geometry.
     realDistanceAU: 9.54,
     rotationSpeed: 0.042,
     // Precise real obliquity (26.73°, was rounded to 27) — this is the
@@ -165,7 +177,9 @@ export const PLANETS = [
     name: 'Uranus',
     color: '#7de3e0',
     radius: 2.0,
-    // Real heliocentric distance in AU.
+    // Hand-tuned visual orbit distance for Browse/Cosmic (see Mercury note).
+    distance: 90,
+    // Real heliocentric distance in AU — used only for pattern geometry.
     realDistanceAU: 19.19,
     rotationSpeed: 0.03,
     tilt: 82,
@@ -187,7 +201,9 @@ export const PLANETS = [
     name: 'Neptune',
     color: '#4166f5',
     radius: 1.9,
-    // Real heliocentric distance in AU.
+    // Hand-tuned visual orbit distance for Browse/Cosmic (see Mercury note).
+    distance: 108,
+    // Real heliocentric distance in AU — used only for pattern geometry.
     realDistanceAU: 30.07,
     rotationSpeed: 0.032,
     tilt: 28,

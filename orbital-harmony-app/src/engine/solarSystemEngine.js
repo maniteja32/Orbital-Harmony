@@ -32,12 +32,6 @@ import { loadPlanetTexture, buildPlanetBody } from './planetFactory.js';
 
 const DAYS_PER_YEAR = 365.25;
 const TWO_PI = Math.PI * 2;
-// Scale factor to convert real AU distances to scene units. Real AU distances
-// (0.39..30.07) are multiplied by this factor (~0.3) to keep distances
-// manageable while maintaining scientifically accurate planet-to-planet ratios.
-// This ensures patterns traced between any two planets are geometrically true
-// to real astronomical resonances, not just visually appealing.
-const DISTANCE_SCALE_FACTOR = 0.3;
 // The cinematic browse-screen camera path holds on a true top-down shot
 // (matching the loading screen's overview), then slowly ROTATES down to a
 // more angled, dimensional view — see HERO_ELEVATION_START_DEG/
@@ -358,9 +352,20 @@ export function createSolarSystemEngine(canvas, opts) {
   // legacy pattern's tight, large-radius orbits keep the Sun small relative
   // to the traced spiral on their own, so no per-mode shrink is needed.
   const SUN_RADIUS = 4.2;
+  // Landing screen (browse, orthographic top-down) ONLY: the Sun and every
+  // planet body render at a fixed fraction of their normal size so the full
+  // 8-planet system reads as a spacious, elegant overview rather than a
+  // crowded "planet showcase" — orbital DISTANCES/spacing are completely
+  // untouched (only the visual body geometry scales down, via
+  // axialTilt.scale / sunMesh.scale below), so this never affects the
+  // pattern/duo screens (they don't set `orthographic`). Sun shrinks less
+  // than the planets so it stays the clear focal point of the scene.
+  const LANDING_SUN_SCALE = 0.75;
+  const LANDING_PLANET_SCALE = 0.68;
   const sunGeo = new THREE.SphereGeometry(SUN_RADIUS, 64, 64);
   const sunMat = makeSunMaterial();
   const sunMesh = new THREE.Mesh(sunGeo, sunMat);
+  if (orthographic) sunMesh.scale.setScalar(LANDING_SUN_SCALE);
   scene.add(sunMesh);
   const sunGlowSprites = [];
 
@@ -386,7 +391,7 @@ export function createSolarSystemEngine(canvas, opts) {
       blending: THREE.AdditiveBlending,
       depthWrite: false,
     }));
-    const s = SUN_RADIUS * scale;
+    const s = SUN_RADIUS * scale * (orthographic ? LANDING_SUN_SCALE : 1);
     sprite.scale.set(s, s, 1);
     sprite.userData.baseScale = s;
     sunGlowSprites.push(sprite);
@@ -398,8 +403,12 @@ export function createSolarSystemEngine(canvas, opts) {
   //   planet scaled proportionally by real AU ratio. Ensures scientific accuracy
   //   while maintaining consistent visual framing (e.g., Earth–Jupiter: outer=50,
   //   inner=50*(1.0/5.2)=9.6, preserving the 1:5.2 AU ratio).
-  // - For BROWSE/COSMIC mode: uniform scaling (realDistanceAU * DISTANCE_SCALE_FACTOR)
-  //   to show all planets in one view.
+  // - For BROWSE/COSMIC mode: use each planet's hand-tuned `distance` field
+  //   (NOT real AU distances). Real AU ratios are far too compressed against
+  //   SUN_RADIUS (4.2) and the planets' own visual radii — e.g. Jupiter's real
+  //   distance would land literally inside the Sun's sphere — so the full
+  //   8-planet browse view needs its own believable, non-overlapping layout,
+  //   same as before real AU distances were introduced for pattern geometry.
   let planetDatas = planetKeys
     .map((key) => PLANETS_BY_KEY[key])
     .filter(Boolean);
@@ -414,15 +423,17 @@ export function createSolarSystemEngine(canvas, opts) {
       distance: (d.realDistanceAU / maxAU) * PATTERN_REFERENCE_DISTANCE,
     }));
   } else {
-    // Browse/Cosmic mode: uniform scaling from real AU distances.
-    planetDatas = planetDatas.map((d) => ({
-      ...d,
-      distance: (d.realDistanceAU || d.distance) * DISTANCE_SCALE_FACTOR,
-    }));
+    // Browse/Cosmic mode: keep each planet's hand-tuned visual `distance`.
+    planetDatas = planetDatas.map((d) => ({ ...d }));
   }
 
   const planets = planetDatas.map((data) => {
     const planet = buildPlanet(data, patternStartDate);
+    // Landing screen only (see LANDING_PLANET_SCALE above) — shrink the
+    // whole visual body (mesh + rings + clouds/atmosphere, all children of
+    // axialTilt) in place, leaving tiltAnchor's `data.distance` position
+    // (and therefore orbital spacing) completely untouched.
+    if (orthographic) planet.axialTilt.scale.setScalar(LANDING_PLANET_SCALE);
     scene.add(planet.pivot);
     if (showOrbitRings) scene.add(makeOrbitRing(data.distance, data.color));
     return planet;
@@ -577,11 +588,13 @@ export function createSolarSystemEngine(canvas, opts) {
   // viewport dimension (margin 1.2) — the whole spiral lives within the outer
   // orbit, so this fills the frame while leaving a little breathing room for
   // the outer planet's own sphere. Non-pattern paths keep their prior framing.
+  // For 8-planet browse mode, need more margin to prevent planets from overlapping
+  // visually on screen.
   const framingMargin = useLegacyPattern
     ? 1.2
     : planets.length <= 2
       ? 1.4
-      : 1.18;
+      : 1.35;
 
   // Same "fixed vertical extent, adaptive horizontal extent" convention as
   // the perspective path below, but for an orthographic camera the FRUSTUM
@@ -700,36 +713,24 @@ export function createSolarSystemEngine(canvas, opts) {
   const earthRefDistance = PLANETS_BY_KEY.earth?.distance ?? maxDistance * 0.35;
   const heroWidePos = heroPosition(dist, HERO_ELEVATION_START_DEG);
   const heroAngledPos = heroPosition(dist, HERO_ELEVATION_END_DEG);
-  // Final resting shot: pulled back so more of the system reads in frame and
-  // the Sun sits at a comfortable on-screen size. For this orthographic
-  // camera on-screen scale is INVERSELY proportional to the frustum
-  // half-height (which scales linearly with this margin), so a SMALLER
-  // margin = more zoomed in. History: 1.2 was too close (Sun dominated);
-  // 2.4 halved everything and read a touch too far out on mobile; 2.0 zooms
-  // back in ~1.2x (2.4 / 2.0) for a slightly closer, more immersive framing
-  // while still keeping the outer planets in view.
-  // IMPORTANT for the orthographic camera in use here: on-screen scale
-  // comes ENTIRELY from the frustum half-height, NOT camera distance
-  // (moving an orthographic camera closer/further does nothing visually)
-  // — so "zooming in" is animated by shrinking `camera.top/bottom/left/
-  // right` toward `heroCloseHalf` in tick() below, not by moving the
-  // camera. The camera position/angle/up stay FROZEN at `heroAngledPos`
-  // through the whole zoom phase (no further rotation).
-  const HERO_CLOSE_MARGIN = 2.0;
+  // Rest state for the landing screen (both the first-time cinematic intro
+  // and the returning-visitor `startSettled` framing below land on this
+  // exact same framing, so there's never a first-visit vs. repeat-visit
+  // scale mismatch).
   const heroWideHalf = orthoHalfHeight(maxDistance, framingMargin, width / height);
-  const heroCloseHalf = orthoHalfHeight(earthRefDistance, HERO_CLOSE_MARGIN, width / height);
-  // Perspective fallback only (this engine also supports a plain
-  // PerspectiveCamera for other screens) — dolly-in works normally there
-  // since scale IS distance-driven for perspective, unlike orthographic.
-  const heroClosePos = camera.isOrthographicCamera
-    ? heroAngledPos
-    : heroPosition(distanceToFit(width / height, earthRefDistance, HERO_CLOSE_MARGIN), HERO_ELEVATION_END_DEG);
+  // A wider "establishing shot" frustum used only for the very START of the
+  // cinematic intro (top-down hold + the rotate into the angled view) — the
+  // intro then slowly ZOOMS IN from this pulled-back establishing shot down
+  // to the normal `heroWideHalf` resting framing above, giving the intro a
+  // genuine push-in beat instead of holding at the same scale throughout.
+  const INTRO_ESTABLISH_MARGIN = framingMargin * 1.3;
+  const heroEstablishHalf = orthoHalfHeight(maxDistance, INTRO_ESTABLISH_MARGIN, width / height);
   // A small, CONSTANT look-at offset sits the Sun slightly above
   // dead-center for a more considered mobile-portrait composition.
   const introLookTarget = new THREE.Vector3(0, -earthRefDistance * 0.045, 0);
   const INTRO_HOLD_SEC = 0.8;
   const INTRO_TRAVEL_SEC = 2.1;
-  const INTRO_ZOOM_SEC = 2.7;
+  const INTRO_ZOOM_SEC = 2.2;
   let introPhase = cinematicIntro ? 'hold' : 'done';
   let introElapsed = 0;
   let introCompleteCb = null;
@@ -779,25 +780,38 @@ export function createSolarSystemEngine(canvas, opts) {
     camera.up.copy(heroUp(HERO_ELEVATION_START_DEG));
     camera.position.copy(heroWidePos);
     camera.lookAt(introLookTarget);
+    // Start on the wider "establishing shot" frustum — the hold + rotate
+    // phases keep this same wide scale (angle-only motion); the zoom phase
+    // further below is what pushes in from here to `heroWideHalf`.
+    if (camera.isOrthographicCamera) {
+      camera.left = (-heroEstablishHalf * width) / height;
+      camera.right = (heroEstablishHalf * width) / height;
+      camera.top = heroEstablishHalf;
+      camera.bottom = -heroEstablishHalf;
+      camera.updateProjectionMatrix();
+    }
     // OrbitControls (if this screen wants it) is attached once the scripted
     // move finishes — see tick() below.
   } else if (startSettled && interactive) {
-    // Returning to this screen (e.g. Back from Mode select) — jump STRAIGHT
-    // to the final settled hero framing the cinematic intro ends on, so the
-    // zoom-in never replays. Mirrors the exact end-state set in tick()'s
-    // introPhase === 'zoom' completion branch below.
+    // Intro already played on a prior load (systemIntroPlayed persisted in
+    // localStorage) — skip the animation and jump STRAIGHT to the full-system
+    // view with the nice angled hero position, ready for OrbitControls. The
+    // zoom-in effect was just a cinematic flourish; the persistent default is
+    // the full solar system, not an Earth-centric zoom.
     camera.up.copy(heroUp(HERO_ELEVATION_END_DEG));
-    camera.position.copy(heroClosePos);
+    camera.position.copy(heroAngledPos);
     camera.lookAt(introLookTarget);
     if (camera.isOrthographicCamera) {
-      camera.left = (-heroCloseHalf * width) / height;
-      camera.right = (heroCloseHalf * width) / height;
-      camera.top = heroCloseHalf;
-      camera.bottom = -heroCloseHalf;
+      // Use the full-system framing (heroWideHalf), not the zoomed framing
+      const half = heroWideHalf;
+      camera.left = (-half * width) / height;
+      camera.right = (half * width) / height;
+      camera.top = half;
+      camera.bottom = -half;
       camera.updateProjectionMatrix();
-      // Persist the zoomed framing so a later resize() re-derives from it.
-      restFrameRadius = earthRefDistance;
-      restFrameMargin = HERO_CLOSE_MARGIN;
+      // Keep the full-system framing as the rest state
+      restFrameRadius = maxDistance;
+      restFrameMargin = framingMargin;
     }
     camera.up.set(0, 1, 0);
     attachOrbitControls(introLookTarget);
@@ -1248,43 +1262,27 @@ export function createSolarSystemEngine(canvas, opts) {
           introElapsed = 0;
         }
       } else if (introPhase === 'zoom') {
-        // For the ORTHOGRAPHIC camera this screen actually uses, on-screen
-        // scale comes entirely from the frustum half-height, not distance
-        // — so the "zoom toward Sun+Earth" is animated by shrinking
-        // camera.top/bottom/left/right, NOT by moving the camera (moving
-        // an orthographic camera closer/further is a no-op visually).
-        // Position/up/lookAt stay completely frozen at their final
-        // `travel`-phase values, so there is zero further rotation.
-        // (Perspective fallback: dolly the position in instead, since
-        // scale IS distance-driven there.)
+        // Camera position/angle/up are already at their final `travel`-end
+        // values and stay completely FROZEN here — only the frustum
+        // half-height animates, pushing in from the wider establishing
+        // shot (`heroEstablishHalf`) down to the normal resting framing
+        // (`heroWideHalf`). Interpolated GEOMETRICALLY (exponentially)
+        // rather than linearly since zoom reads logarithmically to the eye
+        // — a linear lerp races through the wide part and crawls at the end.
         const t = Math.min(introElapsed / INTRO_ZOOM_SEC, 1);
         const eased = smootherStep(t);
         if (camera.isOrthographicCamera) {
-          // Interpolate the frustum half-height GEOMETRICALLY (exponentially)
-          // rather than linearly: zoom is perceived logarithmically, so a
-          // constant multiplicative step per frame reads as a perfectly even,
-          // smooth zoom — a linear lerp of the half-height instead races
-          // through the early (wide) part and crawls through the end.
-          const half = heroWideHalf * Math.pow(heroCloseHalf / heroWideHalf, eased);
+          const half = heroEstablishHalf * Math.pow(heroWideHalf / heroEstablishHalf, eased);
           camera.left = (-half * width) / height;
           camera.right = (half * width) / height;
           camera.top = half;
           camera.bottom = -half;
           camera.updateProjectionMatrix();
-        } else {
-          camera.position.lerpVectors(heroAngledPos, heroClosePos, eased);
-          camera.lookAt(introLookTarget);
         }
         if (t >= 1) {
           introPhase = 'done';
-          // Persist the zoomed-in framing as the new "rest" state so a
-          // later resize() (orientation change, mobile chrome show/hide)
-          // re-derives the frustum from THIS framing instead of snapping
-          // back to the full-system view.
-          if (camera.isOrthographicCamera) {
-            restFrameRadius = earthRefDistance;
-            restFrameMargin = HERO_CLOSE_MARGIN;
-          }
+          restFrameRadius = maxDistance;
+          restFrameMargin = framingMargin;
           // Snap back to the default up vector before OrbitControls takes
           // over — it derives its own spherical coordinates from
           // camera.up and assumes the default (see the long comment above

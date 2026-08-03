@@ -35,7 +35,15 @@ export const useAppStore = create((set) => ({
   patternMode: 'explore', // 'explore' (pick two planets) | 'cosmic' (birth-date signature)
   cosmicDate: null, // Date the Cosmic Signature pattern is anchored to (null = Explore flow)
   snapshot: null, // captured PNG data URL of the final pattern
-  systemIntroPlayed: false, // has the Solar System cinematic zoom-in played once?
+  // has the Solar System cinematic intro (top-down hold -> rotate -> zoom
+  // in) played yet THIS SESSION? Deliberately NOT persisted to
+  // localStorage — the cinematic intro should play in full every time the
+  // page actually loads/reloads (continuing straight on from the loading
+  // screen's top-down orrery), but should still be skipped if the user
+  // simply navigates back to this screen from elsewhere in the same
+  // session (e.g. Back from Planet Select) so it doesn't replay constantly
+  // mid-session.
+  systemIntroPlayed: false,
 
   goTo: (screen) => set({ screen }),
 
