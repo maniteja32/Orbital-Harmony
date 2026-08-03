@@ -63,7 +63,7 @@ export default function SolarSystemScreen({ onExplore, onCosmic }) {
           <LiquidGlass className="mode-glass rounded-[24px] w-full bg-white/[0.05]" style={MODE_RIM}>
             <button type="button" className="mode-card mode-card--liquid" onClick={onExplore}>
               <span className="mode-card__text">
-                <span className="mode-card__title">Explore</span>
+                <span className="mode-card__title">Discover</span>
                 <span className="mode-card__desc">Create patterns using any two planets.</span>
               </span>
             </button>

@@ -118,8 +118,8 @@ function makeSunMaterial() {
         // Brighten the photosphere and nudge it toward hot yellow-white so
         // the disc ALWAYS reads as a hot star, never a dim reddish planet
         // (users noted the pulse trough could look like Mars).
-        vec3 tex = texture2D(surfaceMap, vUv).rgb * 1.28;
-        tex = mix(tex, vec3(1.0, 0.92, 0.72), 0.14);
+        vec3 tex = texture2D(surfaceMap, vUv).rgb * 0.45;
+        tex = mix(tex, vec3(1.0, 0.92, 0.72), 0.18);
         // Classic limb darkening, but with a higher floor (0.32, not 0.1) so
         // even the disc edge stays clearly lit rather than going dark/dull.
         float facing = clamp(dot(vNormal, vec3(0.0, 0.0, 1.0)), 0.0, 1.0);
@@ -129,16 +129,16 @@ function makeSunMaterial() {
         vec3 highlightDir = normalize(vec3(-0.4, 0.4, 0.85));
         float highlight = pow(clamp(dot(vNormal, highlightDir), 0.0, 1.0), 5.0);
         vec3 color = tex * limb + vec3(1.0, 0.96, 0.85) * highlight * 0.28;
-        // INNER glow breathes UP from a solid baseline (0.22 min) — it only
-        // ever ADDS warmth toward the centre, never removes brightness.
+        // INNER glow breathes UP from a solid baseline (0.55 min) — it only
+        // ever ADDS warmth towards the centre, never removes brightness.
         float core = pow(facing, 2.0);
         float glowWave = 0.5 + 0.5 * sin(time * 1.6);
-        color += vec3(1.0, 0.88, 0.6) * core * (0.22 + 0.22 * glowWave);
+        color += vec3(1.0, 0.88, 0.6) * core * (0.55 + 0.35 * glowWave);
         // The overall breathing is ADDITIVE-ONLY (0 -> +): the Sun only ever
         // glows BRIGHTER than its bright baseline, never dimmer — so no frame
         // ever reads as a dull, dim disc.
         float breath = 0.5 + 0.5 * sin(time * 1.6);
-        color *= 1.0 + 0.16 * breath;
+        color *= 1.0 + 0.28 * breath;
         gl_FragColor = vec4(color, 1.0);
       }
     `,
@@ -384,9 +384,9 @@ export function createSolarSystemEngine(canvas, opts) {
   // Sun's on-screen SIZE is exactly the same as before.
   const sunGlowTexture = makeGlowTexture();
   [
-    { scale: 2.5, color: 0xfff2cf, opacity: 0.4 },
-    { scale: 3.7, color: 0xffb347, opacity: 0.22 },
-    { scale: 5.1, color: 0xff7a3d, opacity: 0.12 },
+    { scale: 2.5, color: 0xfff2cf, opacity: 0.56 },
+    { scale: 3.7, color: 0xffb347, opacity: 0.32 },
+    { scale: 5.1, color: 0xff7a3d, opacity: 0.18 },
   ].forEach(({ scale, color, opacity }) => {
     const sprite = new THREE.Sprite(new THREE.SpriteMaterial({
       map: sunGlowTexture,
