@@ -27,6 +27,15 @@ export default function PlanetSelectScreen({ onNext, onBack }) {
 
   return (
     <div className="screen screen--select">
+      <div className="screen__actions screen__actions--top">
+        <button type="button" className="back-button back-button--icon" onClick={onBack} aria-label="Back">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="m12 19-7-7 7-7" />
+            <path d="M19 12H5" />
+          </svg>
+        </button>
+      </div>
+
       <div className="screen__header screen__header--mode">
         <h1>Explore</h1>
         <p>Choose any two planets</p>
@@ -76,12 +85,6 @@ export default function PlanetSelectScreen({ onNext, onBack }) {
       )}
 
       <div className="screen__actions">
-        <button type="button" className="back-button back-button--icon" onClick={onBack} aria-label="Back">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="m12 19-7-7 7-7" />
-            <path d="M19 12H5" />
-          </svg>
-        </button>
         <div className="select-actions__button">
           <GlassButton tone="primary" className="w-full h-12 text-base font-medium" disabled={!canContinue} onClick={onNext}>
             Generate Pattern

@@ -714,6 +714,11 @@ button {
   gap: 10px;
 }
 
+.screen__actions--top {
+  justify-content: flex-start;
+  margin-bottom: 8px;
+}
+
 .screen__actions .btn--back {
   flex: 1;
 }
