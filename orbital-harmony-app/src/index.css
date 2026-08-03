@@ -1273,8 +1273,8 @@ button {
   position: relative;
   flex: 1;
   min-height: 140px;
-  margin: 0 22px;
-  border-radius: var(--radius-lg);
+  margin: 0;
+  border-radius: 0;
   overflow: hidden;
   border: none;
   background: #000;
