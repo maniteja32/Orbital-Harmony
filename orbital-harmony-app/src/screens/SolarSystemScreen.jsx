@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
+import { Orbit, Sparkles } from 'lucide-react';
 import SolarSystemCanvas from '../components/SolarSystemCanvas.jsx';
 import { LiquidGlass } from '../components/ui/glasscn/liquid-glass.jsx';
 import { PLANETS } from '../data/planets.js';
@@ -62,6 +63,7 @@ export default function SolarSystemScreen({ onExplore, onCosmic }) {
         <div className="system-modes">
           <LiquidGlass className="mode-glass rounded-[24px] w-full bg-white/[0.05]" style={MODE_RIM}>
             <button type="button" className="mode-card mode-card--liquid" onClick={onExplore}>
+              <Orbit size={32} className="mb-2" strokeWidth={1.5} />
               <span className="mode-card__text">
                 <span className="mode-card__title">Orbitograph</span>
                 <span className="mode-card__desc">Create patterns using any two planets.</span>
@@ -71,6 +73,7 @@ export default function SolarSystemScreen({ onExplore, onCosmic }) {
 
           <LiquidGlass className="mode-glass rounded-[24px] w-full bg-white/[0.05]" style={MODE_RIM}>
             <button type="button" className="mode-card mode-card--liquid" onClick={onCosmic}>
+              <Sparkles size={32} className="mb-2" strokeWidth={1.5} />
               <span className="mode-card__text">
                 <span className="mode-card__title">Cosmic Signature</span>
                 <span className="mode-card__desc">Generate a unique pattern using your birthdate.</span>
