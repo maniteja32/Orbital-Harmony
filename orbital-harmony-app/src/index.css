@@ -3546,20 +3546,18 @@ button {
 }
 
 /* ============================================================================
-   Loading Screen — orange Orbital Harmony title with cinematic fade-in
+   Loading Screen — orange Orbital Harmony title with same position as landing
    ============================================================================ */
 
 .loading-header {
   position: absolute;
-  top: 0;
+  top: calc(76px + var(--safe-top));
   left: 0;
   right: 0;
-  z-index: 20;
-  padding: calc(40px + var(--safe-top)) 28px 20px;
+  z-index: 2;
+  padding: 0 28px;
   text-align: center;
   pointer-events: none;
-  opacity: 1;
-  transform: translateY(0);
 }
 
 .loading-title {
