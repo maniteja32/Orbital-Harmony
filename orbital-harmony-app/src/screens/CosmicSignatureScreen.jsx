@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { Home } from 'lucide-react';
 import { GlassButton } from '../components/ui/glasscn/glass-button.jsx';
 import { GlassDatePicker } from '../components/GlassDatePicker.jsx';
 import { parseCosmicDateInput } from '../utils/cosmicSignature.js';
@@ -58,9 +58,9 @@ export default function CosmicSignatureScreen({ onReveal, onBack }) {
           type="button"
           className="back-button back-button--icon"
           onClick={onBack}
-          aria-label="Back"
+          aria-label="Home"
         >
-          <ArrowLeft size={18} strokeWidth={2} aria-hidden="true" />
+          <Home size={18} strokeWidth={2} aria-hidden="true" />
         </button>
         <div className="select-actions__button">
           <GlassButton

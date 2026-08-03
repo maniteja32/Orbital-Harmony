@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { RotateCw } from 'lucide-react';
+import { RotateCw, Home } from 'lucide-react';
 import { PLANETS, PLANETS_BY_KEY } from '../data/planets.js';
 import { PlanetSwipeRow } from '../components/PlanetSwipeRow.jsx';
 import { MeteorField } from '../components/MeteorField.jsx';
@@ -28,11 +28,8 @@ export default function PlanetSelectScreen({ onNext, onBack }) {
   return (
     <div className="screen screen--select">
       <div className="screen__actions screen__actions--top">
-        <button type="button" className="back-button back-button--icon" onClick={onBack} aria-label="Back">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="m12 19-7-7 7-7" />
-            <path d="M19 12H5" />
-          </svg>
+        <button type="button" className="back-button back-button--icon" onClick={onBack} aria-label="Home">
+          <Home size={18} strokeWidth={2} aria-hidden="true" />
         </button>
       </div>
 
