@@ -34,7 +34,7 @@ export default function PlanetSelectScreen({ onNext, onBack }) {
       </div>
 
       <div className="screen__header screen__header--mode">
-        <h1>Explore</h1>
+        <h1>Orbitograph</h1>
         <p>Choose any two planets</p>
       </div>
 
