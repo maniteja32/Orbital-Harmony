@@ -23,20 +23,20 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails, onS
 
   return (
     <div className="screen screen--result">
-      {!isCosmic && (
-        <div className="mode-topbar">
-          {onBack ? (
-            <button
-              type="button"
-              className="back-button back-button--icon"
-              onClick={onBack}
-              aria-label="Back"
-            >
-              <ArrowLeft size={18} strokeWidth={2} aria-hidden="true" />
-            </button>
-          ) : (
-            <span />
-          )}
+      <div className="mode-topbar">
+        {onBack ? (
+          <button
+            type="button"
+            className="back-button back-button--icon"
+            onClick={onBack}
+            aria-label="Back"
+          >
+            <ArrowLeft size={18} strokeWidth={2} aria-hidden="true" />
+          </button>
+        ) : (
+          <span />
+        )}
+        {!isCosmic && (
           <div className="result-topbar__actions">
             <button
               type="button"
@@ -55,8 +55,8 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails, onS
               <Share2 size={18} strokeWidth={2} aria-hidden="true" />
             </button>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       <div className="screen__header screen__header--mode">
         {isCosmic ? (
@@ -105,16 +105,6 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails, onS
           </div>
 
           <div className="result-actions__primary-row">
-            {onBack && (
-              <button
-                type="button"
-                className="back-button back-button--icon result-actions__back"
-                onClick={onBack}
-                aria-label="Back"
-              >
-                <ArrowLeft size={18} strokeWidth={2} aria-hidden="true" />
-              </button>
-            )}
             <GlassButton tone="primary" className="w-full h-12 text-base font-medium" onClick={handleGenerateNew}>
               Generate New Signature
             </GlassButton>

@@ -1376,11 +1376,33 @@ export function createSolarSystemEngine(canvas, opts) {
       if (introPhase === 'done') cb();
     },
     captureDataURL() {
-      // Render synchronously right before reading the pixels — required now
-      // that preserveDrawingBuffer is off (the backbuffer is otherwise cleared
-      // before toDataURL could read it).
+      // The saved/shared/downloaded image is the traced resonance pattern
+      // itself — it should NEVER show the Sun or planet markers used to
+      // draw it (those are simulation aids, not part of the artifact).
+      // Hide them for this one synchronous render, capture, then restore
+      // immediately so the still-running live view (this frame continues
+      // rendering for a moment before the screen navigates away) is
+      // completely unaffected. Orbit rings are intentionally left visible
+      // — only the Sun + planet bodies (and anything parented to them,
+      // e.g. Earth's moon/clouds/atmosphere) are hidden.
+      sunMesh.visible = false;
+      sunGlowSprites.forEach((sprite) => {
+        sprite.visible = false;
+      });
+      planets.forEach((planet) => {
+        planet.pivot.visible = false;
+      });
       renderScene();
-      return renderer.domElement.toDataURL('image/png');
+      const dataUrl = renderer.domElement.toDataURL('image/png');
+      sunMesh.visible = true;
+      sunGlowSprites.forEach((sprite) => {
+        sprite.visible = true;
+      });
+      planets.forEach((planet) => {
+        planet.pivot.visible = true;
+      });
+      renderScene();
+      return dataUrl;
     },
     destroy() {
       if (rafId != null) cancelAnimationFrame(rafId);

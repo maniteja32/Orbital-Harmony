@@ -1962,7 +1962,6 @@ button {
 }
 
 .result-actions--cosmic {
-  margin-top: 0;
   gap: 8px;
 }
 
@@ -1992,10 +1991,6 @@ button {
 
 .result-actions__primary-row > div.relative > [data-slot='glass-button'] {
   width: 100%;
-}
-
-.result-actions__back {
-  flex-shrink: 0;
 }
 
 /* ---- Mode select ("Choose an Experience") + Cosmic Signature -------------- */
