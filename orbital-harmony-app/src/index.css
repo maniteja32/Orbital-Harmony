@@ -296,6 +296,19 @@ button {
   text-align: center;
 }
 
+/* `.screen__header` is taken out of flow (absolute, to match the landing
+   page's title position for a seamless crossfade — see the comment above
+   `.screen--select .screen__header`), so the form right after it in the
+   DOM would otherwise render starting at the very top of `.screen`'s own
+   padding and sit UNDERNEATH/overlapping the header text. Unlike Select
+   (whose tall swipe carousels are vertically centered in the remaining
+   space, which incidentally clears the header), Cosmic's compact form
+   needs an explicit top margin sized to clear the header's title +
+   subtitle instead. */
+.screen--cosmic .cosmic-form {
+  margin-top: 118px;
+}
+
 .screen--select .screen__header--mode h1 {
   font-size: clamp(20px, 6.4vw, 24px);
   color: var(--text-primary);
