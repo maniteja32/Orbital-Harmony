@@ -11,8 +11,9 @@
   --glass-bg: rgba(255, 255, 255, 0.045);
   --glass-bg-strong: rgba(255, 255, 255, 0.07);
   --glass-border: rgba(255, 255, 255, 0.09);
+  --nebula: #D8D1C5;
   --text-primary: #f5f6fa;
-  --text-secondary: rgba(245, 246, 250, 0.62);
+  --text-secondary: var(--nebula);
   --text-tertiary: rgba(245, 246, 250, 0.4);
   --accent: #ff6a3d;
   --accent-glow: rgba(255, 106, 61, 0.35);
@@ -27,6 +28,8 @@
   --font-display: 'Syncopate', 'Funnel Display', -apple-system, sans-serif;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+  /* Shared visual center for loading + landing solar systems. */
+  --system-center-y: 42%;
 }
 
 * {
@@ -358,6 +361,15 @@ button {
 .solar-canvas-wrap {
   position: absolute;
   inset: 0;
+}
+
+/* Match loading-screen center logic exactly via the shared
+   --system-center-y variable. Height stays 100% (NOT enlarged) so the
+   renderer/canvas resolution never changes — only its on-screen position
+   shifts, keeping the math a pure translate instead of a resize+shift
+   that was throwing the alignment off. */
+.screen--system .solar-canvas-wrap {
+  transform: translateY(calc(var(--system-center-y) - 50%));
 }
 
 /* On desktop/web (>=561px, where the app column no longer fills the screen),
@@ -2956,7 +2968,8 @@ button {
    elegantly unobtrusive, complementing the motion rather than competing. */
 .loading-message {
   position: absolute;
-  bottom: 29%;
+  /* Match the landing subtitle line so loading -> landing text stays anchored. */
+  top: calc(9.75% + 41px);
   left: 0;
   right: 0;
   text-align: center;
@@ -2972,7 +2985,7 @@ button {
 .loading-message p {
   font-family: var(--font-ui);
   font-size: 16px;
-  color: #ffffff;
+  color: var(--nebula);
   letter-spacing: 0.05em;
   margin: 0;
   font-weight: 400;
@@ -2994,7 +3007,7 @@ button {
   display: inline;
   opacity: 0.45;
   animation: ellipsis-pulse 1.2s ease-in-out infinite;
-  color: #ffffff;
+  color: var(--nebula);
 }
 
 .loading-ellipsis:nth-child(2) {
@@ -3094,7 +3107,7 @@ button {
   font-size: 12.5px;
   font-weight: 500;
   letter-spacing: 0.05em;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   opacity: 0;
   transform: translateY(6px);
   transition: opacity 1.4s ease 0.3s, transform 1.4s cubic-bezier(0.22, 1, 0.36, 1) 0.3s;

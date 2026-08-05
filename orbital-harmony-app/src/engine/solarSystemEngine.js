@@ -725,9 +725,8 @@ export function createSolarSystemEngine(canvas, opts) {
   // genuine push-in beat instead of holding at the same scale throughout.
   const INTRO_ESTABLISH_MARGIN = framingMargin * 1.3;
   const heroEstablishHalf = orthoHalfHeight(maxDistance, INTRO_ESTABLISH_MARGIN, width / height);
-  // A small, CONSTANT look-at offset sits the Sun slightly above
-  // dead-center for a more considered mobile-portrait composition.
-  const introLookTarget = new THREE.Vector3(0, -earthRefDistance * 0.045, 0);
+  // Keep vertical centering controlled by the shared CSS center variable.
+  const introLookTarget = new THREE.Vector3(0, 0, 0);
   const INTRO_HOLD_SEC = 0.8;
   const INTRO_TRAVEL_SEC = 2.1;
   const INTRO_ZOOM_SEC = 2.2;
