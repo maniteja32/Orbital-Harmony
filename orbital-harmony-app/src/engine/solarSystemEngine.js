@@ -594,7 +594,7 @@ export function createSolarSystemEngine(canvas, opts) {
     ? 1.2
     : planets.length <= 2
       ? 1.4
-      : 0.85;
+      : 0.6;
 
   // Same "fixed vertical extent, adaptive horizontal extent" convention as
   // the perspective path below, but for an orthographic camera the FRUSTUM
@@ -735,7 +735,11 @@ export function createSolarSystemEngine(canvas, opts) {
   // intro then slowly ZOOMS IN from this pulled-back establishing shot down
   // to the normal `heroWideHalf` resting framing above, giving the intro a
   // genuine push-in beat instead of holding at the same scale throughout.
-  const INTRO_ESTABLISH_MARGIN = framingMargin * 1.3;
+  // Kept as its OWN fixed margin (not derived from `framingMargin`) — the
+  // final resting zoom can be tightened independently without also
+  // cropping this initial wide top-down view, which should always show the
+  // WHOLE system comfortably regardless of how close the final zoom ends up.
+  const INTRO_ESTABLISH_MARGIN = 1.35;
   const heroEstablishHalf = orthoHalfHeight(maxDistance, INTRO_ESTABLISH_MARGIN, width / height);
   // Keep vertical centering controlled by the shared CSS center variable.
   const introLookTarget = new THREE.Vector3(0, 0, 0);
