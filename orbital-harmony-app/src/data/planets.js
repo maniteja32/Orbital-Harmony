@@ -99,10 +99,8 @@ export const PLANETS = [
     // clouds completely") — cloudTexture/rendering support is left intact
     // in the engine, just gated off here; flip back to true to restore.
     hasClouds: false,
-    // Moon disabled for now per explicit request ("remove the moon") —
-    // moon-rendering support in the engine is left intact, just gated off
-    // here; flip back to true to restore.
-    hasMoon: false,
+    // Moon re-enabled per explicit request ("add moon back").
+    hasMoon: true,
     traceSpeed: 1.0,
     orbitalPeriodDays: 365.256,
     meanLongitudeDeg: 100.46457,

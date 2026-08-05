@@ -362,6 +362,21 @@ export function createSolarSystemEngine(canvas, opts) {
   // than the planets so it stays the clear focal point of the scene.
   const LANDING_SUN_SCALE = 0.75;
   const LANDING_PLANET_SCALE = 0.68;
+  // Extra per-planet bump on top of LANDING_PLANET_SCALE (landing page only,
+  // sun untouched) — the four inner rocky planets plus the two outer ice
+  // giants read a bit small at the base scale, so they get a bigger 1.2x
+  // bump; Jupiter/Saturn are already the biggest bodies so they only get a
+  // gentler 1.1x nudge.
+  const LANDING_PLANET_SCALE_BUMP = {
+    mercury: 1.2,
+    venus: 1.2,
+    earth: 1.2,
+    mars: 1.2,
+    jupiter: 1,
+    saturn: 1,
+    uranus: 1.2,
+    neptune: 1.2,
+  };
   const sunGeo = new THREE.SphereGeometry(SUN_RADIUS, 64, 64);
   const sunMat = makeSunMaterial();
   const sunMesh = new THREE.Mesh(sunGeo, sunMat);
@@ -432,8 +447,13 @@ export function createSolarSystemEngine(canvas, opts) {
     // Landing screen only (see LANDING_PLANET_SCALE above) — shrink the
     // whole visual body (mesh + rings + clouds/atmosphere, all children of
     // axialTilt) in place, leaving tiltAnchor's `data.distance` position
-    // (and therefore orbital spacing) completely untouched.
-    if (orthographic) planet.axialTilt.scale.setScalar(LANDING_PLANET_SCALE);
+    // (and therefore orbital spacing) completely untouched. The extra
+    // per-planet bump (see LANDING_PLANET_SCALE_BUMP above) is layered on
+    // top of the same base scale.
+    if (orthographic) {
+      const bump = LANDING_PLANET_SCALE_BUMP[data.key] ?? 1;
+      planet.axialTilt.scale.setScalar(LANDING_PLANET_SCALE * bump);
+    }
     scene.add(planet.pivot);
     if (showOrbitRings) scene.add(makeOrbitRing(data.distance, data.color));
     return planet;
