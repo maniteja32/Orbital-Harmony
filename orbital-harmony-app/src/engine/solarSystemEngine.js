@@ -614,7 +614,7 @@ export function createSolarSystemEngine(canvas, opts) {
     ? 1.2
     : planets.length <= 2
       ? 1.4
-      : 0.6;
+      : 0.5;
 
   // Same "fixed vertical extent, adaptive horizontal extent" convention as
   // the perspective path below, but for an orthographic camera the FRUSTUM
