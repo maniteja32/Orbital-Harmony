@@ -96,7 +96,9 @@ export default function LoadingScreen({ onDone, onExited }) {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
       centerX = width / 2;
-      centerY = height / 2;
+      // Lift the orrery cluster slightly so the composition balances better
+      // against the anchored moon foreground.
+      centerY = height * 0.46;
       // Keep the outermost orbit comfortably inside the shorter viewport
       // dimension so it's never cropped on narrow mobile screens. Kept
       // deliberately compact (was 0.42) so the whole loading pattern reads

@@ -2956,7 +2956,7 @@ button {
    elegantly unobtrusive, complementing the motion rather than competing. */
 .loading-message {
   position: absolute;
-  bottom: 26%;
+  bottom: 29%;
   left: 0;
   right: 0;
   text-align: center;
@@ -3034,7 +3034,7 @@ button {
 
 .loading-title-wrap {
   position: absolute;
-  top: 20%;
+  top: 18.5%;
   left: 0;
   right: 0;
   transform: translateY(0);
