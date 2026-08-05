@@ -594,7 +594,7 @@ export function createSolarSystemEngine(canvas, opts) {
     ? 1.2
     : planets.length <= 2
       ? 1.4
-      : 1.35;
+      : 0.85;
 
   // Same "fixed vertical extent, adaptive horizontal extent" convention as
   // the perspective path below, but for an orthographic camera the FRUSTUM
@@ -611,6 +611,17 @@ export function createSolarSystemEngine(canvas, opts) {
   }
   let restFrameRadius = maxDistance;
   let restFrameMargin = framingMargin;
+  // Tracks whatever vertical half-height is ACTUALLY on screen right now
+  // (updated every time the frustum is explicitly set below, including
+  // every frame of the intro's zoom animation). resize() reuses this
+  // directly instead of recomputing from restFrameRadius/restFrameMargin
+  // (which only ever hold the FINAL rest-state values) — that mismatch
+  // was the cause of a visible size "jump": a resize firing mid-intro
+  // (hold/travel/zoom) would snap the frustum straight to the final
+  // zoomed-in size, then the next tick() frame would snap it back to the
+  // correct in-progress value, reading as a one-frame flash right around
+  // the zoom transition.
+  let currentOrthoHalf = null;
 
   // Now that the real planet set is known, size the orthographic frustum
   // to actually fit it (the placeholder bounds passed to the constructor
@@ -622,6 +633,7 @@ export function createSolarSystemEngine(canvas, opts) {
     camera.top = half;
     camera.bottom = -half;
     camera.updateProjectionMatrix();
+    currentOrthoHalf = half;
   }
 
   // Starfield is rendered as a separate "skybox" pass: its own scene + a
@@ -788,6 +800,7 @@ export function createSolarSystemEngine(canvas, opts) {
       camera.top = heroEstablishHalf;
       camera.bottom = -heroEstablishHalf;
       camera.updateProjectionMatrix();
+      currentOrthoHalf = heroEstablishHalf;
     }
     // OrbitControls (if this screen wants it) is attached once the scripted
     // move finishes — see tick() below.
@@ -808,6 +821,7 @@ export function createSolarSystemEngine(canvas, opts) {
       camera.top = half;
       camera.bottom = -half;
       camera.updateProjectionMatrix();
+      currentOrthoHalf = half;
       // Keep the full-system framing as the rest state
       restFrameRadius = maxDistance;
       restFrameMargin = framingMargin;
@@ -1277,6 +1291,7 @@ export function createSolarSystemEngine(canvas, opts) {
           camera.top = half;
           camera.bottom = -half;
           camera.updateProjectionMatrix();
+          currentOrthoHalf = half;
         }
         if (t >= 1) {
           introPhase = 'done';
@@ -1305,12 +1320,14 @@ export function createSolarSystemEngine(canvas, opts) {
       // No "distance" concept for framing here — just recompute the
       // frustum bounds from the new aspect (fixed vertical half-height,
       // adaptive horizontal half-width), same fit formula used at setup.
-      // Uses `restFrameRadius`/`restFrameMargin` (NOT the raw
-      // `maxDistance`/`framingMargin` constants) so a resize respects
-      // whichever framing is CURRENTLY at rest — the full system before
-      // the cinematic "zoom to Sun+Earth" intro phase completes, or the
-      // Sun+Earth framing after it does (see that phase in tick()).
-      const half = orthoHalfHeight(restFrameRadius, restFrameMargin, w / h);
+      // Reuses `currentOrthoHalf` (NOT a fresh recompute from
+      // `restFrameRadius`/`restFrameMargin`, which only ever hold the
+      // FINAL rest-state values) so a resize firing mid-intro (hold/
+      // travel/zoom) keeps whatever half-height is ACTUALLY on screen
+      // right now instead of snapping to the final framing — see the
+      // `currentOrthoHalf` declaration above for why that snap was
+      // causing a visible "jump" right around the zoom transition.
+      const half = currentOrthoHalf ?? orthoHalfHeight(restFrameRadius, restFrameMargin, w / h);
       camera.left = (-half * w) / h;
       camera.right = (half * w) / h;
       camera.top = half;

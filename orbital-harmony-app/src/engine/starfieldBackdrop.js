@@ -13,16 +13,56 @@ import * as THREE from 'three';
 let starSpriteCache = null;
 function makeStarSprite() {
   if (starSpriteCache) return starSpriteCache;
-  const size = 32;
+  const size = 64;
   const canvas = document.createElement('canvas');
   canvas.width = canvas.height = size;
   const ctx = canvas.getContext('2d');
-  const gradient = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
-  gradient.addColorStop(0, 'rgba(255,255,255,1)');
-  gradient.addColorStop(0.4, 'rgba(255,255,255,0.55)');
-  gradient.addColorStop(1, 'rgba(255,255,255,0)');
-  ctx.fillStyle = gradient;
+  const cx = size / 2;
+  const cy = size / 2;
+
+  // Soft halo — a gentle glow rather than a hard-edged disc.
+  const halo = ctx.createRadialGradient(cx, cy, 0, cx, cy, size * 0.5);
+  halo.addColorStop(0, 'rgba(255,255,255,1)');
+  halo.addColorStop(0.35, 'rgba(255,255,255,0.48)');
+  halo.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = halo;
   ctx.fillRect(0, 0, size, size);
+
+  // Thin four-point spike cross (one vertical + one horizontal beam, each
+  // fading to transparent at both ends) — reads as a small glint/shine
+  // rather than a flat white ball, even at the tiny point sizes most
+  // background stars render at.
+  ctx.save();
+  ctx.translate(cx, cy);
+  const spikeLength = size * 0.48;
+  const drawSpike = (angle) => {
+    ctx.save();
+    ctx.rotate(angle);
+    const grad = ctx.createLinearGradient(0, -spikeLength, 0, spikeLength);
+    grad.addColorStop(0, 'rgba(255,255,255,0)');
+    grad.addColorStop(0.5, 'rgba(255,255,255,0.9)');
+    grad.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = size * 0.05;
+    ctx.beginPath();
+    ctx.moveTo(0, -spikeLength);
+    ctx.lineTo(0, spikeLength);
+    ctx.stroke();
+    ctx.restore();
+  };
+  drawSpike(0);
+  drawSpike(Math.PI / 2);
+  ctx.restore();
+
+  // Bright compact core.
+  const core = ctx.createRadialGradient(cx, cy, 0, cx, cy, size * 0.14);
+  core.addColorStop(0, 'rgba(255,255,255,1)');
+  core.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = core;
+  ctx.beginPath();
+  ctx.arc(cx, cy, size * 0.14, 0, Math.PI * 2);
+  ctx.fill();
+
   starSpriteCache = new THREE.CanvasTexture(canvas);
   return starSpriteCache;
 }
@@ -31,9 +71,9 @@ function makeStarSprite() {
 // loading backdrop AND the Solar System engine's skybox (which imports
 // buildStarfield from here), so the two screens render the IDENTICAL field.
 const LAYER_SPECS = [
-  { count: 2400, size: 2.2, opacity: 0.6, minR: 900, maxR: 1700, spin: 0.0015 },
-  { count: 1300, size: 3.0, opacity: 0.72, minR: 650, maxR: 950, spin: 0.003 },
-  { count: 240, size: 4.0, opacity: 0.95, minR: 480, maxR: 680, spin: 0.005 },
+  { count: 3200, size: 1.8, opacity: 0.78, minR: 900, maxR: 1700, spin: 0.0015 },
+  { count: 1800, size: 2.3, opacity: 0.9, minR: 650, maxR: 950, spin: 0.003 },
+  { count: 320, size: 2.9, opacity: 1, minR: 480, maxR: 680, spin: 0.005 },
 ];
 
 function sphereStar(minR, maxR) {
@@ -115,7 +155,7 @@ function buildStarLayer(data, size, opacity) {
         vColor = color;
         float wave = sin(uTime * twinkleSpeed + twinklePhase);
         vTwinkle = 1.0 + twinkleAmount * wave;
-        float sizePulse = 1.0 + max(wave, 0.0) * twinkleAmount * 0.6;
+        float sizePulse = 1.0 + max(wave, 0.0) * twinkleAmount * 0.85;
         gl_PointSize = uSize * sizePulse;
         gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
       }
@@ -139,6 +179,143 @@ function buildStarLayer(data, size, opacity) {
   return new THREE.Points(geometry, material);
 }
 
+// ---- Deep-space ambience: a couple of low-opacity
+// nebula/dust patches, and a couple of tiny distant-galaxy smudges. These are
+// real WORLD-SPACE oriented planes (NOT camera-facing billboards/sprites) so
+// they correctly foreshorten/parallax as the user orbits the landing scene
+// post-intro — a billboard would look wrong here since it would always face
+// the viewer instead of reading as fixed distant scenery (the same reason
+// the orbit rings/planets aren't billboards either). Kept extremely subtle
+// (low opacity, additive blending against the pure-black background) and
+// strictly desaturated/neutral — depth cues, never a colourful backdrop.
+let nebulaTextureCache = null;
+function makeNebulaTexture() {
+  if (nebulaTextureCache) return nebulaTextureCache;
+  const size = 256;
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  // Three overlapping soft blobs at fixed offsets so the silhouette reads
+  // as a wispy, irregular cloud rather than a perfect circle.
+  const blobs = [
+    { x: size * 0.42, y: size * 0.46, r: size * 0.34 },
+    { x: size * 0.6, y: size * 0.55, r: size * 0.3 },
+    { x: size * 0.48, y: size * 0.62, r: size * 0.26 },
+  ];
+  blobs.forEach(({ x, y, r }) => {
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, 'rgba(255,255,255,0.6)');
+    g.addColorStop(0.6, 'rgba(255,255,255,0.22)');
+    g.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, size, size);
+  });
+  nebulaTextureCache = new THREE.CanvasTexture(canvas);
+  return nebulaTextureCache;
+}
+
+let galaxyTextureCache = null;
+function makeGalaxyTexture() {
+  if (galaxyTextureCache) return galaxyTextureCache;
+  const size = 128;
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  const cx = size / 2;
+  const cy = size / 2;
+  const outer = ctx.createRadialGradient(cx, cy, 0, cx, cy, size * 0.5);
+  outer.addColorStop(0, 'rgba(255,255,255,0.5)');
+  outer.addColorStop(0.5, 'rgba(255,255,255,0.18)');
+  outer.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = outer;
+  ctx.fillRect(0, 0, size, size);
+  const core = ctx.createRadialGradient(cx, cy, 0, cx, cy, size * 0.12);
+  core.addColorStop(0, 'rgba(255,255,255,0.85)');
+  core.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = core;
+  ctx.beginPath();
+  ctx.arc(cx, cy, size * 0.12, 0, Math.PI * 2);
+  ctx.fill();
+  galaxyTextureCache = new THREE.CanvasTexture(canvas);
+  return galaxyTextureCache;
+}
+
+// Cached layout (positions/sizes/tilts/tints) so both the loading backdrop
+// and the Solar System skybox place the SAME deep-space elements — same
+// convention as getStarData() above.
+let deepSpaceLayoutCache = null;
+function getDeepSpaceLayout() {
+  if (deepSpaceLayoutCache) return deepSpaceLayoutCache;
+  // Placed well BEYOND the background star shell (which tops out at 1700)
+  // so these are unambiguously the farthest things in the scene — normal
+  // depth-testing then guarantees the (much closer) sun/planets/orbit
+  // rings always render in FRONT of them, so they never visually overlap
+  // the system, only ever sit behind it in open background space.
+  const placeFar = sphereStar(1900, 2400);
+  const nebulae = Array.from({ length: 4 }, () => ({
+    pos: placeFar(),
+    scale: 380 + Math.random() * 220,
+    tiltZ: Math.random() * Math.PI * 2,
+    // Muted, desaturated tints only — dusty amber or cool blue-grey, never
+    // a saturated "sci-fi" colour.
+    tint: Math.random() < 0.5 ? 0x9fb3d6 : 0xd6c4a0,
+    opacity: 0.055 + Math.random() * 0.035,
+  }));
+  const galaxies = Array.from({ length: 2 }, () => ({
+    pos: placeFar(),
+    scale: 110 + Math.random() * 60,
+    tiltZ: Math.random() * Math.PI * 2,
+    opacity: 0.08 + Math.random() * 0.04,
+  }));
+  deepSpaceLayoutCache = { nebulae, galaxies };
+  return deepSpaceLayoutCache;
+}
+
+// A single unit plane reused (via per-mesh `.scale`) across every nebula/
+// galaxy patch — one shared geometry, cheap on both draw calls and memory.
+const deepSpacePlaneGeometry = new THREE.PlaneGeometry(1, 1);
+
+function makeAmbiencePlane(texture, size, position, tiltZ, opacity, tint = 0xffffff) {
+  const material = new THREE.MeshBasicMaterial({
+    map: texture,
+    color: tint,
+    transparent: true,
+    opacity,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    side: THREE.DoubleSide,
+  });
+  const mesh = new THREE.Mesh(deepSpacePlaneGeometry, material);
+  mesh.scale.set(size, size, 1);
+  mesh.position.set(position.x, position.y, position.z);
+  // Oriented ONCE toward the scene centre (fixed in world space, not
+  // re-aimed at the camera every frame) — `side: DoubleSide` means it reads
+  // correctly regardless of which face ends up toward the viewer.
+  mesh.lookAt(0, 0, 0);
+  mesh.rotateZ(tiltZ);
+  mesh.userData.spin = 0;
+  return mesh;
+}
+
+// Returns a FLAT ARRAY of meshes (not a Group) — both existing render loops
+// iterate `starfield.children` and access `layer.material` directly, which
+// would throw on a plain Group (no `.material`). Flattening keeps every
+// child a real Mesh with its own `.material`, safe for both loops.
+function buildDeepSpaceMeshes() {
+  const layout = getDeepSpaceLayout();
+  const meshes = [];
+
+  layout.nebulae.forEach((n) => {
+    meshes.push(makeAmbiencePlane(makeNebulaTexture(), n.scale, n.pos, n.tiltZ, n.opacity, n.tint));
+  });
+
+  layout.galaxies.forEach((g) => {
+    meshes.push(makeAmbiencePlane(makeGalaxyTexture(), g.scale, g.pos, g.tiltZ, g.opacity, 0xfff2df));
+  });
+
+  return meshes;
+}
+
 // Build a starfield GROUP from the shared cached data. Exported so
 // solarSystemEngine.js renders the EXACT same field (same star positions) as
 // the loading backdrop.
@@ -150,6 +327,10 @@ export function buildStarfield() {
     layer.userData.spin = spec.spin;
     group.add(layer);
   });
+  // Faint nebula dust + distant galaxy smudges (see above) — added flat,
+  // after the stars, so they sit behind/among them visually via additive
+  // blending without ever occluding the actual star points.
+  buildDeepSpaceMeshes().forEach((mesh) => group.add(mesh));
   return group;
 }
 

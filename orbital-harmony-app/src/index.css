@@ -397,7 +397,7 @@ button {
    duration + easing exactly match the loading screen's fade-out, so the two
    identical starfields crossfade perfectly in place. */
 .app-shell[data-screen='system'] > .screen-transition {
-  animation: systemFadeIn 0.85s cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation: systemFadeIn 1.2s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
 @keyframes systemFadeIn {
@@ -2895,7 +2895,7 @@ button {
   inset: 0;
   overflow: hidden;
   background: #000000;
-  transition: opacity 0.85s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .loading-screen.is-leaving {
@@ -2916,6 +2916,13 @@ button {
   display: block;
   opacity: 0;
   transition: opacity 1.4s ease;
+  /* Fade the WebGL sky (stars + Milky Way band + nebula glow) out smoothly
+     BEFORE it reaches the moon photo below — without this, the deep-space
+     glow gets abruptly clipped by the moon image's own rectangular/circular
+     edge, reading as an ugly hard seam/"patch" rather than a clean handoff
+     from procedural sky to photographed foreground. */
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 58%, transparent 74%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 58%, transparent 74%);
 }
 
 .loading-stars.is-ready {

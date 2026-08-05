@@ -116,12 +116,14 @@ export default function LoadingScreen({ onDone, onExited }) {
     const HOLD_MS = reducedMotion ? 900 : 3400;
     const TRANSITION_MS = reducedMotion ? 500 : 1700;
     // Kept in exact lockstep with the `.loading-screen` CSS opacity
-    // transition duration (0.85s normally, 0.3s under reduced motion — see
+    // transition duration (1.2s normally, 0.3s under reduced motion — see
     // index.css) — this timer is what actually swaps to the next screen,
     // so if it fired even slightly before the CSS fade-out visually
     // finished, the old screen would pop away mid-fade instead of the
-    // handoff reading as one smooth fade-to-black.
-    const FADE_MS = reducedMotion ? 300 : 850;
+    // handoff reading as one smooth fade-to-black. Lengthened from 0.85s so
+    // the loading <-> landing crossfade overlaps longer and reads as a
+    // slower, gentler dissolve rather than a quick swap.
+    const FADE_MS = reducedMotion ? 300 : 1200;
     const SPEED_MULT = reducedMotion ? 0.15 : 1;
     // The orrery spins fast at the start of loading and eases down to a slow,
     // calm pace (close to the real planets') by the hand-off — see the draw
