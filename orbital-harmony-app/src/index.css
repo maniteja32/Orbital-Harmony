@@ -2910,6 +2910,33 @@ button {
   opacity: 1;
 }
 
+.loading-moon {
+  position: absolute;
+  left: 0;
+  right: 0;
+  /* Shifted below the screen edge (rather than cropping the photo) so
+     the full, untouched image is shown but sits lower in the frame,
+     clear of the loading message above it. */
+  bottom: -34px;
+  width: 100%;
+  /* Real photo (not a procedural render) — object-fit: contain shows the
+     ENTIRE image with nothing cropped off; object-position anchors it to
+     the bottom of its box so it still reads as a horizon accent. */
+  height: 30vh;
+  max-height: 260px;
+  object-fit: contain;
+  object-position: center bottom;
+  display: block;
+  opacity: 0;
+  transition: opacity 1.4s ease;
+  pointer-events: none;
+  user-select: none;
+}
+
+.loading-moon.is-ready {
+  opacity: 1;
+}
+
 .loading-canvas {
   position: absolute;
   inset: 0;
@@ -2945,7 +2972,7 @@ button {
 .loading-message p {
   font-family: var(--font-ui);
   font-size: 16px;
-  color: rgba(255, 255, 255, 0.65);
+  color: #ffffff;
   letter-spacing: 0.05em;
   margin: 0;
   font-weight: 400;
@@ -2967,6 +2994,7 @@ button {
   display: inline;
   opacity: 0.45;
   animation: ellipsis-pulse 1.2s ease-in-out infinite;
+  color: #ffffff;
 }
 
 .loading-ellipsis:nth-child(2) {
@@ -3031,7 +3059,6 @@ button {
   font-size: 23px;
   font-weight: 700;
   letter-spacing: 0.3em;
-  text-transform: uppercase;
   color: rgba(255, 106, 61, 0.85);
   text-shadow: 0 0 34px rgba(234, 230, 255, 0.28);
   /* Two lines ("Orbital" / "Harmony", each its own <span>), centered

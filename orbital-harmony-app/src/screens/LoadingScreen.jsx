@@ -69,6 +69,10 @@ export default function LoadingScreen({ onDone, onExited }) {
     // still drawn on the transparent 2D canvas on top.
     const backdrop = starCanvasRef.current ? createStarfieldBackdrop(starCanvasRef.current) : null;
 
+    // The moon is now a plain static <img> (see JSX below) anchored to the
+    // bottom of the screen — replaced the earlier procedural Three.js
+    // sphere/lighting rig entirely, so there's no WebGL setup needed here.
+
     let width = 0;
     let height = 0;
     let centerX = 0;
@@ -90,6 +94,7 @@ export default function LoadingScreen({ onDone, onExited }) {
       canvas.style.width = `${width}px`;
       canvas.style.height = `${height}px`;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
       centerX = width / 2;
       centerY = height / 2;
       // Keep the outermost orbit comfortably inside the shorter viewport
@@ -186,6 +191,14 @@ export default function LoadingScreen({ onDone, onExited }) {
       // deliberately near-invisible (opacity was 0.05, then 0.02) so the
       // rings sit almost flush with the black background, just enough of
       // a hint to imply orbital paths without ever reading as a drawn line.
+      // Keep spinner visuals in the sky area so they don't paint over the
+      // lunar foreground texture.
+      const skyMaskY = height * 0.7;
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(0, 0, width, skyMaskY);
+      ctx.clip();
+
       ctx.lineWidth = 0.3;
       ctx.strokeStyle = 'rgba(150, 150, 150, 0.02)';
       for (const p of planets) {
@@ -199,19 +212,14 @@ export default function LoadingScreen({ onDone, onExited }) {
       // one — see createStarfieldBackdrop — so there's no 2D star drawing
       // here anymore.)
 
-      // ---- Sun: small orange core with a gentle, slow pulse (matches the
-      // app's warm orange accent; a warm-bright centre fading to orange) ----
       sunPulseT += dt;
-      const pulseScale = 1 + Math.sin(sunPulseT * 1.4) * 0.04;
-      const sunRadius = Math.max(7, maxOrbitPx * 0.035) * pulseScale;
 
-      const core = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, sunRadius);
-      core.addColorStop(0, '#ffd9b8');
-      core.addColorStop(0.55, '#ff6a3d');
-      core.addColorStop(1, '#ff5124');
-      ctx.fillStyle = core;
+      // ---- Sun: a plain solid orange dot, no glow/gradient — kept simple
+      // on purpose (a soft radial glow here previously read as an oversized
+      // blur instead of a small sun).
+      ctx.fillStyle = '#ff9c4a';
       ctx.beginPath();
-      ctx.arc(centerX, centerY, sunRadius, 0, Math.PI * 2);
+      ctx.arc(centerX, centerY, maxOrbitPx * 0.02, 0, Math.PI * 2);
       ctx.fill();
 
       // ---- Step 3: advance + draw each planet as a small glowing dot ----
@@ -245,6 +253,8 @@ export default function LoadingScreen({ onDone, onExited }) {
         ctx.arc(x, y, p.dotRadius, 0, Math.PI * 2);
         ctx.fill();
       }
+
+      ctx.restore();
     }
     rafId = requestAnimationFrame(draw);
 
@@ -262,6 +272,11 @@ export default function LoadingScreen({ onDone, onExited }) {
   return (
     <div className={`loading-screen${leaving ? ' is-leaving' : ''}`}>
       <canvas ref={starCanvasRef} className={`loading-stars${ready ? ' is-ready' : ''}`} />
+      <img
+        src="/textures/loading-moon-photo.jpg"
+        alt=""
+        className={`loading-moon${ready ? ' is-ready' : ''}`}
+      />
       <canvas
         ref={canvasRef}
         className={`loading-canvas${ready ? ' is-ready' : ''}`}
