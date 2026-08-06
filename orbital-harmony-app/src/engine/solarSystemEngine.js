@@ -711,27 +711,17 @@ export function createSolarSystemEngine(canvas, opts) {
   const dist = distanceToFit(width / height);
 
   // ---- Cinematic intro camera path (Solar System browse screen) -----------
-  // Holds on a true top-down establishing shot (elevation 90° — matches the
+  // Holds on a near top-down establishing shot (just shy of 90° to avoid the
+  // exact lookAt pole singularity with default camera up), then slowly
   // loading screen's flat overview), then slowly ROTATES down to a more
-  // angled, dimensional view (34°) over several seconds — distance/frustum
+  // angled, dimensional view (24°) over several seconds — distance/frustum
   // (see the orthographic frustum-fit block above) and the "no zoom" rule
   // are completely unchanged, only the viewing ANGLE animates.
-  const HERO_ELEVATION_START_DEG = 90;
-  const HERO_ELEVATION_END_DEG = 34;
+  const HERO_ELEVATION_START_DEG = 89.6;
+  const HERO_ELEVATION_END_DEG = 24;
   function heroPosition(distance, elevationDeg) {
     const rad = THREE.MathUtils.degToRad(elevationDeg);
     return new THREE.Vector3(0, distance * Math.sin(rad), distance * Math.cos(rad));
-  }
-  // A camera-up vector that stays PERPENDICULAR to the view direction at
-  // every elevation angle (including exactly 90°) — this is what lets the
-  // rotation pass smoothly THROUGH the true top-down pole position without
-  // ever hitting the degenerate "up parallel to view direction" case a
-  // plain default up=(0,1,0) would (see the long comment above about why
-  // straight-down + default up is unstable for lookAt()). Verified
-  // algebraically: dot(up, forward) = 0 for all elevationDeg.
-  function heroUp(elevationDeg) {
-    const rad = THREE.MathUtils.degToRad(elevationDeg);
-    return new THREE.Vector3(0, Math.cos(rad), -Math.sin(rad));
   }
   function easeInOutCubic(t) {
     return t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2;
@@ -769,9 +759,11 @@ export function createSolarSystemEngine(canvas, opts) {
   let introPhase = cinematicIntro ? 'hold' : 'done';
   let introElapsed = 0;
   let introCompleteCb = null;
+  let pendingIntroComplete = false;
 
   let controls = null;
   let onKeyZoom = null;
+  let suppressControlsUpdateFrames = 0;
   function attachOrbitControls(target) {
     controls = new OrbitControls(camera, renderer.domElement);
     controls.target.copy(target ?? new THREE.Vector3(0, 0, 0));
@@ -787,6 +779,16 @@ export function createSolarSystemEngine(canvas, opts) {
     controls.minZoom = 1;
     controls.maxZoom = 3.5;
     controls.enablePan = false;
+
+    // Force OrbitControls to capture the camera/target in a settled state
+    // before damping/autorotate take over, which avoids a small first-frame
+    // correction nudge at cinematic handoff.
+    controls.enableDamping = false;
+    controls.autoRotate = false;
+    controls.update();
+    controls.enableDamping = true;
+    suppressControlsUpdateFrames = 2;
+
     // Calm/settled after a scripted cinematic move — no lingering ambient
     // auto-orbit fighting the composition the intro just settled into.
     controls.autoRotate = !cinematicIntro;
@@ -812,7 +814,7 @@ export function createSolarSystemEngine(canvas, opts) {
   }
 
   if (cinematicIntro) {
-    camera.up.copy(heroUp(HERO_ELEVATION_START_DEG));
+    camera.up.set(0, 1, 0);
     camera.position.copy(heroWidePos);
     camera.lookAt(introLookTarget);
     // Start on the wider "establishing shot" frustum — the hold + rotate
@@ -834,7 +836,7 @@ export function createSolarSystemEngine(canvas, opts) {
     // view with the nice angled hero position, ready for OrbitControls. The
     // zoom-in effect was just a cinematic flourish; the persistent default is
     // the full solar system, not an Earth-centric zoom.
-    camera.up.copy(heroUp(HERO_ELEVATION_END_DEG));
+    camera.up.set(0, 1, 0);
     camera.position.copy(heroAngledPos);
     camera.lookAt(introLookTarget);
     if (camera.isOrthographicCamera) {
@@ -850,7 +852,7 @@ export function createSolarSystemEngine(canvas, opts) {
       restFrameRadius = maxDistance;
       restFrameMargin = framingMargin;
     }
-    camera.up.set(0, 1, 0);
+    camera.lookAt(introLookTarget);
     attachOrbitControls(introLookTarget);
     controls.autoRotate = false;
   } else if (interactive) {
@@ -1290,9 +1292,7 @@ export function createSolarSystemEngine(canvas, opts) {
       } else if (introPhase === 'travel') {
         const t = Math.min(introElapsed / INTRO_TRAVEL_SEC, 1);
         const eased = easeInOutCubic(t);
-        const elevationDeg = THREE.MathUtils.lerp(HERO_ELEVATION_START_DEG, HERO_ELEVATION_END_DEG, eased);
         camera.position.lerpVectors(heroWidePos, heroAngledPos, eased);
-        camera.up.copy(heroUp(elevationDeg));
         camera.lookAt(introLookTarget);
         if (t >= 1) {
           introPhase = 'zoom';
@@ -1321,20 +1321,23 @@ export function createSolarSystemEngine(canvas, opts) {
           introPhase = 'done';
           restFrameRadius = maxDistance;
           restFrameMargin = framingMargin;
-          // Snap back to the default up vector before OrbitControls takes
-          // over — it derives its own spherical coordinates from
-          // camera.up and assumes the default (see the long comment above
-          // distanceToFit about why only the non-interactive path may
-          // ever change camera.up).
-          camera.up.set(0, 1, 0);
+          camera.lookAt(introLookTarget);
           if (interactive) attachOrbitControls(introLookTarget);
-          if (introCompleteCb) introCompleteCb();
+          if (introCompleteCb) pendingIntroComplete = true;
         }
       }
     }
 
-    if (controls) controls.update();
+    if (controls) {
+      if (suppressControlsUpdateFrames > 0) suppressControlsUpdateFrames -= 1;
+      else controls.update();
+    }
     renderScene();
+
+    if (pendingIntroComplete) {
+      pendingIntroComplete = false;
+      introCompleteCb?.();
+    }
   }
 
   function resize() {

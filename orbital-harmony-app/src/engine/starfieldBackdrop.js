@@ -71,9 +71,9 @@ function makeStarSprite() {
 // loading backdrop AND the Solar System engine's skybox (which imports
 // buildStarfield from here), so the two screens render the IDENTICAL field.
 const LAYER_SPECS = [
-  { count: 3200, size: 1.8, opacity: 0.78, minR: 900, maxR: 1700, spin: 0.0015 },
-  { count: 1800, size: 2.3, opacity: 0.9, minR: 650, maxR: 950, spin: 0.003 },
-  { count: 320, size: 2.9, opacity: 1, minR: 480, maxR: 680, spin: 0.005 },
+  { count: 4800, size: 1.8, opacity: 0.78, minR: 900, maxR: 1700, spin: 0.0015 },
+  { count: 2700, size: 2.3, opacity: 0.9, minR: 650, maxR: 950, spin: 0.003 },
+  { count: 480, size: 2.9, opacity: 1, minR: 480, maxR: 680, spin: 0.005 },
 ];
 
 function sphereStar(minR, maxR) {

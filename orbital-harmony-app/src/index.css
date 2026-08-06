@@ -358,6 +358,14 @@ button {
   padding: 0;
 }
 
+/* Landing is a fully fixed composition (canvas + absolutely positioned
+   header/CTA), so it should never participate in vertical auto-scroll.
+   Keeping overflow hidden avoids scrollbar-width toggles during the
+   intro-end UI fade that can shift the whole frame by a few pixels. */
+.screen--system {
+  overflow: hidden;
+}
+
 .solar-canvas-wrap {
   position: absolute;
   inset: 0;
@@ -2847,6 +2855,13 @@ button {
 
 .screen--select .screen__actions {
   flex-direction: row;
+}
+
+.screen--select .screen__actions:not(.screen__actions--top) > .back-button--icon {
+  width: 48px;
+  height: 48px;
+  min-height: 48px;
+  flex: 0 0 48px;
 }
 
 .screen--select .select-actions__button,

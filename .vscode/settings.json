@@ -2,5 +2,9 @@
     "chat.tools.terminal.autoApprove": {
         "git push": true,
         "npm run dev": true
+    },
+    "search.exclude": {
+        "**/orbital-harmony-app/dist/**": true,
+        "**/ios/OrbitalHarmony/Resources/www/**": true
     }
 }
