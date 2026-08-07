@@ -2819,6 +2819,134 @@ button {
   }
 }
 
+/* Further scale down calendar for very small phones (320px-390px) */
+@media (max-width: 390px) {
+  .gdp__pop {
+    width: min(300px, calc(100vw - 32px));
+    max-width: min(300px, calc(100vw - 32px));
+    max-height: min(360px, calc(100dvh - 260px));
+    padding: 10px;
+  }
+
+  .gdp__nav {
+    margin-bottom: 8px;
+  }
+
+  .gdp__navGlass {
+    width: 28px;
+    height: 28px;
+  }
+
+  .gdp__period {
+    min-height: 32px;
+    height: 32px;
+    padding: 2px;
+  }
+
+  .gdp__monthBtn {
+    min-width: 88px;
+    max-width: 100px;
+    height: 28px;
+    padding: 0 8px;
+    font-size: 13px;
+  }
+
+  .gdp__yearBtn {
+    min-width: 60px;
+    max-width: 76px;
+    height: 28px;
+    padding: 0 8px;
+    font-size: 13px;
+  }
+
+  .gdp__dowcell {
+    font-size: 9px;
+    padding: 2px 0;
+  }
+
+  .gdp__grid {
+    gap: 2px;
+  }
+
+  .gdp__cell {
+    font-size: 11px;
+  }
+
+  .gdp__footer {
+    margin-top: 6px;
+    padding-top: 6px;
+  }
+
+  .gdp__footbtn {
+    padding: 5px 8px;
+    font-size: 11px;
+  }
+}
+
+/* Even more aggressive scaling for extra-small phones (320px) */
+@media (max-width: 320px) {
+  .gdp__pop {
+    width: min(280px, calc(100vw - 24px));
+    max-width: min(280px, calc(100vw - 24px));
+    max-height: min(320px, calc(100dvh - 280px));
+    padding: 8px;
+  }
+
+  .gdp__nav {
+    margin-bottom: 6px;
+  }
+
+  .gdp__navGlass {
+    width: 26px;
+    height: 26px;
+  }
+
+  .gdp__period {
+    min-height: 30px;
+    height: 30px;
+    padding: 1px;
+  }
+
+  .gdp__monthBtn {
+    min-width: 76px;
+    max-width: 88px;
+    height: 26px;
+    padding: 0 6px;
+    font-size: 12px;
+  }
+
+  .gdp__yearBtn {
+    min-width: 52px;
+    max-width: 66px;
+    height: 26px;
+    padding: 0 6px;
+    font-size: 12px;
+  }
+
+  .gdp__dowcell {
+    font-size: 8px;
+    padding: 1px 0;
+  }
+
+  .gdp__grid {
+    gap: 1px;
+  }
+
+  .gdp__cell {
+    font-size: 10px;
+  }
+
+  .gdp__footer {
+    margin-top: 4px;
+    padding-top: 4px;
+  }
+
+  .gdp__footbtn {
+    padding: 4px 6px;
+    font-size: 10px;
+  }
+}
+
 .cosmic-preview {
   display: flex;
   flex-direction: column;
