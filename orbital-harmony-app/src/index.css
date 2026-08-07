@@ -945,6 +945,7 @@ button {
      buttons on short phones (e.g. iPhone SE, 375×667) — see .swipe-planet
      below for the matching responsive row-height fix. */
   gap: clamp(28px, 8dvh, 96px);
+  margin-top: 120px;
   min-height: 0;
 }
 
@@ -2916,6 +2917,7 @@ button {
   /* Prevent planet carousel labels from overlapping subtitle at small heights */
   .swipe-select {
     gap: clamp(32px, 7dvh, 96px);
+    margin-top: 135px;
   }
 
   .swipe-row__label {
@@ -2940,6 +2942,7 @@ button {
   /* Extra spacing to prevent overlaps on very small screens */
   .swipe-select {
     gap: clamp(36px, 8dvh, 96px);
+    margin-top: 145px;
   }
 
   .swipe-row__label {
