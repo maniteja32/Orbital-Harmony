@@ -2909,6 +2909,15 @@ button {
   .screen--cosmic .cosmic-form {
     margin-top: 100px;
   }
+
+  /* Prevent planet carousel labels from overlapping subtitle at small heights */
+  .swipe-select {
+    gap: clamp(32px, 7dvh, 96px);
+  }
+
+  .swipe-row__label {
+    margin-bottom: 0px;
+  }
 }
 
 @media (max-width: 320px) {
@@ -2923,6 +2932,24 @@ button {
 
   .screen--cosmic .cosmic-form {
     margin-top: 95px;
+  }
+
+  /* Extra spacing to prevent overlaps on very small screens */
+  .swipe-select {
+    gap: clamp(36px, 8dvh, 96px);
+  }
+
+  .swipe-row__label {
+    margin-bottom: 2px;
+    font-size: 10px;
+  }
+
+  .swipe-row__name {
+    font-size: 15px;
+  }
+
+  .swipe-row__fact {
+    font-size: 11px;
   }
 }
 
