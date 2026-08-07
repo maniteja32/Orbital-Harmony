@@ -310,6 +310,7 @@ button {
    subtitle instead. */
 .screen--cosmic .cosmic-form {
   margin-top: 118px;
+  margin-bottom: 80px;
 }
 
 .screen--select .screen__header--mode h1 {
@@ -2899,6 +2900,29 @@ button {
   .screen--select .select-actions__button:last-child,
   .screen--cosmic .select-actions__button:last-child {
     flex: 4;
+  }
+
+  .screen--cosmic .screen__header--mode p {
+    font-size: 14px;
+  }
+
+  .screen--cosmic .cosmic-form {
+    margin-top: 100px;
+  }
+}
+
+@media (max-width: 320px) {
+  .screen--cosmic .screen__header--mode h1 {
+    font-size: clamp(18px, 5vw, 24px);
+  }
+
+  .screen--cosmic .screen__header--mode p {
+    font-size: 11px;
+    line-height: 1.3;
+  }
+
+  .screen--cosmic .cosmic-form {
+    margin-top: 95px;
   }
 }
 
