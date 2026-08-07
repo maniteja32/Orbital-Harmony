@@ -44,7 +44,7 @@ export function GlassDatePicker({ value, onChange, max, placeholder = 'Select da
   const maxDate = useMemo(() => parseYMD(max), [max]);
   const maxYear = maxDate ? maxDate.getFullYear() : new Date().getFullYear();
 
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true); // Always open by default
   const [monthMenuOpen, setMonthMenuOpen] = useState(false);
   const [yearMenuOpen, setYearMenuOpen] = useState(false);
   const [view, setView] = useState(() => {
@@ -78,19 +78,8 @@ export function GlassDatePicker({ value, onChange, max, placeholder = 'Select da
 
   // Close on outside click / Escape.
   useEffect(() => {
-    if (!open) return;
-    function onDown(e) {
-      if (rootRef.current && !rootRef.current.contains(e.target)) setOpen(false);
-    }
-    function onKey(e) {
-      if (e.key === 'Escape') setOpen(false);
-    }
-    document.addEventListener('pointerdown', onDown);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('pointerdown', onDown);
-      document.removeEventListener('keydown', onKey);
-    };
+    // Calendar is always open, no need to close it
+    return;
   }, [open]);
 
   const years = useMemo(() => {
@@ -137,18 +126,18 @@ export function GlassDatePicker({ value, onChange, max, placeholder = 'Select da
 
   function pick(day) {
     onChange(toYMD(view.year, view.month, day));
-    setOpen(false);
+    // Calendar stays open
   }
 
   function clearDate() {
     onChange('');
-    setOpen(false);
+    // Calendar stays open
   }
 
   function pickToday() {
     if (!canPickToday) return;
     onChange(toYMD(today.getFullYear(), today.getMonth(), today.getDate()));
-    setOpen(false);
+    // Calendar stays open
   }
 
   const label = selected
@@ -168,7 +157,7 @@ export function GlassDatePicker({ value, onChange, max, placeholder = 'Select da
           type="button"
           id={id}
           className={`cosmic-input gdp__trigger${selected ? '' : ' gdp__trigger--empty'}`}
-          onClick={() => setOpen((o) => !o)}
+          disabled
           aria-haspopup="dialog"
           aria-expanded={open}
           aria-controls={dialogId}
@@ -178,19 +167,18 @@ export function GlassDatePicker({ value, onChange, max, placeholder = 'Select da
         </button>
       </LiquidGlass>
 
-      {open && (
-        <LiquidGlass
-          ref={popRef}
-          id={dialogId}
-          className="gdp__pop rounded-[20px] bg-white/[0.06]"
-          role="dialog"
-          aria-modal="false"
-          aria-labelledby={headingId}
-          style={{
-            '--liquid-glass-rim-width': '0.9px',
-            '--liquid-glass-rim-light': 'rgba(255,255,255,0.22)',
-          }}
-        >
+      <LiquidGlass
+        ref={popRef}
+        id={dialogId}
+        className="gdp__pop rounded-[20px] bg-white/[0.06]"
+        role="dialog"
+        aria-modal="false"
+        aria-labelledby={headingId}
+        style={{
+          '--liquid-glass-rim-width': '0.9px',
+          '--liquid-glass-rim-light': 'rgba(255,255,255,0.22)',
+        }}
+      >
           <div className="gdp__nav">
             <h2 id={headingId} className="sr-only">Choose birth date</h2>
             <LiquidGlass
@@ -359,7 +347,6 @@ export function GlassDatePicker({ value, onChange, max, placeholder = 'Select da
             </button>
           </div>
         </LiquidGlass>
-      )}
     </div>
   );
 }
