@@ -310,8 +310,9 @@ button {
    needs an explicit top margin sized to clear the header's title +
    subtitle instead. */
 .screen--cosmic .cosmic-form {
-  margin-top: 145px;
+  margin-top: 160px;
   margin-bottom: 80px;
+  padding-top: 16px;
 }
 
 .screen--select .screen__header--mode h1 {
@@ -2335,7 +2336,8 @@ button {
 .cosmic-field {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
+  margin-top: 8px;
 }
 
 .cosmic-field__label,
