@@ -497,7 +497,7 @@ button {
 
 .system-header p {
   color: var(--text-secondary);
-  font-size: 16px;
+  font-size: 12px;
   line-height: 1.5;
   max-width: 320px;
   margin: 0 auto;
@@ -1262,8 +1262,11 @@ button {
   position: absolute;
   top: calc(28px + var(--safe-top));
   left: 22px;
+  right: 22px;
   z-index: 10;
   margin: 0;
+  display: flex;
+  justify-content: space-between;
 }
 
 /* Back button + header used to stack vertically (button above the

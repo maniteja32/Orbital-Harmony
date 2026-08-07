@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, Pause, Play, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Info, Pause, Play, RotateCcw } from 'lucide-react';
 import SolarSystemCanvas from '../components/SolarSystemCanvas.jsx';
 import { LiquidGlass } from '../components/ui/glasscn/liquid-glass.jsx';
 import { PLANETS, PLANETS_BY_KEY } from '../data/planets.js';
@@ -167,6 +167,13 @@ export default function SimulationScreen({ onComplete, onBack }) {
             <ArrowLeft size={18} strokeWidth={2} aria-hidden="true" />
           </button>
         )}
+        <button
+          type="button"
+          className="back-button back-button--icon"
+          aria-label="Information"
+        >
+          <Info size={18} strokeWidth={2} aria-hidden="true" />
+        </button>
       </div>
       {pairTitle && <p className="sim-pair-title">{pairTitle}</p>}
       <div className="sim-canvas-wrap">
