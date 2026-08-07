@@ -257,7 +257,7 @@ button {
      headings are kept a consistent weight app-wide. */
   font-weight: 400;
   letter-spacing: 0.01em;
-  margin-bottom: 6px;
+  margin-bottom: 12px;
 }
 
 .screen__header p {
