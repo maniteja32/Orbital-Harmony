@@ -264,6 +264,7 @@ button {
   color: var(--text-secondary);
   font-size: 14px;
   line-height: 1.5;
+  margin-bottom: 24px;
 }
 
 /* Planet Select's header ("Explore" / "Choose any two planets") reads
@@ -942,7 +943,7 @@ button {
      16px floor keeps the two groups from ever overlapping the header/
      buttons on short phones (e.g. iPhone SE, 375×667) — see .swipe-planet
      below for the matching responsive row-height fix. */
-  gap: clamp(20px, 6dvh, 96px);
+  gap: clamp(28px, 8dvh, 96px);
   min-height: 0;
 }
 
