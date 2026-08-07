@@ -98,10 +98,6 @@ export function GlassDatePicker({ value, onChange, max, placeholder = 'Select da
   for (let i = 0; i < firstWeekday; i += 1) cells.push(null);
   for (let d = 1; d <= daysInMonth; d += 1) cells.push(d);
 
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0);
-  const canPickToday = !maxDate || today <= maxDate;
-
   function shiftMonth(delta) {
     setView((v) => {
       let m = v.month + delta;
@@ -126,17 +122,6 @@ export function GlassDatePicker({ value, onChange, max, placeholder = 'Select da
 
   function pick(day) {
     onChange(toYMD(view.year, view.month, day));
-    // Calendar stays open
-  }
-
-  function clearDate() {
-    onChange('');
-    // Calendar stays open
-  }
-
-  function pickToday() {
-    if (!canPickToday) return;
-    onChange(toYMD(today.getFullYear(), today.getMonth(), today.getDate()));
     // Calendar stays open
   }
 
@@ -312,18 +297,16 @@ export function GlassDatePicker({ value, onChange, max, placeholder = 'Select da
               const dayDate = new Date(view.year, view.month, day, 12, 0, 0);
               const disabled = maxDate ? dayDate > maxDate : false;
               const isSel = sameDay(dayDate, selected);
-              const isToday = sameDay(dayDate, today);
               const weekday = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][dayDate.getDay()];
               return (
                 <button
                   key={day}
                   type="button"
-                  className={`gdp__cell${isSel ? ' is-selected' : ''}${isToday && !isSel ? ' is-today' : ''}`}
+                  className={`gdp__cell${isSel ? ' is-selected' : ''}`}
                   onClick={() => pick(day)}
                   disabled={disabled}
                   role="gridcell"
                   aria-selected={isSel}
-                  aria-current={isToday ? 'date' : undefined}
                   aria-label={`${weekday}, ${day} ${MONTHS[view.month]} ${view.year}`}
                   tabIndex={isSel ? 0 : -1}
                 >
@@ -331,20 +314,6 @@ export function GlassDatePicker({ value, onChange, max, placeholder = 'Select da
                 </button>
               );
             })}
-          </div>
-
-          <div className="gdp__footer">
-            <button type="button" className="gdp__footbtn" onClick={clearDate}>
-              Clear
-            </button>
-            <button
-              type="button"
-              className="gdp__footbtn gdp__footbtn--accent"
-              onClick={pickToday}
-              disabled={!canPickToday}
-            >
-              Today
-            </button>
           </div>
         </LiquidGlass>
     </div>
