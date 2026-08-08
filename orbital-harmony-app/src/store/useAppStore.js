@@ -35,6 +35,7 @@ export const useAppStore = create((set) => ({
   patternMode: 'explore', // 'explore' (pick two planets) | 'cosmic' (birth-date signature)
   cosmicDate: null, // Date the Cosmic Signature pattern is anchored to (null = Explore flow)
   snapshot: null, // captured PNG data URL of the final pattern
+  lineStyle: 'solid', // 'solid' | 'dashed' | 'dots' — shared pattern line style, see LineStyleToggle.jsx
   // has the Solar System cinematic intro (top-down hold -> rotate -> zoom
   // in) played yet THIS SESSION? Deliberately NOT persisted to
   // localStorage — the cinematic intro should play in full every time the
@@ -55,6 +56,7 @@ export const useAppStore = create((set) => ({
   setSnapshot: (snapshot) => set({ snapshot }),
   setPatternMode: (patternMode) => set({ patternMode }),
   setCosmicDate: (cosmicDate) => set({ cosmicDate }),
+  setLineStyle: (lineStyle) => set({ lineStyle }),
   markSystemIntroPlayed: () => set({ systemIntroPlayed: true }),
 
   resetForNewPattern: () =>

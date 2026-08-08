@@ -2,40 +2,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pause, Play, RotateCcw } from 'lucide-react';
 import SolarSystemCanvas from '../components/SolarSystemCanvas.jsx';
 import { TopNavigationBar } from '../components/TopNavigationBar.jsx';
+import { LineStyleToggleButton } from '../components/LineStyleToggle.jsx';
 import { LiquidGlass } from '../components/ui/glasscn/liquid-glass.jsx';
 import { PLANETS, PLANETS_BY_KEY } from '../data/planets.js';
 import { computePatternPlan } from '../utils/resonance.js';
 import { useAppStore, SPEED_PRESETS } from '../store/useAppStore.js';
-
-// Cycles through the engine's 3 pattern line styles (see LINE_STYLES in
-// solarSystemEngine.js) on each tap, instead of a plain on/off toggle.
-const LINE_STYLE_ORDER = ['solid', 'dashed', 'dots'];
-const LINE_STYLE_LABEL = { solid: 'Line', dashed: 'Dashed', dots: 'Dots' };
-// A simple four-petal flower (the app's own pattern figures read as
-// flower-like rosettes) so the icon hints at "pattern style", not just an
-// abstract line. Butt (square) caps on the dash so short segments read as
-// clean rectangular dashes instead of rounding into dot-like pills, which
-// is what made "dashed" and "dots" look nearly identical at this size.
-const LINE_STYLE_DASH = { solid: undefined, dashed: '4.5 3', dots: '0.1 3' };
-const LINE_STYLE_CAP = { solid: 'round', dashed: 'butt', dots: 'round' };
-
-function LineStyleIcon({ style }) {
-  const dash = LINE_STYLE_DASH[style];
-  const cap = LINE_STYLE_CAP[style];
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M12 16.5A4.5 4.5 0 1 1 7.5 12 4.5 4.5 0 1 1 12 7.5a4.5 4.5 0 1 1 4.5 4.5 4.5 4.5 0 1 1-4.5 4.5"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap={cap}
-        strokeLinejoin="round"
-        strokeDasharray={dash}
-      />
-      <circle cx="12" cy="12" r="2.75" stroke="currentColor" strokeWidth="2" strokeLinecap={cap} strokeDasharray={dash} />
-    </svg>
-  );
-}
 
 // Rim tuning for the tuning-panel cards' LiquidGlass surface — matches the
 // mode cards' MODE_RIM (SolarSystemScreen.jsx) so every glass surface in the
@@ -92,12 +63,11 @@ const SIGNATURE_SAMPLES = 260;
  * Runs the tracer and captures the generated image when complete.
  */
 export default function SimulationScreen({ onComplete, onBack }) {
-  const { planetA, planetB, speed, detailLevel, setDetailLevel, setSnapshot, cosmicDate, patternMode } = useAppStore();
+  const { planetA, planetB, speed, detailLevel, setDetailLevel, setSnapshot, cosmicDate, patternMode, lineStyle, setLineStyle } = useAppStore();
   const canvasRef = useRef(null);
   const doneRef = useRef(false);
   const [isPaused, setIsPaused] = useState(true);
   const [speedFactor, setSpeedFactor] = useState(1);
-  const [lineStyle, setLineStyle] = useState('solid');
   const isCosmic = patternMode === 'cosmic';
 
   // A detail change remounts SolarSystemCanvas (see its `key` prop below),
@@ -124,6 +94,12 @@ export default function SimulationScreen({ onComplete, onBack }) {
     () => (isCosmic ? PLANETS.map((p) => p.key) : [planetA, planetB]),
     [isCosmic, planetA, planetB],
   );
+
+  // Applies the persisted line-style choice (see useAppStore) to a freshly
+  // mounted canvas — the material always initializes as `solid` otherwise.
+  useEffect(() => {
+    canvasRef.current?.setLineStyle(lineStyle);
+  }, [planetKeys]);
   const speedCfg = SPEED_PRESETS[speed];
 
   // Run length + chord density. Cosmic mode sweeps the all-planets figure
@@ -219,11 +195,10 @@ export default function SimulationScreen({ onComplete, onBack }) {
     setIsPaused(true);
   }, [speedFactor]);
 
-  const toggleLineStyle = useCallback(() => {
-    const nextStyle = LINE_STYLE_ORDER[(LINE_STYLE_ORDER.indexOf(lineStyle) + 1) % LINE_STYLE_ORDER.length];
+  const handleLineStyleChange = useCallback((nextStyle) => {
     setLineStyle(nextStyle);
     canvasRef.current?.setLineStyle(nextStyle);
-  }, [lineStyle]);
+  }, [setLineStyle]);
 
   return (
     <div className="screen screen--simulation">
@@ -334,14 +309,7 @@ export default function SimulationScreen({ onComplete, onBack }) {
             <Pause size={18} strokeWidth={2} aria-hidden="true" />
           )}
         </button>
-        <button
-          type="button"
-          className={`back-button back-button--icon sim-controls__toggle${lineStyle !== 'solid' ? ' is-active' : ''}`}
-          onClick={toggleLineStyle}
-          aria-label={LINE_STYLE_LABEL[lineStyle]}
-        >
-          <LineStyleIcon style={lineStyle} />
-        </button>
+        <LineStyleToggleButton lineStyle={lineStyle} onChange={handleLineStyleChange} className="sim-controls__toggle" />
       </div>
     </div>
   );

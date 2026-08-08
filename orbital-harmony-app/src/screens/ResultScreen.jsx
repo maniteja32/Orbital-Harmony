@@ -1,6 +1,7 @@
 import { Heart, Share2 } from 'lucide-react';
 import { GlassButton } from '../components/ui/glasscn/glass-button.jsx';
 import { TopNavigationBar } from '../components/TopNavigationBar.jsx';
+import { LineStyleToggleButton } from '../components/LineStyleToggle.jsx';
 import { PLANETS_BY_KEY } from '../data/planets.js';
 import { formatCosmicSignatureDate } from '../utils/cosmicSignature.js';
 import { useAppStore } from '../store/useAppStore.js';
@@ -9,7 +10,7 @@ import { useAppStore } from '../store/useAppStore.js';
  *  Save/Share live as top-bar icons; "View Details" opens the info/controls
  *  screen and "Generate New Pattern" restarts the flow. */
 export default function ResultScreen({ onGenerateNew, onBack, onViewDetails, onShare, onSave }) {
-  const { planetA, planetB, snapshot, resetForNewPattern, patternMode, cosmicDate } = useAppStore();
+  const { planetA, planetB, snapshot, resetForNewPattern, patternMode, cosmicDate, lineStyle, setLineStyle } = useAppStore();
   const isCosmic = patternMode === 'cosmic';
   const planetAData = PLANETS_BY_KEY[planetA];
   const planetBData = PLANETS_BY_KEY[planetB];
@@ -83,19 +84,12 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails, onS
             <button
               type="button"
               className="back-button back-button--icon"
-              onClick={onSave}
-              aria-label="Save to collection"
-            >
-              <Heart size={18} strokeWidth={2} aria-hidden="true" />
-            </button>
-            <button
-              type="button"
-              className="back-button back-button--icon"
               onClick={onShare}
               aria-label="Share this pattern"
             >
               <Share2 size={18} strokeWidth={2} aria-hidden="true" />
             </button>
+            <LineStyleToggleButton lineStyle={lineStyle} onChange={setLineStyle} />
           </div>
           <button type="button" className="btn-frosted-pill" onClick={handleGenerateNew}>
             Generate New Pattern
