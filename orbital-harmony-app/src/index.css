@@ -2119,7 +2119,7 @@ button {
   font-size: 18px;
   font-weight: 400;
   letter-spacing: 0.01em;
-  line-height: 1.2;
+  line-height: 1;
   color: var(--text-primary);
   margin: 0;
   position: absolute;
@@ -2130,6 +2130,7 @@ button {
   padding: 0 16px;
   user-select: text;
   cursor: text;
+  white-space: nowrap;
 }
 
 /* Compact header when title is in top bar (only shows subtitle/description) */
