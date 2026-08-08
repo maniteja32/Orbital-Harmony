@@ -1,17 +1,25 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, lazy, Suspense } from 'react';
 import ScreenTransition from './components/ScreenTransition.jsx';
 import LoadingScreen from './screens/LoadingScreen.jsx';
-import SolarSystemScreen from './screens/SolarSystemScreen.jsx';
-import ModeSelectScreen from './screens/ModeSelectScreen.jsx';
-import CosmicSignatureScreen from './screens/CosmicSignatureScreen.jsx';
-import PlanetSelectScreen from './screens/PlanetSelectScreen.jsx';
-import SimulationScreen from './screens/SimulationScreen.jsx';
-import ResultScreen from './screens/ResultScreen.jsx';
-import PatternDetailsScreen from './screens/PatternDetailsScreen.jsx';
-import KnowledgeCardScreen from './screens/KnowledgeCardScreen.jsx';
-import CollectionScreen from './screens/CollectionScreen.jsx';
-import SharePatternScreen from './screens/SharePatternScreen.jsx';
-import ProfileScreen from './screens/ProfileScreen.jsx';
+
+// Lazy load all screens except LoadingScreen to reduce initial bundle
+const SolarSystemScreen = lazy(() => import('./screens/SolarSystemScreen.jsx'));
+const ModeSelectScreen = lazy(() => import('./screens/ModeSelectScreen.jsx'));
+const CosmicSignatureScreen = lazy(() => import('./screens/CosmicSignatureScreen.jsx'));
+const PlanetSelectScreen = lazy(() => import('./screens/PlanetSelectScreen.jsx'));
+const SimulationScreen = lazy(() => import('./screens/SimulationScreen.jsx'));
+const ResultScreen = lazy(() => import('./screens/ResultScreen.jsx'));
+const PatternDetailsScreen = lazy(() => import('./screens/PatternDetailsScreen.jsx'));
+const KnowledgeCardScreen = lazy(() => import('./screens/KnowledgeCardScreen.jsx'));
+const CollectionScreen = lazy(() => import('./screens/CollectionScreen.jsx'));
+const SharePatternScreen = lazy(() => import('./screens/SharePatternScreen.jsx'));
+const ProfileScreen = lazy(() => import('./screens/ProfileScreen.jsx'));
+
+// Fallback component for lazy-loaded screens
+function ScreenFallback() {
+  return <div className="screen-fallback" />;
+}
+
 import { useAppStore } from './store/useAppStore.js';
 import { createStarfieldBackdrop } from './engine/starfieldBackdrop.js';
 import { preloadPlanetTextures } from './engine/planetFactory.js';
@@ -74,55 +82,57 @@ export default function App() {
     <div className="app-shell" data-screen={screen}>
       <canvas ref={ambientRef} className="ambient-stars" aria-hidden="true" />
       <ScreenTransition key={screen}>
-        {screen === 'system' && (
-          <SolarSystemScreen
-            onExplore={() => {
-              setPatternMode('explore');
-              setCosmicDate(null);
-              goTo('select');
-            }}
-            onCosmic={() => goTo('cosmic')}
-          />
-        )}
-        {screen === 'mode' && (
-          <ModeSelectScreen
-            onExplore={() => {
-              setPatternMode('explore');
-              setCosmicDate(null);
-              goTo('select');
-            }}
-            onCosmic={() => goTo('cosmic')}
-            onBack={() => goTo('system')}
-          />
-        )}
-        {screen === 'select' && <PlanetSelectScreen onNext={() => goTo('settings')} onBack={() => goTo('system')} />}
-        {screen === 'cosmic' && <CosmicSignatureScreen onReveal={() => goTo('settings')} onBack={() => goTo('system')} />}
-        {screen === 'settings' && (
-          <SimulationScreen
-            onComplete={() => goTo('result')}
-            onBack={() => goTo(patternMode === 'cosmic' ? 'cosmic' : 'select')}
-          />
-        )}
-        {screen === 'result' && (
-          <ResultScreen
-            onGenerateNew={() => goTo(patternMode === 'cosmic' ? 'cosmic' : 'select')}
-            onBack={() => goTo(patternMode === 'cosmic' ? 'cosmic' : 'settings')}
-            onViewDetails={() => goTo('details')}
-            onShare={() => goTo('share')}
-            onSave={() => goTo('collection')}
-          />
-        )}
-        {screen === 'details' && (
-          <PatternDetailsScreen
-            onBack={() => goTo('result')}
-            onRegenerate={() => goTo('settings')}
-            onKnowledge={() => goTo('knowledge')}
-          />
-        )}
-        {screen === 'knowledge' && <KnowledgeCardScreen onClose={() => goTo('details')} />}
-        {screen === 'collection' && <CollectionScreen onOpen={() => goTo('result')} />}
-        {screen === 'share' && <SharePatternScreen onBack={() => goTo('result')} />}
-        {screen === 'profile' && <ProfileScreen onBack={() => goTo('system')} />}
+        <Suspense fallback={<ScreenFallback />}>
+          {screen === 'system' && (
+            <SolarSystemScreen
+              onExplore={() => {
+                setPatternMode('explore');
+                setCosmicDate(null);
+                goTo('select');
+              }}
+              onCosmic={() => goTo('cosmic')}
+            />
+          )}
+          {screen === 'mode' && (
+            <ModeSelectScreen
+              onExplore={() => {
+                setPatternMode('explore');
+                setCosmicDate(null);
+                goTo('select');
+              }}
+              onCosmic={() => goTo('cosmic')}
+              onBack={() => goTo('system')}
+            />
+          )}
+          {screen === 'select' && <PlanetSelectScreen onNext={() => goTo('settings')} onBack={() => goTo('system')} />}
+          {screen === 'cosmic' && <CosmicSignatureScreen onReveal={() => goTo('settings')} onBack={() => goTo('system')} />}
+          {screen === 'settings' && (
+            <SimulationScreen
+              onComplete={() => goTo('result')}
+              onBack={() => goTo(patternMode === 'cosmic' ? 'cosmic' : 'select')}
+            />
+          )}
+          {screen === 'result' && (
+            <ResultScreen
+              onGenerateNew={() => goTo(patternMode === 'cosmic' ? 'cosmic' : 'select')}
+              onBack={() => goTo(patternMode === 'cosmic' ? 'cosmic' : 'settings')}
+              onViewDetails={() => goTo('details')}
+              onShare={() => goTo('share')}
+              onSave={() => goTo('collection')}
+            />
+          )}
+          {screen === 'details' && (
+            <PatternDetailsScreen
+              onBack={() => goTo('result')}
+              onRegenerate={() => goTo('settings')}
+              onKnowledge={() => goTo('knowledge')}
+            />
+          )}
+          {screen === 'knowledge' && <KnowledgeCardScreen onClose={() => goTo('details')} />}
+          {screen === 'collection' && <CollectionScreen onOpen={() => goTo('result')} />}
+          {screen === 'share' && <SharePatternScreen onBack={() => goTo('result')} />}
+          {screen === 'profile' && <ProfileScreen onBack={() => goTo('system')} />}
+        </Suspense>
       </ScreenTransition>
       {showLoading && (
         <div className="loading-screen-slot">
