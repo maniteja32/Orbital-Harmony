@@ -2113,7 +2113,7 @@ button {
   z-index: 1;
 }
 
-/* Title displayed in top navigation bar - truly centered */
+/* Title displayed in top navigation bar - truly centered and selectable */
 .topbar-title {
   font-family: var(--font-display);
   font-size: 18px;
@@ -2128,7 +2128,8 @@ button {
   transform: translate(-50%, -50%);
   text-align: center;
   padding: 0 16px;
-  pointer-events: none;
+  user-select: text;
+  cursor: text;
 }
 
 /* Compact header when title is in top bar (only shows subtitle/description) */
