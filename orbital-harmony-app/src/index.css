@@ -288,6 +288,13 @@ button {
   padding: 0 22px;
 }
 
+/* Reserves clearance for the absolutely-positioned topbar above, so
+   .planet-picker's flex:1 box (and its vertical centering) starts right
+   below it instead of overlapping. */
+.screen--select {
+  padding-top: calc(76px + var(--safe-top));
+}
+
 .eyebrow {
   font-family: var(--font-display);
   font-size: 11px;
@@ -874,6 +881,18 @@ button {
    and writes it into --scale/--opacity custom properties, so the
    "coverflow" grow/fade effect tracks the swipe continuously and fluidly
    instead of only snapping between discrete states. */
+/* Groups the instruction + both carousels into a single set, vertically
+   centered in the space between the topbar and the Continue button (see
+   .screen--select padding-top/.screen__actions below) on every viewport. */
+.planet-picker {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
+  min-height: 0;
+}
+
 /* Instruction line reading as a shared header for BOTH Planet A/Planet B
    carousels below it, in normal flow so it never overlaps the topbar
    (unlike the old absolutely-positioned `.screen__header` approach). Also
@@ -885,6 +904,13 @@ button {
   font-size: 16px;
   line-height: 1.5;
   color: var(--text-secondary);
+}
+
+/* Inside .planet-picker the whole set is centered as one unit, so the
+   intro no longer needs its own top margin — spacing to the carousel
+   below comes from .planet-picker's gap instead. */
+.planet-picker .screen-intro {
+  margin-top: 0;
 }
 
 .swipe-select {
@@ -3239,6 +3265,12 @@ button {
   .screen {
     gap: 10px;
     padding: calc(16px + var(--safe-top)) 22px calc(14px + var(--safe-bottom));
+  }
+
+  /* Restore enough top clearance for the absolute topbar even though the
+     general .screen padding-top above was just shrunk for short viewports. */
+  .screen--select {
+    padding-top: calc(64px + var(--safe-top));
   }
 
   .screen__header h1 {

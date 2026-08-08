@@ -30,28 +30,30 @@ export default function PlanetSelectScreen({ onNext, onBack }) {
     <div className="screen screen--select">
       <TopNavigationBar title="Orbitograph" onBack={onBack} />
 
-      <p className="screen-intro">Choose two planets</p>
+      <div className="planet-picker">
+        <p className="screen-intro">Choose two planets</p>
 
-      <div className="swipe-select">
-        <MeteorField />
-        <PlanetSwipeRow
-          label="Planet A"
-          planets={PLANETS}
-          selectedKey={planetA}
-          initialKey={PLANETS[0].key}
-          onSelect={setPlanetA}
-          excludeKey={planetB}
-          hideInfo
-        />
-        <PlanetSwipeRow
-          label="Planet B"
-          planets={PLANETS}
-          selectedKey={planetB}
-          initialKey={PLANETS[2]?.key ?? PLANETS[0].key}
-          onSelect={setPlanetB}
-          excludeKey={planetA}
-          hideInfo
-        />
+        <div className="swipe-select">
+          <MeteorField />
+          <PlanetSwipeRow
+            label="Planet A"
+            planets={PLANETS}
+            selectedKey={planetA}
+            initialKey={PLANETS[0].key}
+            onSelect={setPlanetA}
+            excludeKey={planetB}
+            hideInfo
+          />
+          <PlanetSwipeRow
+            label="Planet B"
+            planets={PLANETS}
+            selectedKey={planetB}
+            initialKey={PLANETS[2]?.key ?? PLANETS[0].key}
+            onSelect={setPlanetB}
+            excludeKey={planetA}
+            hideInfo
+          />
+        </div>
       </div>
 
       {/* Planet Fact card hidden for now — flip this back to `factPlanet &&`
