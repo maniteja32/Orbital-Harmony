@@ -361,9 +361,10 @@ export function createSolarSystemEngine(canvas, opts) {
   // pattern/duo screens (they don't set `orthographic`). Sun shrinks less
   // than the planets so it stays the clear focal point of the scene.
   const LANDING_SUN_SCALE = 0.75;
-  // Bumped 1.2x (0.68 -> 0.816) so the full 8-planet browse view reads a
-  // little less sparse, still landing-screen only via the `orthographic` gate.
-  const LANDING_PLANET_SCALE = 0.816;
+  // Bumped 1.2x twice (0.68 -> 0.816 -> 0.9792) so the full 8-planet browse
+  // view reads a little less sparse, still landing-screen only via the
+  // `orthographic` gate.
+  const LANDING_PLANET_SCALE = 0.9792;
   // Extra per-planet bump on top of LANDING_PLANET_SCALE (landing page only,
   // sun untouched) — the four inner rocky planets plus the two outer ice
   // giants read a bit small at the base scale, so they get a bigger 1.2x
