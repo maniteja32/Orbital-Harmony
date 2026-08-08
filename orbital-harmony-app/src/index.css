@@ -211,6 +211,45 @@ button {
   transition: scale 0.2s ease, color 0.15s ease, box-shadow 0.3s ease;
 }
 
+/* Full-width primary CTA using the SAME clean frosted glass as .back-button/
+   .icon-button (plain backdrop-filter blur+saturate+brightness) instead of
+   the SVG-displacement LiquidGlass wrapper, which reads as blurred/greyed
+   over busy backgrounds at this size. */
+.btn-frosted-pill {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 44px;
+  border-radius: 999px;
+  border: none;
+  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(16px) saturate(145%) brightness(1.12);
+  -webkit-backdrop-filter: blur(16px) saturate(145%) brightness(1.12);
+  box-shadow:
+    0 6px 16px -10px rgba(0, 0, 0, 0.5),
+    inset 0 1px 1px rgba(255, 255, 255, 0.16),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.18);
+  cursor: pointer;
+  scale: 1;
+  transition: scale 0.2s ease, color 0.15s ease, box-shadow 0.3s ease;
+}
+
+.btn-frosted-pill:active {
+  scale: 0.97;
+}
+
+.btn-frosted-pill:disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
 /* Shared liquid-glass rim for the chrome icon/pill buttons across every
    screen (back / hamburger / info) — the SAME opposite-corner diagonal
    specular used by the GlassButton CTAs (bright top-left + bottom-right,
@@ -220,7 +259,8 @@ button {
 .system-menu::after,
 .system-info::after,
 .mode-card::after,
-.icon-button::after {
+.icon-button::after,
+.btn-frosted-pill::after {
   content: '';
   position: absolute;
   inset: 0;

@@ -3,7 +3,6 @@ import { RotateCw } from 'lucide-react';
 import { PLANETS, PLANETS_BY_KEY } from '../data/planets.js';
 import { PlanetSwipeRow } from '../components/PlanetSwipeRow.jsx';
 import { MeteorField } from '../components/MeteorField.jsx';
-import { GlassButton } from '../components/ui/glasscn/glass-button.jsx';
 import { TopNavigationBar } from '../components/TopNavigationBar.jsx';
 import { useAppStore } from '../store/useAppStore.js';
 
@@ -79,9 +78,9 @@ export default function PlanetSelectScreen({ onNext, onBack }) {
 
       <div className="screen__actions">
         <div className="select-actions__button">
-          <GlassButton tone="primary" className="w-full h-11 text-base font-medium" disabled={!canContinue} onClick={onNext}>
+          <button type="button" className="btn-frosted-pill" disabled={!canContinue} onClick={onNext}>
             Continue
-          </GlassButton>
+          </button>
         </div>
       </div>
     </div>
