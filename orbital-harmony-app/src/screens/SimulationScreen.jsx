@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pause, Play, RotateCcw } from 'lucide-react';
 import SolarSystemCanvas from '../components/SolarSystemCanvas.jsx';
 import { TopNavigationBar } from '../components/TopNavigationBar.jsx';
@@ -68,6 +68,19 @@ export default function SimulationScreen({ onComplete, onBack }) {
   const [isPaused, setIsPaused] = useState(true);
   const [speedFactor, setSpeedFactor] = useState(1);
   const isCosmic = patternMode === 'cosmic';
+
+  // A detail change remounts SolarSystemCanvas (see its `key` prop below),
+  // which always mounts paused (`startPaused`) — resume it once the fresh
+  // instance is attached so playback actually matches the "Pause" button
+  // handleDetailLevelChange already switches to, instead of staying frozen.
+  const isFirstDetailRender = useRef(true);
+  useEffect(() => {
+    if (isFirstDetailRender.current) {
+      isFirstDetailRender.current = false;
+      return;
+    }
+    canvasRef.current?.setPaused(false);
+  }, [detailLevel]);
   const planetAData = PLANETS_BY_KEY[planetA];
   const planetBData = PLANETS_BY_KEY[planetB];
   const hasPair = Boolean(planetAData && planetBData);
@@ -157,10 +170,10 @@ export default function SimulationScreen({ onComplete, onBack }) {
     doneRef.current = false;
     setDetailLevel(nextLevel);
     // Changing detail remounts the canvas at a fresh detail level (see the
-    // `key` prop below), which restarts the whole pattern from scratch —
-    // so the transport button must flip back to "Play" (paused) instead of
-    // claiming it's already running, ready for the user to start it again.
-    setIsPaused(true);
+    // `key` prop below), restarting the whole pattern from scratch — it
+    // should resume playing immediately, so the transport correctly shows
+    // "Pause" (in progress) rather than "Play" (idle).
+    setIsPaused(false);
   }, [detailLevel, setDetailLevel]);
 
   const resetPattern = useCallback(() => {
