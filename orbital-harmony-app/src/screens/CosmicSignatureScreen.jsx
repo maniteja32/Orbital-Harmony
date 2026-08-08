@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Home } from 'lucide-react';
 import { GlassButton } from '../components/ui/glasscn/glass-button.jsx';
 import { GlassDatePicker } from '../components/GlassDatePicker.jsx';
+import { TopNavigationBar } from '../components/TopNavigationBar.jsx';
 import { parseCosmicDateInput } from '../utils/cosmicSignature.js';
 import { useAppStore } from '../store/useAppStore.js';
 
@@ -32,18 +33,7 @@ export default function CosmicSignatureScreen({ onReveal, onBack }) {
 
   return (
     <div className="screen screen--cosmic">
-      <div className="mode-topbar">
-        <button
-          type="button"
-          className="back-button back-button--icon"
-          onClick={onBack}
-          aria-label="Back"
-        >
-          <Home size={18} strokeWidth={2} aria-hidden="true" />
-        </button>
-        <h1 className="topbar-title">Cosmic Signature</h1>
-        <span />
-      </div>
+      <TopNavigationBar title="Cosmic Signature" onBack={onBack} icon={Home} />
 
       <div className="screen__header screen__header--mode screen__header--compact">
         <p>Enter your birth details</p>

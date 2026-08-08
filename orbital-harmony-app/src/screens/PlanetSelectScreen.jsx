@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { RotateCw, ArrowLeft } from 'lucide-react';
+import { RotateCw } from 'lucide-react';
 import { PLANETS, PLANETS_BY_KEY } from '../data/planets.js';
 import { PlanetSwipeRow } from '../components/PlanetSwipeRow.jsx';
 import { MeteorField } from '../components/MeteorField.jsx';
 import { GlassButton } from '../components/ui/glasscn/glass-button.jsx';
+import { TopNavigationBar } from '../components/TopNavigationBar.jsx';
 import { useAppStore } from '../store/useAppStore.js';
 
 /** Step 1 — pick Planet A then Planet B via two independent swipeable
@@ -27,13 +28,7 @@ export default function PlanetSelectScreen({ onNext, onBack }) {
 
   return (
     <div className="screen screen--select">
-      <div className="mode-topbar">
-        <button type="button" className="back-button back-button--icon" onClick={onBack} aria-label="Back">
-          <ArrowLeft size={18} strokeWidth={2} aria-hidden="true" />
-        </button>
-        <h1 className="topbar-title">Orbitograph</h1>
-        <span />
-      </div>
+      <TopNavigationBar title="Orbitograph" onBack={onBack} />
 
       <div className="screen__header screen__header--mode screen__header--compact">
         <p>Choose two planets</p>
