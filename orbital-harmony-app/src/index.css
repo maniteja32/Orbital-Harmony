@@ -2150,6 +2150,11 @@ button {
   white-space: nowrap;
 }
 
+/* Nudged 2px lower than the shared .topbar-title baseline, on this screen only. */
+.screen--select .topbar-title {
+  top: calc(50% + 3px);
+}
+
 /* Small circular glass control (info button) — same frosted-glass language as
    .back-button, just square-ish and iconic. */
 .icon-button {
