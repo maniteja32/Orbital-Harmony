@@ -1511,7 +1511,6 @@ button {
   appearance: none;
   width: 18px;
   height: 18px;
-  margin-top: 1px;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.28);
   background: rgba(255, 255, 255, 0.08);
