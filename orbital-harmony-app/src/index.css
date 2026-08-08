@@ -3096,7 +3096,8 @@ button {
 
 .loading-message p {
   font-family: var(--font-ui);
-  font-size: 16px;
+  /* Matches .system-header p (landing subtitle) exactly. */
+  font-size: 12px;
   color: var(--nebula);
   letter-spacing: 0.05em;
   margin: 0;
@@ -3817,7 +3818,7 @@ button {
 
 .loading-subtitle {
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: 16px;
   line-height: 1.5;
   max-width: 320px;
   margin: 0 auto;
