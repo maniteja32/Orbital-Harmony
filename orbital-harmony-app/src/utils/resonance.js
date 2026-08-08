@@ -197,7 +197,7 @@ const DAYS_PER_YEAR = 365.25;
 // at the EXACT same stroke weight and the two surfaces never drift apart.
 // Kept intentionally fine so dense resonances stay airy instead of reading
 // like a filled white mesh on mobile.
-export const PATTERN_LINE_WIDTH = 1.05;
+export const PATTERN_LINE_WIDTH = 1;
 
 const PLAN = {
   // Caps on each planet's whole-loop count within one window. The inner cap

@@ -49,7 +49,7 @@ const TUNE_RIM = {
 const DEFAULT_SPEED_MULTIPLIER = 3;
 const DETAIL_LEVEL_MIN = 1;
 const DETAIL_LEVEL_MAX = 10;
-const SIMULATION_PATTERN_OPACITY_MULTIPLIER = 0.78;
+const SIMULATION_PATTERN_OPACITY_MULTIPLIER = 0.8;
 
 function detailMultiplier(level) {
   return 0.7 + (level / DETAIL_LEVEL_MAX) * 0.6;
@@ -138,14 +138,14 @@ export default function SimulationScreen({ onComplete, onBack }) {
       return {
         totalSimYears: SIGNATURE_YEARS,
         traceIntervalDays: (SIGNATURE_YEARS * 365.25) / SIGNATURE_SAMPLES,
-        patternOpacity: 1,
+        patternOpacity: SIMULATION_PATTERN_OPACITY_MULTIPLIER,
         patternRates: undefined,
       };
     }
     const a = PLANETS_BY_KEY[planetA];
     const b = PLANETS_BY_KEY[planetB];
     if (!a || !b) {
-      return { totalSimYears: FALLBACK_SIM_YEARS, traceIntervalDays: FALLBACK_TRACE_INTERVAL_DAYS, patternOpacity: 1, patternRates: undefined };
+      return { totalSimYears: FALLBACK_SIM_YEARS, traceIntervalDays: FALLBACK_TRACE_INTERVAL_DAYS, patternOpacity: SIMULATION_PATTERN_OPACITY_MULTIPLIER, patternRates: undefined };
     }
     const plan = computePatternPlan(a.orbitalPeriodDays, b.orbitalPeriodDays);
     const adjustedChordCount = Math.max(
