@@ -889,7 +889,11 @@ button {
 
 .swipe-select {
   position: relative;
-  flex: 1;
+  /* Sized to its own content (the two rows + their gap) instead of
+     stretching to fill the remaining screen height — that stretch was
+     the source of the empty space above/below the carousel set; row
+     height and inter-row gap are untouched. */
+  flex: none;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -1079,7 +1083,7 @@ button {
      the header/buttons (see .swipe-select above); scaling down on short
      viewports while still reaching the full 176px on taller phones keeps
      every row on-screen without clipping Saturn's ring. */
-  height: clamp(90px, 15dvh, 140px);
+  height: clamp(72px, 11dvh, 108px);
   display: flex;
   align-items: center;
   justify-content: center;
