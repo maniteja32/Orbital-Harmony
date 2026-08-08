@@ -570,9 +570,13 @@ export function createSolarSystemEngine(canvas, opts) {
         return line;
       };
 
+      // Brightened from the original 0.18/0.66 (Cosmic Signature's own
+      // separate line system — NOT the shared PATTERN_LINE_WIDTH/opacity
+      // used by the Explore chord trace) — the low originals read as much
+      // fainter/thinner than Explore's denser, brighter pattern.
       cosmicSignatureLines = [
-        makeSignatureLine(0.18),
-        makeSignatureLine(0.66),
+        makeSignatureLine(0.24),
+        makeSignatureLine(0.85),
       ];
       cosmicSignatureLines.forEach((line) => scene.add(line));
 
@@ -592,9 +596,10 @@ export function createSolarSystemEngine(canvas, opts) {
           return line;
         };
 
+        // Brightened from the original 0.08/0.24 for the same reason.
         return [
-          makeArtifactLine(0.08),
-          makeArtifactLine(0.24),
+          makeArtifactLine(0.13),
+          makeArtifactLine(0.38),
         ];
       };
 
