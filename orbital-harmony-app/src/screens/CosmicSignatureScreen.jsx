@@ -35,9 +35,7 @@ export default function CosmicSignatureScreen({ onReveal, onBack }) {
     <div className="screen screen--cosmic">
       <TopNavigationBar title="Cosmic Signature" onBack={onBack} icon={Home} />
 
-      <div className="screen__header screen__header--mode screen__header--compact">
-        <p>Enter your birth details</p>
-      </div>
+      <p className="screen-intro">Enter your birth details</p>
 
       <div className="cosmic-form">
         <GlassDatePicker

@@ -30,7 +30,7 @@ export default function PlanetSelectScreen({ onNext, onBack }) {
     <div className="screen screen--select">
       <TopNavigationBar title="Orbitograph" onBack={onBack} />
 
-      <p className="swipe-select__intro">Choose two planets</p>
+      <p className="screen-intro">Choose two planets</p>
 
       <div className="swipe-select">
         <MeteorField />
