@@ -133,6 +133,7 @@ export default function LoadingScreen({ onDone, onExited }) {
 
     let sequenceStart = null;
     let holdTimer, transitionTimer, doneTimer;
+    let unmounted = false;
 
     function beginTransition() {
       setTransitioning(true);
@@ -150,13 +151,41 @@ export default function LoadingScreen({ onDone, onExited }) {
       }, TRANSITION_MS);
     }
 
+    // Google Fonts loads with `display: swap` (see index.html), so on a slow
+    // connection (common on a cold WKWebView launch, see ios/README.md) the
+    // "Orbital Harmony" title can still be showing its fallback system font
+    // when the crossfade begins, then SWAP to Syncopate mid-transition —
+    // visually reading as a stray flash of differently-styled text right as
+    // the landing screen appears. `document.fonts.ready` resolves once every
+    // requested @font-face has finished loading (or failed); racing it
+    // against a short cap means the common case (fonts already loaded well
+    // within HOLD_MS) fires `beginTransition` at the exact same time as
+    // before, while a slow-network case waits a little longer for fonts
+    // instead of ever swapping mid-crossfade.
+    const FONT_WAIT_CAP_MS = 2000;
+    const fontsReady = typeof document !== 'undefined' && document.fonts?.ready
+      ? document.fonts.ready.catch(() => {})
+      : Promise.resolve();
+    let fontsSettled = false;
+    fontsReady.then(() => {
+      fontsSettled = true;
+    });
+
     // No textures to load for a flat 2D scene — reveal on the very next
     // frame (a hair after mount, so the CSS opacity transitions on the
     // canvas still have a "from" state to animate out of).
     const readyRaf = requestAnimationFrame(() => {
       setReady(true);
       sequenceStart = performance.now();
-      holdTimer = setTimeout(beginTransition, HOLD_MS);
+      holdTimer = setTimeout(() => {
+        if (fontsSettled) {
+          beginTransition();
+        } else {
+          Promise.race([fontsReady, new Promise((resolve) => setTimeout(resolve, FONT_WAIT_CAP_MS))]).then(() => {
+            if (!unmounted) beginTransition();
+          });
+        }
+      }, HOLD_MS);
     });
 
     let rafId = null;
@@ -266,6 +295,7 @@ export default function LoadingScreen({ onDone, onExited }) {
     rafId = requestAnimationFrame(draw);
 
     return () => {
+      unmounted = true;
       cancelAnimationFrame(rafId);
       cancelAnimationFrame(readyRaf);
       clearTimeout(holdTimer);
