@@ -1,11 +1,37 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Ellipsis, Minus, Pause, Play, RotateCcw } from 'lucide-react';
+import { Pause, Play, RotateCcw } from 'lucide-react';
 import SolarSystemCanvas from '../components/SolarSystemCanvas.jsx';
 import { TopNavigationBar } from '../components/TopNavigationBar.jsx';
 import { LiquidGlass } from '../components/ui/glasscn/liquid-glass.jsx';
 import { PLANETS, PLANETS_BY_KEY } from '../data/planets.js';
 import { computePatternPlan } from '../utils/resonance.js';
 import { useAppStore, SPEED_PRESETS } from '../store/useAppStore.js';
+
+// Cycles through the engine's 3 pattern line styles (see LINE_STYLES in
+// solarSystemEngine.js) on each tap, instead of a plain on/off toggle.
+const LINE_STYLE_ORDER = ['solid', 'dashed', 'dots'];
+const LINE_STYLE_LABEL = { solid: 'Line', dashed: 'Dashed', dots: 'Dots' };
+// Same stroke-dasharray numbers per SVG unit on an ~18px icon, distinct
+// enough at a glance to read as solid vs dashed vs dotted (a generic
+// "more/ellipsis" glyph read as an unrelated "options" button instead of
+// a line-style control). Drawn as a wavy "S" curve so it reads as a LINE,
+// not a row of unrelated dots.
+const LINE_STYLE_DASH = { solid: undefined, dashed: '3.5 3', dots: '0.1 3.2' };
+
+function LineStyleIcon({ style }) {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M4 17c2.5-7 5.5 7 8 0s5.5-7 8 0"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeDasharray={LINE_STYLE_DASH[style]}
+      />
+    </svg>
+  );
+}
 
 // Rim tuning for the tuning-panel cards' LiquidGlass surface — matches the
 // mode cards' MODE_RIM (SolarSystemScreen.jsx) so every glass surface in the
@@ -190,7 +216,7 @@ export default function SimulationScreen({ onComplete, onBack }) {
   }, [speedFactor]);
 
   const toggleLineStyle = useCallback(() => {
-    const nextStyle = lineStyle === 'solid' ? 'dots' : 'solid';
+    const nextStyle = LINE_STYLE_ORDER[(LINE_STYLE_ORDER.indexOf(lineStyle) + 1) % LINE_STYLE_ORDER.length];
     setLineStyle(nextStyle);
     canvasRef.current?.setLineStyle(nextStyle);
   }, [lineStyle]);
@@ -306,16 +332,11 @@ export default function SimulationScreen({ onComplete, onBack }) {
         </button>
         <button
           type="button"
-          className={`back-button back-button--icon sim-controls__toggle${lineStyle === 'dots' ? ' is-active' : ''}`}
+          className={`back-button back-button--icon sim-controls__toggle${lineStyle !== 'solid' ? ' is-active' : ''}`}
           onClick={toggleLineStyle}
-          aria-label={lineStyle === 'solid' ? 'Dots' : 'Line'}
-          aria-pressed={lineStyle === 'dots'}
+          aria-label={LINE_STYLE_LABEL[lineStyle]}
         >
-          {lineStyle === 'solid' ? (
-            <Ellipsis size={18} strokeWidth={2} aria-hidden="true" />
-          ) : (
-            <Minus size={18} strokeWidth={2} aria-hidden="true" />
-          )}
+          <LineStyleIcon style={lineStyle} />
         </button>
       </div>
     </div>

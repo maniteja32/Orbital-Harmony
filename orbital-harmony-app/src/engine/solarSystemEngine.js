@@ -26,6 +26,7 @@ import { buildStarfield } from './starfieldBackdrop.js';
 // "solid" uses gapSize: 0 so no gap ever opens regardless of dashSize.
 const LINE_STYLES = {
   solid: { dashSize: 1, gapSize: 0 },
+  dashed: { dashSize: 2, gapSize: 2 },
   dots: { dashSize: 0.5, gapSize: 1 },
 };
 import { loadPlanetTexture, buildPlanetBody } from './planetFactory.js';
@@ -1396,7 +1397,7 @@ export function createSolarSystemEngine(canvas, opts) {
     setPaused(value) {
       paused = value;
     },
-    // style: 'solid' | 'dots' — see LINE_STYLES. Only touches the
+    // style: 'solid' | 'dashed' | 'dots' — see LINE_STYLES. Only touches the
     // dashSize/gapSize NUMBERS (never the `dashed` boolean itself, which
     // is a compile-time shader define that would need a costly recompile
     // to toggle).
