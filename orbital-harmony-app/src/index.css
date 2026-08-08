@@ -2048,6 +2048,17 @@ button {
 }
 
 /* ---- Result screen ------------------------------------------------------------ */
+/* .mode-topbar's own 22px horizontal padding stacks on top of `.screen`'s
+   own 22px padding here (unlike Select/Simulation, which escape it via
+   `position: absolute`), doubling the back button's inset and centering
+   the title in a narrower box than every other screen. Cancel the
+   parent's padding with a matching negative margin so it sits flush with
+   the true screen edge — same visual position as everywhere else — while
+   staying in normal flow (this screen isn't full-bleed like Simulation). */
+.screen--result .mode-topbar {
+  margin: 0 -22px;
+}
+
 .result-frame {
   border-radius: var(--radius-lg);
   overflow: hidden;

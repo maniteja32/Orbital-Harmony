@@ -156,7 +156,11 @@ export default function SimulationScreen({ onComplete, onBack }) {
     if (nextLevel === detailLevel) return;
     doneRef.current = false;
     setDetailLevel(nextLevel);
-    setIsPaused(false);
+    // Changing detail remounts the canvas at a fresh detail level (see the
+    // `key` prop below), which restarts the whole pattern from scratch —
+    // so the transport button must flip back to "Play" (paused) instead of
+    // claiming it's already running, ready for the user to start it again.
+    setIsPaused(true);
   }, [detailLevel, setDetailLevel]);
 
   const resetPattern = useCallback(() => {
