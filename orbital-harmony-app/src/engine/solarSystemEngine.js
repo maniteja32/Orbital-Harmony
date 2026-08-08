@@ -1112,8 +1112,10 @@ export function createSolarSystemEngine(canvas, opts) {
         // Scale-down animation: starts after a small delay, then animates over miniIntroDurationSec
         const delayedElapsed = Math.max(0, miniBodiesElapsed - scaleAnimationDelaySec);
         scaleProgress = Math.min(delayedElapsed / Math.max(0.01, miniIntroDurationSec), 1);
-      } else if (miniBodiesIntro) {
-        // Original mini-bodies intro (used on browse screen, etc.)
+      } else if (miniBodiesIntro && !shouldScaleAfterPlay) {
+        // Original mini-bodies intro (used on browse screen, etc.) — never
+        // runs here when `shouldScaleAfterPlay` is set, otherwise bodies
+        // shrank the instant this screen mounted, before Play was pressed.
         scaleProgress = Math.min(miniBodiesElapsed / Math.max(0.01, miniIntroDurationSec), 1);
       }
       
