@@ -36,7 +36,7 @@ function sameDay(a, b) {
  * field; tapping it opens a popover calendar with month + year dropdowns for
  * fast navigation across decades (ideal for birth dates). `value` / `onChange`
  * use 'YYYY-MM-DD' strings; `max` optionally caps the latest selectable day. */
-export function GlassDatePicker({ value, onChange, max, placeholder = 'Select date', id }) {
+export function GlassDatePicker({ value, onChange, max, placeholder = 'Select date', id, minimal = false }) {
   const uid = useId().replace(/:/g, '');
   const dialogId = `gdp-dialog-${uid}`;
   const headingId = `gdp-heading-${uid}`;
@@ -131,31 +131,39 @@ export function GlassDatePicker({ value, onChange, max, placeholder = 'Select da
 
   return (
     <div className={`gdp${open ? ' is-open' : ''}`} ref={rootRef}>
-      <LiquidGlass
-        className="gdp__triggerGlass rounded-[18px] w-full bg-white/[0.03]"
-        style={{
-          '--liquid-glass-rim-width': '0.9px',
-          '--liquid-glass-rim-light': 'rgba(255,255,255,0.28)',
-        }}
-      >
-        <button
-          type="button"
-          id={id}
-          className={`cosmic-input gdp__trigger${selected ? '' : ' gdp__trigger--empty'}`}
-          disabled
-          aria-haspopup="dialog"
-          aria-expanded={open}
-          aria-controls={dialogId}
+      {minimal && selected && (
+        <div className="gdp__selectedDate" aria-live="polite">
+          <span className="gdp__selectedLabel">Selected:</span>
+          <span className="gdp__selectedValue">{label}</span>
+        </div>
+      )}
+      {!minimal && (
+        <LiquidGlass
+          className="gdp__triggerGlass rounded-[18px] w-full bg-white/[0.03]"
+          style={{
+            '--liquid-glass-rim-width': '0.9px',
+            '--liquid-glass-rim-light': 'rgba(255,255,255,0.28)',
+          }}
         >
-          <span>{label}</span>
-          <Calendar size={18} strokeWidth={1.8} className="cosmic-field__icon" aria-hidden="true" />
-        </button>
-      </LiquidGlass>
+          <button
+            type="button"
+            id={id}
+            className={`cosmic-input gdp__trigger${selected ? '' : ' gdp__trigger--empty'}`}
+            disabled
+            aria-haspopup="dialog"
+            aria-expanded={open}
+            aria-controls={dialogId}
+          >
+            <span>{label}</span>
+            <Calendar size={18} strokeWidth={1.8} className="cosmic-field__icon" aria-hidden="true" />
+          </button>
+        </LiquidGlass>
+      )}
 
       <LiquidGlass
         ref={popRef}
         id={dialogId}
-        className="gdp__pop rounded-[20px] bg-white/[0.06]"
+        className={`gdp__pop rounded-[20px] bg-white/[0.06]${minimal ? ' gdp__pop--minimal' : ''}`}
         role="dialog"
         aria-modal="false"
         aria-labelledby={headingId}

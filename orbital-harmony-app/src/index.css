@@ -310,9 +310,9 @@ button {
    needs an explicit top margin sized to clear the header's title +
    subtitle instead. */
 .screen--cosmic .cosmic-form {
-  margin-top: 160px;
+  margin-top: 100px;
   margin-bottom: 80px;
-  padding-top: 16px;
+  padding-top: 0;
 }
 
 .screen--select .screen__header--mode h1 {
@@ -2711,6 +2711,39 @@ button {
   box-shadow: 0 8px 18px -10px rgba(180, 180, 180, 0.38);
 }
 
+/* Minimal date picker - show only selected date text above calendar */
+.gdp__selectedDate {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.gdp__selectedLabel {
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 11px;
+}
+
+.gdp__selectedValue {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.gdp__pop--minimal {
+  position: static;
+  width: 100%;
+  max-width: none;
+  max-height: none;
+  box-shadow: none;
+  background: transparent;
+  padding: 0;
+  backdrop-filter: none;
+}
+
 .gdp__footer {
   margin-top: 12px;
   padding-top: 10px;
@@ -2911,7 +2944,7 @@ button {
   }
 
   .screen--cosmic .cosmic-form {
-    margin-top: 115px;
+    margin-top: 85px;
   }
 
   /* Prevent planet carousel labels from overlapping subtitle at small heights */
@@ -2936,7 +2969,7 @@ button {
   }
 
   .screen--cosmic .cosmic-form {
-    margin-top: 115px;
+    margin-top: 85px;
   }
 
   /* Extra spacing to prevent overlaps on very small screens */

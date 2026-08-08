@@ -38,15 +38,13 @@ export default function CosmicSignatureScreen({ onReveal, onBack }) {
       </div>
 
       <div className="cosmic-form">
-        <label className="cosmic-field">
-          <span className="cosmic-field__label">Date of Birth</span>
-          <GlassDatePicker
-            value={dateStr}
-            max={maxDate}
-            onChange={setDateStr}
-            placeholder="Select your birth date"
-          />
-        </label>
+        <GlassDatePicker
+          value={dateStr}
+          max={maxDate}
+          onChange={setDateStr}
+          placeholder="Select your birth date"
+          minimal={true}
+        />
 
         <p className="cosmic-hint">
           Same birth date always generates the same signature.
