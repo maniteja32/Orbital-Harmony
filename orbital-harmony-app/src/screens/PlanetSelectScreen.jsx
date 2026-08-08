@@ -80,7 +80,7 @@ export default function PlanetSelectScreen({ onNext, onBack }) {
       <div className="screen__actions">
         <div className="select-actions__button">
           <GlassButton tone="primary" className="w-full h-11 text-base font-medium" disabled={!canContinue} onClick={onNext}>
-            Generate Pattern
+            Continue
           </GlassButton>
         </div>
       </div>
