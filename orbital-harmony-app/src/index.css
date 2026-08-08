@@ -2089,8 +2089,23 @@ button {
 .mode-topbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
+  position: relative;
+  height: 44px;
   gap: 12px;
+}
+
+.mode-topbar button:first-child {
+  position: absolute;
+  left: 22px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.mode-topbar span:last-child {
+  position: absolute;
+  right: 22px;
+  width: 44px;
 }
 
 /* Title displayed in top navigation bar beside back button */
@@ -2102,8 +2117,9 @@ button {
   line-height: 1.2;
   color: var(--text-primary);
   margin: 0;
-  flex: 1;
   text-align: center;
+  width: 100%;
+  padding: 0 70px;
 }
 
 /* Compact header when title is in top bar (only shows subtitle/description) */
