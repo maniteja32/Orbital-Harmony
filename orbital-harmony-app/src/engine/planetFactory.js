@@ -1,5 +1,5 @@
 // ============================================================================
-// Orbital Harmony — SINGLE SOURCE OF TRUTH for how a "planet" actually
+// Space Harmony — SINGLE SOURCE OF TRUTH for how a "planet" actually
 // looks: real texture loading (with the same saturation boost) and real
 // mesh/material/ring construction, shared by EVERY screen that renders a
 // planet (Solar System browse, Reveal/Result pattern screens via

@@ -153,7 +153,7 @@ export default function LoadingScreen({ onDone, onExited }) {
 
     // Google Fonts loads with `display: swap` (see index.html), so on a slow
     // connection (common on a cold WKWebView launch, see ios/README.md) the
-    // "Orbital Harmony" title can still be showing its fallback system font
+    // "Space Harmony" title can still be showing its fallback system font
     // when the crossfade begins, then SWAP to Syncopate mid-transition —
     // visually reading as a stray flash of differently-styled text right as
     // the landing screen appears. `document.fonts.ready` resolves once every
@@ -319,7 +319,7 @@ export default function LoadingScreen({ onDone, onExited }) {
         className={`loading-canvas${ready ? ' is-ready' : ''}`}
       />
       <div className="loading-header">
-        <h1 className="loading-title">Orbital Harmony</h1>
+        <h1 className="loading-title">Space Harmony</h1>
         <p className="loading-subtitle">Discover the hidden patterns of planetary motion.</p>
       </div>
       <div className={`loading-message${ready ? ' is-visible' : ''}`}>

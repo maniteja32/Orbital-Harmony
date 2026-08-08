@@ -1,5 +1,5 @@
 // ============================================================================
-// Orbital Harmony — real 3D planet preview renderer for the swipe carousel.
+// Space Harmony — real 3D planet preview renderer for the swipe carousel.
 // The carousel previously drew each planet as a flat CSS radial-gradient
 // circle (and Saturn's rings as a fake gradient ellipse) — this read as
 // cheap/cartoonish next to the actual Three.js solar system. This module

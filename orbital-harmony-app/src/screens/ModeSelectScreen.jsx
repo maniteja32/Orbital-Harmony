@@ -14,7 +14,7 @@ export default function ModeSelectScreen({ onExplore, onCosmic, onBack }) {
           <ArrowLeft size={18} strokeWidth={2} aria-hidden="true" />
           Back
         </button>
-        <button type="button" className="icon-button" aria-label="About Orbital Harmony">
+        <button type="button" className="icon-button" aria-label="About Space Harmony">
           <Info size={22} strokeWidth={2} aria-hidden="true" />
         </button>
       </div>

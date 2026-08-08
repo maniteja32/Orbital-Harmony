@@ -1,10 +1,10 @@
-# Orbital Harmony - Screen Flow & Navigation Map
+# Space Harmony - Screen Flow & Navigation Map
 
 ## APPLICATION ARCHITECTURE
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                    ORBITAL HARMONY                       │
+┌─────────────────────────────────────────────────┐
+│                    SPACE HARMONY                          │
 │              (Main App Shell - App.jsx)                  │
 │  • Starfield backdrop (wider viewports)                 │
 │  • Screen routing via Zustand store (useAppStore)       │

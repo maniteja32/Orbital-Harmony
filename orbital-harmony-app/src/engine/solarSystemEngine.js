@@ -1,5 +1,5 @@
 // ============================================================================
-// Orbital Harmony — Three.js solar-system + pattern-tracer engine.
+// Space Harmony — Three.js solar-system + pattern-tracer engine.
 // Framework-agnostic (no React here) so it can be driven from a single
 // React wrapper component (see components/SolarSystemCanvas.jsx) in two
 // modes:

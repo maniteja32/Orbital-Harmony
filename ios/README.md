@@ -1,4 +1,4 @@
-# Orbital Harmony — iOS App (MVP)
+# Space Harmony — iOS App (MVP)
 
 A native iOS wrapper around the existing [orbital-harmony-app](../orbital-harmony-app)
 React + Three.js web experience. This is an MVP: rather than reimplementing the

@@ -55,7 +55,7 @@ export default function SolarSystemScreen({ onExplore, onCosmic }) {
       />
 
       <div className="system-header">
-        <h1>Orbital Harmony</h1>
+        <h1>Space Harmony</h1>
         <p>Discover the hidden patterns of planetary motion.</p>
       </div>
 

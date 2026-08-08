@@ -8,7 +8,7 @@ const ROWS = [
   { key: 'stats', label: 'My Stats', icon: BarChart3 },
   { key: 'achievements', label: 'Achievements', icon: Trophy },
   { key: 'settings', label: 'Settings', icon: Settings },
-  { key: 'about', label: 'About Orbital Harmony', icon: Info },
+  { key: 'about', label: 'About Space Harmony', icon: Info },
   { key: 'help', label: 'Help & Feedback', icon: HelpCircle },
 ];
 

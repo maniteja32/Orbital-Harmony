@@ -1,4 +1,4 @@
-# Orbital Harmony
+# Space Harmony
 
 A mobile-first React app: pick two planets and discover the hidden
 geometric pattern traced by the line connecting them as they orbit the Sun.

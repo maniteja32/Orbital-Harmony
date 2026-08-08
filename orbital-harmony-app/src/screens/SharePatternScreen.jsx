@@ -46,7 +46,7 @@ export default function SharePatternScreen({ onBack }) {
   const nativeShare = async () => {
     try {
       if (navigator.share) {
-        await navigator.share({ title: `Orbital Harmony — ${title}`, text: `${title} orbital pattern` });
+        await navigator.share({ title: `Space Harmony — ${title}`, text: `${title} orbital pattern` });
       }
     } catch {
       /* user dismissed / unsupported */

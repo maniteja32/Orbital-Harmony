@@ -57,7 +57,7 @@ export default function GeneratingScreen({ onDone, onBack }) {
       </div>
 
       <div className="screen__header">
-        <h1 className="screen__title">Orbital Harmony</h1>
+        <h1 className="screen__title">Space Harmony</h1>
         <p className="screen__subtitle">Discover the hidden patterns of planetary motion.</p>
       </div>
 

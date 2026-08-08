@@ -1,5 +1,5 @@
 // ============================================================================
-// Orbital Harmony — planet data.
+// Space Harmony — planet data.
 // radius/distance/rotationSpeed/tilt/spinDirection mirror the values tuned
 // in the original vanilla-JS prototype (js/main.js) — proportionally
 // believable relative to each other and sized to fit comfortably in view.
