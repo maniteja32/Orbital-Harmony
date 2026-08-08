@@ -2121,6 +2121,7 @@ button {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
+  text-align: center;
   white-space: nowrap;
   max-width: 70%;
   overflow: hidden;
