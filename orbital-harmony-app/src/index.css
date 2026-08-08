@@ -339,9 +339,12 @@ button {
 .screen--select .mode-topbar {
   position: absolute;
   top: calc(16px + var(--safe-top));
-  left: 16px;
+  left: 0;
+  right: 0;
+  width: 100%;
   z-index: 4;
   margin: 0;
+  padding: 0 22px;
 }
 
 .eyebrow {
@@ -2120,12 +2123,11 @@ button {
   margin: 0;
   position: absolute;
   left: 50%;
-  transform: translateX(-50%);
+  top: 50%;
+  transform: translate(-50%, -50%);
   text-align: center;
-  white-space: nowrap;
-  max-width: 70%;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  padding: 0 16px;
+  pointer-events: none;
 }
 
 /* Compact header when title is in top bar (only shows subtitle/description) */
