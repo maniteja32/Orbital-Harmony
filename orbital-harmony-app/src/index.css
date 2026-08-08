@@ -911,6 +911,7 @@ button {
    below comes from .planet-picker's gap instead. */
 .planet-picker .screen-intro {
   margin-top: 0;
+  transform: translateY(-16px);
 }
 
 .swipe-select {
