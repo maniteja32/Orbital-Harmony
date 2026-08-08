@@ -81,6 +81,7 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails, onS
             >
               View Details
             </GlassButton>
+            <LineStyleToggleButton lineStyle={lineStyle} onChange={setLineStyle} />
             <button
               type="button"
               className="back-button back-button--icon"
@@ -89,7 +90,6 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails, onS
             >
               <Share2 size={18} strokeWidth={2} aria-hidden="true" />
             </button>
-            <LineStyleToggleButton lineStyle={lineStyle} onChange={setLineStyle} />
           </div>
           <button type="button" className="btn-frosted-pill" onClick={handleGenerateNew}>
             Generate New Pattern
