@@ -1411,7 +1411,7 @@ button {
    the tuning panel instead of the wrap's raw geometric center. Percentage
    based (of this wrap's own height) so it holds across every viewport. */
 .screen--simulation .solar-canvas-wrap {
-  transform: translateY(7%);
+  transform: translateY(14%);
 }
 
 .sim-tune-panel {
