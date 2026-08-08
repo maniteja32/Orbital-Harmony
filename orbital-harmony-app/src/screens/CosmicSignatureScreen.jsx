@@ -67,7 +67,7 @@ export default function CosmicSignatureScreen({ onReveal, onBack }) {
         <div className="select-actions__button">
           <GlassButton
             tone="primary"
-            className="w-full h-12 text-base font-medium"
+            className="w-full h-11 text-base font-medium"
             disabled={!valid}
             onClick={handleReveal}
           >

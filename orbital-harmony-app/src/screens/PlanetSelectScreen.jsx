@@ -87,7 +87,7 @@ export default function PlanetSelectScreen({ onNext, onBack }) {
           <Home size={18} strokeWidth={2} aria-hidden="true" />
         </button>
         <div className="select-actions__button">
-          <GlassButton tone="primary" className="w-full h-12 text-base font-medium" disabled={!canContinue} onClick={onNext}>
+          <GlassButton tone="primary" className="w-full h-11 text-base font-medium" disabled={!canContinue} onClick={onNext}>
             Generate Pattern
           </GlassButton>
         </div>

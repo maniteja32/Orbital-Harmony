@@ -100,7 +100,7 @@ export default function SharePatternScreen({ onBack }) {
       </div>
 
       <div className="screen__actions">
-        <GlassButton tone="primary" className="w-full h-12 text-base font-medium" onClick={copyLink}>
+        <GlassButton tone="primary" className="w-full h-11 text-base font-medium" onClick={copyLink}>
           {copied ? (
             <span className="share-copied">
               <Check size={18} strokeWidth={2.4} aria-hidden="true" /> Link copied
