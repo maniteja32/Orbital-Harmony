@@ -30,6 +30,19 @@ function quantizeChordCount(rawChordCount, petals) {
   return Math.max(step, Math.round(rawChordCount / step) * step);
 }
 
+// A naive `${percent}%` fill width overshoots/undershoots the native range
+// thumb's actual center at any value other than 0/100 — the browser insets
+// the thumb's travel by its own diameter (18px here) so it never overflows
+// the track edges, but a plain percentage doesn't account for that inset.
+// Mirroring the same inset math (thumbRadius + percent * (100% - thumbSize))
+// keeps the orange fill's right edge exactly under the thumb's center at
+// every value, on any track width.
+const SLIDER_THUMB_SIZE = 18;
+function sliderFillWidth(percent) {
+  const half = SLIDER_THUMB_SIZE / 2;
+  return `calc(${half}px + ${percent / 100} * (100% - ${SLIDER_THUMB_SIZE}px))`;
+}
+
 // Fallback only — used if a selected planet can't be resolved (shouldn't
 // happen in the normal flow). The Explore pattern's real span/density are
 // computed PER PAIR from the two planets' actual orbital periods (see
@@ -194,7 +207,7 @@ export default function SimulationScreen({ onComplete, onBack }) {
           </div>
           <label className="sim-speed-slider" aria-label="Simulation speed">
             <span className="sim-speed-slider__track" />
-            <span className="sim-speed-slider__fill" style={{ width: `${((speedFactor - 0.6) / 1.4) * 100}%` }} />
+            <span className="sim-speed-slider__fill" style={{ width: sliderFillWidth(((speedFactor - 0.6) / 1.4) * 100) }} />
             <input
               type="range"
               min="0.6"
@@ -216,7 +229,7 @@ export default function SimulationScreen({ onComplete, onBack }) {
             </div>
             <label className="sim-speed-slider sim-speed-slider--detail" aria-label="Pattern detail">
               <span className="sim-speed-slider__track" />
-              <span className="sim-speed-slider__fill" style={{ width: `${((detailLevel - DETAIL_LEVEL_MIN) / (DETAIL_LEVEL_MAX - DETAIL_LEVEL_MIN)) * 100}%` }} />
+              <span className="sim-speed-slider__fill" style={{ width: sliderFillWidth(((detailLevel - DETAIL_LEVEL_MIN) / (DETAIL_LEVEL_MAX - DETAIL_LEVEL_MIN)) * 100) }} />
               <input
                 type="range"
                 min={String(DETAIL_LEVEL_MIN)}
