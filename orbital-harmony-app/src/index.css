@@ -1127,7 +1127,7 @@ button {
      the header/buttons (see .swipe-select above); scaling down on short
      viewports while still reaching the full 176px on taller phones keeps
      every row on-screen without clipping Saturn's ring. */
-  height: clamp(112px, 20dvh, 176px);
+  height: clamp(90px, 15dvh, 140px);
   display: flex;
   align-items: center;
   justify-content: center;
