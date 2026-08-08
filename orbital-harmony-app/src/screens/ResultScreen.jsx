@@ -66,10 +66,7 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails, onS
             <p className="result-description">Generated from the planetary arrangement on your birth date.</p>
           </>
         ) : (
-          <>
-            <span className="eyebrow">Your pattern</span>
-            <h1>{title}</h1>
-          </>
+          <h1>{title}</h1>
         )}
       </div>
 
