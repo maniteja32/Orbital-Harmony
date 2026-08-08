@@ -1552,15 +1552,6 @@ button {
 
 .sim-controls__toggle {
   color: var(--text-secondary);
-  width: calc(var(--back-button-size) * 1.2);
-  height: calc(var(--back-button-size) * 1.2);
-  min-height: calc(var(--back-button-size) * 1.2);
-  flex: 0 0 calc(var(--back-button-size) * 1.2);
-}
-
-.sim-controls__toggle svg {
-  width: calc(18px * 1.2);
-  height: calc(18px * 1.2);
 }
 
 .sim-controls__toggle.is-active {
