@@ -11,24 +11,28 @@ import { useAppStore, SPEED_PRESETS } from '../store/useAppStore.js';
 // solarSystemEngine.js) on each tap, instead of a plain on/off toggle.
 const LINE_STYLE_ORDER = ['solid', 'dashed', 'dots'];
 const LINE_STYLE_LABEL = { solid: 'Line', dashed: 'Dashed', dots: 'Dots' };
-// Same stroke-dasharray numbers per SVG unit on an ~18px icon, distinct
-// enough at a glance to read as solid vs dashed vs dotted (a generic
-// "more/ellipsis" glyph read as an unrelated "options" button instead of
-// a line-style control). Drawn as a wavy "S" curve so it reads as a LINE,
-// not a row of unrelated dots.
-const LINE_STYLE_DASH = { solid: undefined, dashed: '3.5 3', dots: '0.1 3.2' };
+// A simple four-petal flower (the app's own pattern figures read as
+// flower-like rosettes) so the icon hints at "pattern style", not just an
+// abstract line. Butt (square) caps on the dash so short segments read as
+// clean rectangular dashes instead of rounding into dot-like pills, which
+// is what made "dashed" and "dots" look nearly identical at this size.
+const LINE_STYLE_DASH = { solid: undefined, dashed: '4.5 3', dots: '0.1 3' };
+const LINE_STYLE_CAP = { solid: 'round', dashed: 'butt', dots: 'round' };
 
 function LineStyleIcon({ style }) {
+  const dash = LINE_STYLE_DASH[style];
+  const cap = LINE_STYLE_CAP[style];
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path
-        d="M4 17c2.5-7 5.5 7 8 0s5.5-7 8 0"
+        d="M12 16.5A4.5 4.5 0 1 1 7.5 12 4.5 4.5 0 1 1 12 7.5a4.5 4.5 0 1 1 4.5 4.5 4.5 4.5 0 1 1-4.5 4.5"
         stroke="currentColor"
         strokeWidth="2"
-        strokeLinecap="round"
+        strokeLinecap={cap}
         strokeLinejoin="round"
-        strokeDasharray={LINE_STYLE_DASH[style]}
+        strokeDasharray={dash}
       />
+      <circle cx="12" cy="12" r="2.75" stroke="currentColor" strokeWidth="2" strokeLinecap={cap} strokeDasharray={dash} />
     </svg>
   );
 }
