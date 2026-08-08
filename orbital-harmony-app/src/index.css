@@ -336,7 +336,8 @@ button {
 /* Back button floats as a top-left chrome pill at the SAME 16px corner
    inset the landing chrome uses, instead of sitting in flow and pushing
    the centered header down. */
-.screen--select .mode-topbar {
+.screen--select .mode-topbar,
+.screen--cosmic .mode-topbar {
   position: absolute;
   top: calc(16px + var(--safe-top));
   left: 0;
