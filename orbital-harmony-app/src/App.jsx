@@ -1,9 +1,16 @@
 import { useState, useRef, useEffect, lazy, Suspense } from 'react';
 import ScreenTransition from './components/ScreenTransition.jsx';
 import LoadingScreen from './screens/LoadingScreen.jsx';
+// Eagerly imported (not lazy) — it's the very first screen shown right after
+// the loading screen's crossfade, so its JS must already be loaded/parsed by
+// the time that handoff happens. Lazy-loading it left a window where the
+// Suspense fallback (a bare unstyled div) rendered underneath the
+// already-fading-out loading screen while its chunk was still being
+// fetched/parsed on mobile — the cause of the visible black gap.
+import SolarSystemScreen from './screens/SolarSystemScreen.jsx';
 
-// Lazy load all screens except LoadingScreen to reduce initial bundle
-const SolarSystemScreen = lazy(() => import('./screens/SolarSystemScreen.jsx'));
+// Lazy load all screens except LoadingScreen/SolarSystemScreen to reduce
+// initial bundle size.
 const ModeSelectScreen = lazy(() => import('./screens/ModeSelectScreen.jsx'));
 const CosmicSignatureScreen = lazy(() => import('./screens/CosmicSignatureScreen.jsx'));
 const PlanetSelectScreen = lazy(() => import('./screens/PlanetSelectScreen.jsx'));
