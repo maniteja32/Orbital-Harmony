@@ -315,6 +315,14 @@ export default function SimulationScreen({ onComplete, onBack }) {
       <div className="sim-controls sim-controls--transport" aria-label="Pattern playback controls">
         <button
           type="button"
+          className="back-button back-button--icon"
+          onClick={resetPattern}
+          aria-label="Reset pattern"
+        >
+          <RotateCcw size={18} strokeWidth={2} aria-hidden="true" />
+        </button>
+        <button
+          type="button"
           className={`back-button back-button--icon sim-controls__toggle${!isPaused ? ' is-active' : ''}`}
           onClick={togglePaused}
           aria-label={isPaused ? 'Play' : 'Pause'}
@@ -325,14 +333,6 @@ export default function SimulationScreen({ onComplete, onBack }) {
           ) : (
             <Pause size={18} strokeWidth={2} aria-hidden="true" />
           )}
-        </button>
-        <button
-          type="button"
-          className="back-button back-button--icon"
-          onClick={resetPattern}
-          aria-label="Reset pattern"
-        >
-          <RotateCcw size={18} strokeWidth={2} aria-hidden="true" />
         </button>
         <button
           type="button"
