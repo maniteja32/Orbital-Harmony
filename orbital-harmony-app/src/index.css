@@ -428,7 +428,9 @@ button {
 
 .system-header {
   position: absolute;
-  top: calc(76px + var(--safe-top));
+  /* Matches .loading-header's top exactly, so the title/subtitle stay
+     visually anchored in place across the loading -> landing crossfade. */
+  top: 9.75%;
   left: 0;
   right: 0;
   z-index: 2;
