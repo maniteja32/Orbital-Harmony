@@ -27,14 +27,15 @@ export default function PlanetSelectScreen({ onNext, onBack }) {
 
   return (
     <div className="screen screen--select">
-      <div className="screen__actions screen__actions--top">
+      <div className="mode-topbar">
         <button type="button" className="back-button back-button--icon" onClick={onBack} aria-label="Back">
           <ArrowLeft size={18} strokeWidth={2} aria-hidden="true" />
         </button>
+        <h1 className="topbar-title">Orbitograph</h1>
+        <span />
       </div>
 
-      <div className="screen__header screen__header--mode">
-        <h1>Orbitograph</h1>
+      <div className="screen__header screen__header--mode screen__header--compact">
         <p>Choose two planets</p>
       </div>
 

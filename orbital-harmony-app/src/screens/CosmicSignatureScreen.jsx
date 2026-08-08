@@ -32,8 +32,20 @@ export default function CosmicSignatureScreen({ onReveal, onBack }) {
 
   return (
     <div className="screen screen--cosmic">
-      <div className="screen__header screen__header--mode">
-        <h1>Cosmic Signature</h1>
+      <div className="mode-topbar">
+        <button
+          type="button"
+          className="back-button back-button--icon"
+          onClick={onBack}
+          aria-label="Back"
+        >
+          <Home size={18} strokeWidth={2} aria-hidden="true" />
+        </button>
+        <h1 className="topbar-title">Cosmic Signature</h1>
+        <span />
+      </div>
+
+      <div className="screen__header screen__header--mode screen__header--compact">
         <p>Enter your birth details</p>
       </div>
 
@@ -52,14 +64,6 @@ export default function CosmicSignatureScreen({ onReveal, onBack }) {
       </div>
 
       <div className="screen__actions">
-        <button
-          type="button"
-          className="back-button back-button--icon"
-          onClick={onBack}
-          aria-label="Home"
-        >
-          <Home size={18} strokeWidth={2} aria-hidden="true" />
-        </button>
         <div className="select-actions__button">
           <GlassButton
             tone="primary"

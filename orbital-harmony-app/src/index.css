@@ -2093,6 +2093,34 @@ button {
   gap: 12px;
 }
 
+/* Title displayed in top navigation bar beside back button */
+.topbar-title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+  color: var(--text-primary);
+  margin: 0;
+  flex: 1;
+  text-align: center;
+}
+
+/* Compact header when title is in top bar (only shows subtitle/description) */
+.screen__header--compact {
+  margin-top: 12px;
+  padding: 0;
+}
+
+.screen__header--compact h1 {
+  display: none;
+}
+
+.screen__header--compact p {
+  margin: 0;
+  font-size: 14px;
+}
+
 /* Small circular glass control (info button) — same frosted-glass language as
    .back-button, just square-ish and iconic. */
 .icon-button {
