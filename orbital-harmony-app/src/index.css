@@ -1294,6 +1294,19 @@ button {
   justify-content: space-between;
 }
 
+/* Shared top nav bar (see TopNavigationBar.jsx), overlaid on the full-bleed
+   canvas at the same position the old back/info button row sat, instead
+   of pushing the canvas down in normal flow. */
+.screen--simulation .mode-topbar {
+  position: absolute;
+  top: calc(28px + var(--safe-top));
+  left: 0;
+  right: 0;
+  z-index: 10;
+  margin: 0;
+  padding: 0 22px;
+}
+
 /* Back button + header used to stack vertically (button above the
    title); now placed in the SAME row via a single-cell CSS grid — both
    children share `grid-area: 1 / 1` so they overlap, with the button
@@ -1348,28 +1361,6 @@ button {
   overflow: hidden;
   border: none;
   background: #000;
-}
-
-/* Selected-pair label, retained on the LIVE generation screen (not just the
-   Result screen) so the user always knows what they're watching get
-   traced. Sits IN-FLOW as a compact header line above the canvas (not an
-   absolutely-positioned overlay floating over the pattern). Sized to
-   EXACTLY match `.screen__header--mode h1` (Result screen's own pair
-   title) so the same "Planet × Planet" text reads at the same size
-   wherever it appears. Vertical position also matches every other
-   screen's header (e.g. "Explore" on Planet Select, measured top: 68px)
-   instead of hugging the very top edge, so it reads as a consistent
-   header position across the whole app. */
-.sim-pair-title {
-  flex-shrink: 0;
-  margin: calc(68px + var(--safe-top)) 22px 0;
-  text-align: center;
-  font-family: var(--font-display);
-  font-size: clamp(19px, 5.6vw, 22px);
-  font-weight: 400;
-  line-height: 1.2;
-  letter-spacing: 0.01em;
-  color: var(--text-primary);
 }
 
 .sim-tune-panel {

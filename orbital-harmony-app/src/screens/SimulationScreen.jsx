@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, Info, Pause, Play, RotateCcw } from 'lucide-react';
+import { Pause, Play, RotateCcw } from 'lucide-react';
 import SolarSystemCanvas from '../components/SolarSystemCanvas.jsx';
+import { TopNavigationBar } from '../components/TopNavigationBar.jsx';
 import { LiquidGlass } from '../components/ui/glasscn/liquid-glass.jsx';
 import { PLANETS, PLANETS_BY_KEY } from '../data/planets.js';
 import { computePatternPlan } from '../utils/resonance.js';
@@ -156,26 +157,7 @@ export default function SimulationScreen({ onComplete, onBack }) {
 
   return (
     <div className="screen screen--simulation">
-      <div className="screen__actions screen__actions--top">
-        {onBack && (
-          <button
-            type="button"
-            className="back-button back-button--icon"
-            onClick={onBack}
-            aria-label="Back"
-          >
-            <ArrowLeft size={18} strokeWidth={2} aria-hidden="true" />
-          </button>
-        )}
-        <button
-          type="button"
-          className="back-button back-button--icon"
-          aria-label="Information"
-        >
-          <Info size={18} strokeWidth={2} aria-hidden="true" />
-        </button>
-      </div>
-      {pairTitle && <p className="sim-pair-title">{pairTitle}</p>}
+      <TopNavigationBar title={pairTitle} onBack={onBack} />
       <div className="sim-canvas-wrap">
         <SolarSystemCanvas
           key={`${planetKeys.join(',')}:${detailLevel}`}
