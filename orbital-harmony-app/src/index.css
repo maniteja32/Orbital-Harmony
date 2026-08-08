@@ -5,6 +5,36 @@
    viewports just get a centered, max-width column (see .app-shell).
    ============================================================================ */
 
+/* Bundled locally (public/fonts/) instead of fetched from Google Fonts over
+   the network — on a slow/cold connection (notably the iOS WKWebView on
+   first launch) the network fetch could still be in flight when text first
+   paints, causing a visible flash from the fallback font to the real one
+   the instant it arrives. Loading from the same origin as everything else
+   removes that race entirely. */
+@font-face {
+  font-family: 'Funnel Display';
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url('/fonts/funnel-300.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Syncopate';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/syncopate-400.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Syncopate';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/syncopate-700.woff2') format('woff2');
+}
+
 :root {
   color-scheme: dark;
   --bg: #030308;
