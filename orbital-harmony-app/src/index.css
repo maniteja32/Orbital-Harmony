@@ -267,29 +267,11 @@ button {
   margin-bottom: 24px;
 }
 
-/* Planet Select's header ("Explore" / "Choose any two planets") reads
-   better centered above the two symmetric Planet A/Planet B carousels
-   below it — scoped to just this screen since other screens using the
-   same `.screen__header` (Result, Simulation) keep their left-aligned
-   title sitting next to a back button/canvas, which centering would
-   throw off.
-
-   For a SEAMLESS landing -> select transition, the title + subtitle are
-   pinned to the EXACT same position and type scale as the landing's
-   `.system-header` (title top ~76px / clamp 22-30px, subtitle 16px), so
-   crossing between the screens keeps them visually anchored and only the
-   words change. The Back button is floated out of flow (see .mode-topbar
-   override below) so it no longer pushes this header down. */
-.screen--select .screen__header {
-  position: absolute;
-  top: calc(76px + var(--safe-top));
-  left: 0;
-  right: 0;
-  z-index: 10;
-  padding: 0 28px;
-  text-align: center;
-}
-
+/* Cosmic Signature's header reads better centered, matching the landing
+   page's `.system-header` position/scale (title top ~76px, subtitle 16px)
+   for a seamless crossfade from Mode Select. Planet Select instead uses
+   `.swipe-select__intro` in normal flow (see below), so it no longer
+   shares this absolute-positioning rule. */
 .screen--cosmic .screen__header {
   position: absolute;
   top: calc(76px + var(--safe-top));
@@ -301,13 +283,11 @@ button {
 }
 
 /* `.screen__header` is taken out of flow (absolute, to match the landing
-   page's title position for a seamless crossfade — see the comment above
-   `.screen--select .screen__header`), so the form right after it in the
-   DOM would otherwise render starting at the very top of `.screen`'s own
-   padding and sit UNDERNEATH/overlapping the header text. Unlike Select
-   (whose tall swipe carousels are vertically centered in the remaining
-   space, which incidentally clears the header), Cosmic's compact form
-   needs an explicit top margin sized to clear the header's title +
+   page's title position for a seamless crossfade), so the form right
+   after it in the DOM would otherwise render starting at the very top of
+   `.screen`'s own padding and sit UNDERNEATH/overlapping the header text.
+   Cosmic's compact form needs an explicit top margin sized to clear the
+   header's title +
    subtitle instead. */
 .screen--cosmic .cosmic-form {
   margin-top: 100px;
@@ -315,18 +295,9 @@ button {
   padding-top: 0;
 }
 
-.screen--select .screen__header--mode h1 {
-  font-size: clamp(20px, 6.4vw, 24px);
-  color: var(--text-primary);
-}
-
 .screen--cosmic .screen__header--mode h1 {
   font-size: clamp(20px, 6.4vw, 24px);
   color: var(--text-primary);
-}
-
-.screen--select .screen__header--mode p {
-  font-size: 16px;
 }
 
 .screen--cosmic .screen__header--mode p {
@@ -934,6 +905,18 @@ button {
    and writes it into --scale/--opacity custom properties, so the
    "coverflow" grow/fade effect tracks the swipe continuously and fluidly
    instead of only snapping between discrete states. */
+/* Instruction line reading as a shared header for BOTH Planet A/Planet B
+   carousels below it, in normal flow so it never overlaps the topbar
+   (unlike the old absolutely-positioned `.screen__header` approach). */
+.swipe-select__intro {
+  margin: 48px 0 0;
+  padding: 0 28px;
+  text-align: center;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
 .swipe-select {
   position: relative;
   flex: 1;
@@ -949,7 +932,6 @@ button {
      buttons on short phones (e.g. iPhone SE, 375×667) — see .swipe-planet
      below for the matching responsive row-height fix. */
   gap: clamp(28px, 8dvh, 96px);
-  margin-top: 120px;
   min-height: 0;
 }
 
@@ -2984,7 +2966,6 @@ button {
 }
 
 @media (max-width: 390px) {
-  .screen--select .screen__header,
   .screen--cosmic .screen__header {
     margin-top: 34px;
   }
@@ -3002,10 +2983,9 @@ button {
     margin-top: 85px;
   }
 
-  /* Prevent planet carousel labels from overlapping subtitle at small heights */
+  /* Tighter inter-group gap so both carousels still fit comfortably */
   .swipe-select {
     gap: clamp(32px, 7dvh, 96px);
-    margin-top: 135px;
   }
 
   .swipe-row__label {
@@ -3027,10 +3007,9 @@ button {
     margin-top: 85px;
   }
 
-  /* Extra spacing to prevent overlaps on very small screens */
+  /* Extra inter-group spacing on very small screens */
   .swipe-select {
     gap: clamp(36px, 8dvh, 96px);
-    margin-top: 145px;
   }
 
   .swipe-row__label {
