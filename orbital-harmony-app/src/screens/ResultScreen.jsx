@@ -116,9 +116,9 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails, onS
           >
             View Details
           </GlassButton>
-          <GlassButton tone="secondary" className="w-full h-11" onClick={handleGenerateNew}>
+          <button type="button" className="btn-frosted-pill" onClick={handleGenerateNew}>
             Generate New Pattern
-          </GlassButton>
+          </button>
         </div>
       )}
     </div>

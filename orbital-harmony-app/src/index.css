@@ -2193,13 +2193,6 @@ button {
   top: calc(50% + 3px);
 }
 
-/* Planet Select / Simulation topbars read a touch bigger than the shared
-   18px baseline (used elsewhere, e.g. Cosmic Signature). */
-.screen--select .topbar-title,
-.screen--simulation .topbar-title {
-  font-size: 20px;
-}
-
 /* Small circular glass control (info button) — same frosted-glass language as
    .back-button, just square-ish and iconic. */
 .icon-button {
