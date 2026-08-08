@@ -3107,11 +3107,13 @@ button {
 
 /* Loading message with pulsing ellipsis — positioned below the orrery
    animation for a calming, minimal feel. Fades in smoothly and remains
-   elegantly unobtrusive, complementing the motion rather than competing. */
+   elegantly unobtrusive, complementing the motion rather than competing.
+   `--system-center-y` + a fixed buffer keeps it clear of the orbit rings
+   (whose radius is derived from the same center) across phone aspect
+   ratios, while staying above the moon image anchored to the bottom. */
 .loading-message {
   position: absolute;
-  /* Match the landing subtitle line so loading -> landing text stays anchored. */
-  top: calc(9.75% + 41px);
+  top: calc(var(--system-center-y) + 22vh);
   left: 0;
   right: 0;
   text-align: center;
