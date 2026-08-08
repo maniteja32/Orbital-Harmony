@@ -17,7 +17,7 @@ const TUNE_RIM = {
 };
 
 const DEFAULT_SPEED_MULTIPLIER = 3;
-const DETAIL_LEVEL_MIN = 0;
+const DETAIL_LEVEL_MIN = 1;
 const DETAIL_LEVEL_MAX = 10;
 const SIMULATION_PATTERN_OPACITY_MULTIPLIER = 0.78;
 
@@ -228,15 +228,13 @@ export default function SimulationScreen({ onComplete, onBack }) {
             </label>
             <div className="sim-slider-labels" aria-hidden="true">
               {Array.from({ length: DETAIL_LEVEL_MAX - DETAIL_LEVEL_MIN + 1 }, (_, index) => DETAIL_LEVEL_MIN + index).map((value) => (
-                value > 0 && (
-                  <span
-                    key={value}
-                    className={`sim-slider-labels__item${detailLevel === value ? ' is-active' : ''}`}
-                    style={{ left: `${((value - DETAIL_LEVEL_MIN) / (DETAIL_LEVEL_MAX - DETAIL_LEVEL_MIN)) * 100}%` }}
-                  >
-                    {value}
-                  </span>
-                )
+                <span
+                  key={value}
+                  className={`sim-slider-labels__item${detailLevel === value ? ' is-active' : ''}`}
+                  style={{ left: `${((value - DETAIL_LEVEL_MIN) / (DETAIL_LEVEL_MAX - DETAIL_LEVEL_MIN)) * 100}%` }}
+                >
+                  {value}
+                </span>
               ))}
             </div>
           </div>
