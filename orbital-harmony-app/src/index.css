@@ -110,13 +110,13 @@ button {
   background: #000000;
 }
 
-/* Ambient full-viewport starfield behind the app column (mounted only on
-   >=561px viewports, see App.jsx). On a phone the column fills the screen so
-   this is never visible; on desktop/web it fills the side margins with the
-   app's own twinkling stars, so the mobile-first column reads as floating in
-   space instead of a narrow strip in dead black. Pure-black backing so the
-   transparent star canvas still reads as deep space; behind all content and
-   non-interactive. */
+/* Ambient full-viewport starfield behind the app column (mounted on every
+   viewport, see App.jsx). On a phone the column fills the screen, so this
+   is the background for screens with no full-bleed canvas of their own; on
+   desktop/web it also fills the side margins with the app's own twinkling
+   stars, so the mobile-first column reads as floating in space instead of
+   a narrow strip in dead black. Pure-black backing so the transparent star
+   canvas still reads as deep space; behind all content and non-interactive. */
 .ambient-stars {
   position: fixed;
   inset: 0;

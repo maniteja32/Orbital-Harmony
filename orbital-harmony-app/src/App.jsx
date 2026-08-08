@@ -59,28 +59,18 @@ export default function App() {
   const [showLoading, setShowLoading] = useState(true);
 
   // Ambient full-viewport starfield behind the app. On a phone the centered
-  // app column fills the whole screen so this is never seen; on a wider
-  // (desktop/web) viewport it fills the side margins with the SAME twinkling
-  // starfield the app uses, so the mobile-first column reads as "floating in
-  // space" instead of a narrow strip cropped in dead black. Mounted ONLY when
-  // there are actually margins (>= 561px, the column's 560px cap) so phones
-  // don't spin up an extra WebGL context for something they'd never show.
+  // app column fills the whole screen, so this reads as the background for
+  // screens with no dedicated full-bleed canvas of their own (Mode Select,
+  // Planet Select, Cosmic Signature, etc.) instead of dead black; on a wider
+  // (desktop/web) viewport it ALSO fills the side margins with the SAME
+  // twinkling starfield, so the mobile-first column reads as "floating in
+  // space". Screens that render their own opaque full-bleed starfield
+  // (Loading, System/Landing) simply paint over this on top, so mounting it
+  // unconditionally causes no visible change there.
   const ambientRef = useRef(null);
   useEffect(() => {
-    const mq = window.matchMedia('(min-width: 561px)');
-    let backdrop = null;
-    const sync = () => {
-      if (mq.matches && !backdrop && ambientRef.current) {
-        backdrop = createStarfieldBackdrop(ambientRef.current);
-      } else if (!mq.matches && backdrop) {
-        backdrop.dispose();
-        backdrop = null;
-      }
-    };
-    sync();
-    mq.addEventListener('change', sync);
+    const backdrop = ambientRef.current ? createStarfieldBackdrop(ambientRef.current) : null;
     return () => {
-      mq.removeEventListener('change', sync);
       backdrop?.dispose();
     };
   }, []);
