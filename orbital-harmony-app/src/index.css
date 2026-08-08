@@ -1402,6 +1402,18 @@ button {
   background: #000;
 }
 
+/* The camera looks at the origin, which lands the sun at the exact
+   vertical center of this wrap — but the overlaid title bar (~72px) and
+   the tuning panel below eat into that space unevenly, reading as the
+   whole system sitting too high. Nudges the rendered system down (same
+   translate-the-wrap technique as `--system-center-y` on the landing
+   screen) so it sits centered in the CLEAR space between the title and
+   the tuning panel instead of the wrap's raw geometric center. Percentage
+   based (of this wrap's own height) so it holds across every viewport. */
+.screen--simulation .solar-canvas-wrap {
+  transform: translateY(7%);
+}
+
 .sim-tune-panel {
   display: flex;
   flex-direction: column;
