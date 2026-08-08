@@ -1,5 +1,6 @@
-import { ArrowLeft, Heart, Share2 } from 'lucide-react';
+import { Heart, Share2 } from 'lucide-react';
 import { GlassButton } from '../components/ui/glasscn/glass-button.jsx';
+import { TopNavigationBar } from '../components/TopNavigationBar.jsx';
 import { PLANETS_BY_KEY } from '../data/planets.js';
 import { formatCosmicSignatureDate } from '../utils/cosmicSignature.js';
 import { useAppStore } from '../store/useAppStore.js';
@@ -23,52 +24,14 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails, onS
 
   return (
     <div className="screen screen--result">
-      <div className="mode-topbar">
-        {onBack ? (
-          <button
-            type="button"
-            className="back-button back-button--icon"
-            onClick={onBack}
-            aria-label="Back"
-          >
-            <ArrowLeft size={18} strokeWidth={2} aria-hidden="true" />
-          </button>
-        ) : (
-          <span />
-        )}
-        {!isCosmic && (
-          <div className="result-topbar__actions">
-            <button
-              type="button"
-              className="back-button back-button--icon"
-              onClick={onSave}
-              aria-label="Save to collection"
-            >
-              <Heart size={18} strokeWidth={2} aria-hidden="true" />
-            </button>
-            <button
-              type="button"
-              className="back-button back-button--icon"
-              onClick={onShare}
-              aria-label="Share this pattern"
-            >
-              <Share2 size={18} strokeWidth={2} aria-hidden="true" />
-            </button>
-          </div>
-        )}
-      </div>
+      <TopNavigationBar title={isCosmic ? 'Cosmic Signature' : title} onBack={onBack} />
 
-      <div className="screen__header screen__header--mode">
-        {isCosmic ? (
-          <>
-            <h1>Cosmic Signature</h1>
-            <p className="result-date">{cosmicDateLabel || 'Date unavailable'}</p>
-            <p className="result-description">Generated from the planetary arrangement on your birth date.</p>
-          </>
-        ) : (
-          <h1>{title}</h1>
-        )}
-      </div>
+      {isCosmic && (
+        <div className="screen__header screen__header--mode">
+          <p className="result-date">{cosmicDateLabel || 'Date unavailable'}</p>
+          <p className="result-description">Generated from the planetary arrangement on your birth date.</p>
+        </div>
+      )}
 
       <div className="result-frame">
         {snapshot ? <img src={snapshot} alt={title} /> : <div className="result-frame__placeholder" />}
@@ -109,13 +72,31 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails, onS
         </div>
       ) : (
         <div className="result-actions">
-          <GlassButton
-            tone="primary"
-            className="w-full h-11 text-base font-medium"
-            onClick={onViewDetails}
-          >
-            View Details
-          </GlassButton>
+          <div className="result-actions__primary-row">
+            <GlassButton
+              tone="primary"
+              className="w-full h-11 text-base font-medium"
+              onClick={onViewDetails}
+            >
+              View Details
+            </GlassButton>
+            <button
+              type="button"
+              className="back-button back-button--icon"
+              onClick={onSave}
+              aria-label="Save to collection"
+            >
+              <Heart size={18} strokeWidth={2} aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              className="back-button back-button--icon"
+              onClick={onShare}
+              aria-label="Share this pattern"
+            >
+              <Share2 size={18} strokeWidth={2} aria-hidden="true" />
+            </button>
+          </div>
           <button type="button" className="btn-frosted-pill" onClick={handleGenerateNew}>
             Generate New Pattern
           </button>
