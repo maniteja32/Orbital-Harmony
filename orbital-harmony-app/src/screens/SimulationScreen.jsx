@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Pause, Play, RotateCcw } from 'lucide-react';
+import { Ellipsis, Minus, Pause, Play, RotateCcw } from 'lucide-react';
 import SolarSystemCanvas from '../components/SolarSystemCanvas.jsx';
 import { TopNavigationBar } from '../components/TopNavigationBar.jsx';
 import { LiquidGlass } from '../components/ui/glasscn/liquid-glass.jsx';
@@ -67,12 +67,15 @@ export default function SimulationScreen({ onComplete, onBack }) {
   const doneRef = useRef(false);
   const [isPaused, setIsPaused] = useState(true);
   const [speedFactor, setSpeedFactor] = useState(1);
+  const [lineStyle, setLineStyle] = useState('solid');
   const isCosmic = patternMode === 'cosmic';
 
   // A detail change remounts SolarSystemCanvas (see its `key` prop below),
   // which always mounts paused (`startPaused`) — resume it once the fresh
   // instance is attached so playback actually matches the "Pause" button
   // handleDetailLevelChange already switches to, instead of staying frozen.
+  // The fresh instance also always renders `solid` (the material's default),
+  // so re-apply the current Line/Dots choice too.
   const isFirstDetailRender = useRef(true);
   useEffect(() => {
     if (isFirstDetailRender.current) {
@@ -80,6 +83,7 @@ export default function SimulationScreen({ onComplete, onBack }) {
       return;
     }
     canvasRef.current?.setPaused(false);
+    canvasRef.current?.setLineStyle(lineStyle);
   }, [detailLevel]);
   const planetAData = PLANETS_BY_KEY[planetA];
   const planetBData = PLANETS_BY_KEY[planetB];
@@ -184,6 +188,12 @@ export default function SimulationScreen({ onComplete, onBack }) {
     canvasRef.current?.setPaused(true);
     setIsPaused(true);
   }, [speedFactor]);
+
+  const toggleLineStyle = useCallback(() => {
+    const nextStyle = lineStyle === 'solid' ? 'dots' : 'solid';
+    setLineStyle(nextStyle);
+    canvasRef.current?.setLineStyle(nextStyle);
+  }, [lineStyle]);
 
   return (
     <div className="screen screen--simulation">
@@ -293,6 +303,19 @@ export default function SimulationScreen({ onComplete, onBack }) {
           aria-label="Reset pattern"
         >
           <RotateCcw size={18} strokeWidth={2} aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          className={`back-button back-button--icon sim-controls__toggle${lineStyle === 'dots' ? ' is-active' : ''}`}
+          onClick={toggleLineStyle}
+          aria-label={lineStyle === 'solid' ? 'Dots' : 'Line'}
+          aria-pressed={lineStyle === 'dots'}
+        >
+          {lineStyle === 'solid' ? (
+            <Ellipsis size={18} strokeWidth={2} aria-hidden="true" />
+          ) : (
+            <Minus size={18} strokeWidth={2} aria-hidden="true" />
+          )}
         </button>
       </div>
     </div>

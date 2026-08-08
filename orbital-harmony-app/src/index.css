@@ -1599,7 +1599,7 @@ button {
 .sim-controls--transport .back-button {
   align-self: center;
   /* Bumped from the shared 44px to 48px for a larger touch target on the
-     two primary transport controls (Play/Pause, Reset). */
+     transport controls (Play/Pause, Reset, Line/Dots). */
   width: 48px;
   height: 48px;
   min-height: 48px;
