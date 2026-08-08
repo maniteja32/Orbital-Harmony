@@ -2089,26 +2089,27 @@ button {
 .mode-topbar {
   display: flex;
   align-items: center;
-  justify-content: center;
-  position: relative;
+  justify-content: space-between;
   height: 44px;
-  gap: 12px;
+  padding: 0 22px;
+  gap: 16px;
+  position: relative;
 }
 
 .mode-topbar button:first-child {
-  position: absolute;
-  left: 22px;
-  top: 50%;
-  transform: translateY(-50%);
+  flex: 0 0 44px;
+  height: 44px;
+  z-index: 1;
 }
 
 .mode-topbar span:last-child {
-  position: absolute;
-  right: 22px;
+  flex: 0 0 44px;
   width: 44px;
+  height: 44px;
+  z-index: 1;
 }
 
-/* Title displayed in top navigation bar beside back button */
+/* Title displayed in top navigation bar - truly centered */
 .topbar-title {
   font-family: var(--font-display);
   font-size: 18px;
@@ -2117,9 +2118,13 @@ button {
   line-height: 1.2;
   color: var(--text-primary);
   margin: 0;
-  text-align: center;
-  width: 100%;
-  padding: 0 70px;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  max-width: 70%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Compact header when title is in top bar (only shows subtitle/description) */
