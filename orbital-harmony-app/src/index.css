@@ -6,16 +6,18 @@
    ============================================================================ */
 
 /* Bundled locally (public/fonts/) instead of fetched from Google Fonts over
-   the network — on a slow/cold connection (notably the iOS WKWebView on
-   first launch) the network fetch could still be in flight when text first
-   paints, causing a visible flash from the fallback font to the real one
-   the instant it arrives. Loading from the same origin as everything else
-   removes that race entirely. */
+   the network. `font-display: block` (not `swap`) so text stays briefly
+   invisible instead of ever painting in a fallback font first — with local
+   files that invisible window is imperceptibly short, but it fully
+   prevents the visible "wrong font, then correct font" flash `swap` allows
+   (which could otherwise still happen: Funnel Display and Syncopate are
+   separate files, so one finishing a moment before the other painted the
+   title in the WRONG one of the two before swapping to the right one). */
 @font-face {
   font-family: 'Funnel Display';
   font-style: normal;
   font-weight: 300 700;
-  font-display: swap;
+  font-display: block;
   src: url('/fonts/funnel-300.woff2') format('woff2');
 }
 
@@ -23,7 +25,7 @@
   font-family: 'Syncopate';
   font-style: normal;
   font-weight: 400;
-  font-display: swap;
+  font-display: block;
   src: url('/fonts/syncopate-400.woff2') format('woff2');
 }
 
@@ -31,7 +33,7 @@
   font-family: 'Syncopate';
   font-style: normal;
   font-weight: 700;
-  font-display: swap;
+  font-display: block;
   src: url('/fonts/syncopate-700.woff2') format('woff2');
 }
 
