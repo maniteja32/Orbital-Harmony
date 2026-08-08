@@ -892,7 +892,10 @@ button {
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  /* Anchored to the top (right under .screen-intro) rather than centered
+     in the remaining space, so the carousels read as directly following
+     the instruction instead of floating away from it on tall viewports. */
+  justify-content: flex-start;
   /* Viewport-proportional breathing room between the Planet A and Planet
      B GROUPS — deliberately much larger than a .swipe-row's own internal
      gap (2px, see below) so the two sections read as clearly separate,
@@ -902,6 +905,7 @@ button {
      buttons on short phones (e.g. iPhone SE, 375×667) — see .swipe-planet
      below for the matching responsive row-height fix. */
   gap: clamp(28px, 8dvh, 96px);
+  margin-top: 24px;
   min-height: 0;
 }
 
