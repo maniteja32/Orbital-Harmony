@@ -388,20 +388,20 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails, onS
           <div className="result-actions__primary-row">
             <button
               type="button"
-              className="back-button back-button--icon"
+              className="back-button back-button--icon result-actions__icon--secondary"
               onClick={onViewDetails}
               aria-label="View details"
             >
               <Info size={18} strokeWidth={2} aria-hidden="true" />
             </button>
-            <LineStyleToggleButton lineStyle={lineStyle} onChange={handleLineStyleChange} />
+            <LineStyleToggleButton lineStyle={lineStyle} onChange={handleLineStyleChange} className="result-actions__icon--secondary" />
             <button
               type="button"
-              className="back-button back-button--icon"
+              className="back-button back-button--icon result-actions__icon--primary"
               onClick={nativeShare}
               aria-label="Share this pattern"
             >
-              <Share2 size={18} strokeWidth={2} aria-hidden="true" />
+              <Share2 size={22} strokeWidth={2} aria-hidden="true" />
             </button>
           </div>
           <button type="button" className="btn-frosted-pill" onClick={handleGenerateNew}>

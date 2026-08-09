@@ -2166,6 +2166,23 @@ button {
   gap: 10px;
 }
 
+/* Share is this row's primary action — sized up to match the Simulation
+   screen's Play/Pause (64px), same "primary flanked by secondary" language
+   as `.sim-controls--transport` uses for its transport row. */
+.result-actions__icon--primary {
+  width: 64px;
+  height: 64px;
+  min-height: 64px;
+  flex: 0 0 64px;
+}
+
+.result-actions__icon--secondary {
+  width: 48px;
+  height: 48px;
+  min-height: 48px;
+  flex: 0 0 48px;
+}
+
 .result-actions__primary-row > [data-slot='glass-button'] {
   flex: 1;
 }
