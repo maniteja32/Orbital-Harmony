@@ -1606,6 +1606,16 @@ button {
   flex: 0 0 48px;
 }
 
+/* Play/Pause is the primary transport action — sized up from the shared
+   48px so it reads as the main control, with Reset/Line-style flanking it
+   at the smaller secondary size. */
+.sim-controls--transport .sim-controls__play {
+  width: 64px;
+  height: 64px;
+  min-height: 64px;
+  flex: 0 0 64px;
+}
+
 .sim-controls__toggle {
   color: var(--text-secondary);
 }

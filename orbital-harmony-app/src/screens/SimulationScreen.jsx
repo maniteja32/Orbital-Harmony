@@ -227,15 +227,15 @@ export default function SimulationScreen({ onComplete, onBack }) {
         </button>
         <button
           type="button"
-          className={`back-button back-button--icon sim-controls__toggle${!isPaused ? ' is-active' : ''}`}
+          className={`back-button back-button--icon sim-controls__toggle sim-controls__play${!isPaused ? ' is-active' : ''}`}
           onClick={togglePaused}
           aria-label={isPaused ? 'Play' : 'Pause'}
           aria-pressed={!isPaused}
         >
           {isPaused ? (
-            <Play size={18} strokeWidth={2} aria-hidden="true" />
+            <Play size={24} strokeWidth={2} aria-hidden="true" />
           ) : (
-            <Pause size={18} strokeWidth={2} aria-hidden="true" />
+            <Pause size={24} strokeWidth={2} aria-hidden="true" />
           )}
         </button>
         <LineStyleToggleButton lineStyle={lineStyle} onChange={handleLineStyleChange} className="sim-controls__toggle" />
