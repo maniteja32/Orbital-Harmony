@@ -247,8 +247,15 @@ const PLAN = {
   // structure, negative space and rotational symmetry are all preserved.
   crowdOnset: 45,        // innerLoops at which beauty relief begins
   crowdSpan: 170,        // innerLoops over which relief ramps to full
-  crowdDensityCut: 0.5,  // up to 50% fewer visible lines at full crowding
-  minOpacity: 0.12,      // faintest the densest sunbursts fade to (lower = airier)
+  // Re-tuned after auditing all 28 pairs in the Pattern Gallery: the
+  // extreme, never-quite-closing pairs (Mercury/Venus/Earth × Uranus/
+  // Neptune, innerLoops in the hundreds) were fading to a near-invisible
+  // 12%-opacity whisper — the opposite of "beautiful", just empty black.
+  // A gentler cut (fewer lines shed) + a much higher opacity floor keeps
+  // even the densest sunburst reading as a bold, legible mandala instead
+  // of vanishing.
+  crowdDensityCut: 0.3,  // up to 30% fewer visible lines at full crowding
+  minOpacity: 0.42,      // faintest the densest sunbursts fade to (lower = airier)
 };
 
 /**
