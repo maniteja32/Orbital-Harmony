@@ -33,16 +33,14 @@ import { buildStarfield } from './starfieldBackdrop.js';
 const LINE_STYLES = {
   solid: { dashSize: 1, gapSize: 0 },
   dashed: { dashSize: 2, gapSize: 1 },
-  // widthScale doubles the stroke thickness (see setLineStyle and
+  // widthScale scales the stroke thickness (see setLineStyle and
   // CANVAS_DASH_STYLES) so a dot reads as a clearly visible mark rather
   // than a barely-visible speck, in both the live trace and the capture.
-  // dashSize raised from 0.05 — that was so tiny it fell below a pixel
-  // for most chords at the live view's typical zoom, so dots barely
-  // rendered at all while tracing and only "appeared" once the capture's
-  // fixed-pixel dash (see CANVAS_DASH_STYLES) took over — the mark itself
-  // must be large enough in WORLD units to survive that projection.
+  // dashSize must stay large enough in WORLD units to survive per-chord
+  // pixel projection (below ~0.05 it fell under a pixel and barely
+  // rendered) — 0.2 (halved from 0.4) is the smaller, still-reliable size.
   // gapSize reduced 2.6 -> 1.3 -> 0.8 for progressively tighter dot spacing.
-  dots: { dashSize: 0.4, gapSize: 0.8, widthScale: 2 },
+  dots: { dashSize: 0.2, gapSize: 0.8, widthScale: 1 },
 };
 
 // Capture-only rendering embellishments for captureDataURL's chord redraw
@@ -53,12 +51,14 @@ const LINE_STYLES = {
 // length/zoom — proportionally scaling even a small world dashSize could
 // still stretch into a visible little bar on a long chord. The GAP still
 // scales proportionally (see below) so dot spacing/density matches the
-// live trace. widthScale matches the live trace's own doubled linewidth
-// (see setLineStyle) so neither surface looks bigger/smaller.
+// live trace. widthScale matches LINE_STYLES.dots' own widthScale (see
+// setLineStyle) so a size change there (the actual diameter control for
+// dots — dashSize/fixedDashPx are already tiny and barely affect the
+// round-cap circle's visible size) shows up in the saved image too.
 const CANVAS_DASH_STYLES = {
   solid: null,
   dashed: { cap: 'butt' },
-  dots: { cap: 'round', widthScale: 2, fixedDashPx: 0.6 },
+  dots: { cap: 'round', widthScale: 1, fixedDashPx: 0.3 },
 };
 import { loadPlanetTexture, buildPlanetBody } from './planetFactory.js';
 
