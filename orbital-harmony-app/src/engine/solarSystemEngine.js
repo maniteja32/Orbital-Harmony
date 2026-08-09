@@ -19,15 +19,30 @@ import { currentOrbitAngleRad } from '../utils/currentPosition.js';
 import { PATTERN_LINE_WIDTH } from '../utils/resonance.js';
 import { buildStarfield } from './starfieldBackdrop.js';
 
-// Pattern-tracer line style presets, ported from the original vanilla-JS
-// prototype (js/main.js) — dashSize/gapSize are in the same screen-space
-// pixel units as LineMaterial's `linewidth` (worldUnits defaults to
-// false), so these numbers stay visually consistent across screen sizes.
-// "solid" uses gapSize: 0 so no gap ever opens regardless of dashSize.
+// Pattern-tracer line style presets — dashSize/gapSize are WORLD-space
+// units (matching each chord's own local distance range, see
+// `patternDistances` below), NOT screen pixels. "solid" uses gapSize: 0 so
+// no gap ever opens regardless of dashSize. "dots" uses a dash MUCH
+// shorter than its gap (instead of dashed's comparable dash/gap) so it
+// reads as small, clearly separated dots rather than a shorter dashed
+// line — the previous 0.5/1 ratio was too close to dashed's 2/2 to tell
+// the two apart at a glance.
 const LINE_STYLES = {
   solid: { dashSize: 1, gapSize: 0 },
-  dashed: { dashSize: 2, gapSize: 2 },
-  dots: { dashSize: 0.5, gapSize: 1 },
+  dashed: { dashSize: 3, gapSize: 1.6 },
+  dots: { dashSize: 0.3, gapSize: 2.2 },
+};
+
+// Canvas-2D equivalents used ONLY by captureDataURL's chord redraw (see
+// below) — expressed as [dash, gap] in absolute pixels (pre-captureRatio),
+// a completely different space than the WebGL material's per-chord world
+// distance above (ctx.setLineDash() works in screen pixels). "dots" uses
+// a near-zero dash so, combined with the round line cap, each mark
+// renders as a small circle instead of a short line segment.
+const CANVAS_DASH_STYLES = {
+  solid: null,
+  dashed: { dash: 7, gap: 5, cap: 'butt' },
+  dots: { dash: 0.01, gap: 6, cap: 'round' },
 };
 import { loadPlanetTexture, buildPlanetBody } from './planetFactory.js';
 
@@ -1012,6 +1027,11 @@ export function createSolarSystemEngine(canvas, opts) {
   let completed = false;
   let onCompleteCb = null;
   let rafId = null;
+  // Tracked separately from the material's raw dashSize/gapSize so
+  // captureDataURL's Canvas-2D redraw (a completely different rasterizer)
+  // knows which style is active and can apply its OWN equivalent dash
+  // pattern (see CANVAS_DASH_STYLES) instead of always drawing solid.
+  let currentLineStyle = 'solid';
 
   // Master-clock angle for a planet at an EXACT simulated day. `day` is the
   // single unified time variable shared by BOTH planets of a chord, so the
@@ -1413,8 +1433,9 @@ export function createSolarSystemEngine(canvas, opts) {
     // is a compile-time shader define that would need a costly recompile
     // to toggle).
     setLineStyle(style) {
+      currentLineStyle = LINE_STYLES[style] ? style : 'solid';
       if (!patternLines) return;
-      const preset = LINE_STYLES[style] ?? LINE_STYLES.solid;
+      const preset = LINE_STYLES[currentLineStyle];
       patternLines.material.dashSize = preset.dashSize;
       patternLines.material.gapSize = preset.gapSize;
     },
@@ -1522,8 +1543,19 @@ export function createSolarSystemEngine(canvas, opts) {
       if (patternLines && patternCount > 0) {
         ctx.strokeStyle = `rgba(255,255,255,${patternOpacity})`;
         ctx.lineWidth = PATTERN_LINE_WIDTH * captureRatio;
-        ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
+        // Apply the CURRENTLY SELECTED line style (see CANVAS_DASH_STYLES)
+        // instead of always stroking solid chords — previously this ignored
+        // `currentLineStyle` entirely, so a saved/shared pattern always
+        // reverted to a solid line even when Dashed or Dots was selected.
+        const dashStyle = CANVAS_DASH_STYLES[currentLineStyle];
+        if (dashStyle) {
+          ctx.setLineDash([dashStyle.dash * captureRatio, dashStyle.gap * captureRatio]);
+          ctx.lineCap = dashStyle.cap;
+        } else {
+          ctx.setLineDash([]);
+          ctx.lineCap = 'round';
+        }
         const v = new THREE.Vector3();
         for (let i = 0; i < patternCount; i++) {
           const base = i * 6;
