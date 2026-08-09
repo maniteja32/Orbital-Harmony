@@ -51,10 +51,10 @@ export default function PatternDetailsScreen({ onBack, onRegenerate }) {
   const pointsGenerated = Math.round((simPlan.totalSimYears * 365.25) / simPlan.traceIntervalDays);
 
   const about = a && b
-    ? `This pattern is traced by the orbital motion of ${a.name} and ${b.name}. The ratio between their orbital periods${
-        resonance ? ` — a ${resonance.longer}:${resonance.shorter} resonance —` : ''
-      } is what shapes this geometry: every time the two planets line up, a new chord is drawn, and those chords weave into the figure you see.`
-    : 'This Cosmic Signature is drawn from the positions of all the planets at your chosen moment, connecting them into a single closed figure unique to that date.';
+    ? `${a.name} and ${b.name} trace this pattern as they orbit${
+        resonance ? ` in a ${resonance.longer}:${resonance.shorter} resonance` : ''
+      } — each alignment draws a new chord.`
+    : 'This Cosmic Signature connects every planet at your chosen moment into one closed figure.';
 
   const params = isCosmic
     ? [
