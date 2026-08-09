@@ -130,13 +130,12 @@ const REFERENCE_TOPBAR_HEIGHT = 44;
 const REFERENCE_SCREEN_GAP = 18;
 const REFERENCE_TITLE_FONT_SIZE = 18;
 const REFERENCE_CARD_RADIUS = 24;
-const REFERENCE_RIM_WIDTH = 0.8;
 
-/** Reproduces the on-screen top-bar title + rounded/bordered result card
- *  (same fonts, proportions and corner radius as index.css) as a single
- *  flat image for sharing/downloading — everything except the back
- *  button, and the pattern itself is drawn at its native captured
- *  resolution with no extra scaling. */
+/** Reproduces the on-screen top-bar title + rounded result card (same
+ *  fonts and corner radius as index.css) as a single flat image for
+ *  sharing/downloading — everything except the back button and border,
+ *  and the pattern itself is drawn at its native captured resolution
+ *  with no extra scaling. */
 async function composeShareImageDataUrl(sourceDataUrl, title, subtitle = '') {
   const image = await loadImage(sourceDataUrl);
   // Match the on-screen square crop exactly: use the smaller of the two
@@ -149,7 +148,6 @@ async function composeShareImageDataUrl(sourceDataUrl, title, subtitle = '') {
   const gap = Math.round(REFERENCE_SCREEN_GAP * scale);
   const titleFontSize = Math.round(REFERENCE_TITLE_FONT_SIZE * scale);
   const cornerRadius = Math.round(REFERENCE_CARD_RADIUS * scale);
-  const rimWidth = Math.max(1, REFERENCE_RIM_WIDTH * scale);
 
   const subtitleFontSize = Math.round(14 * scale);
   const subtitleBlockHeight = subtitle ? Math.round(30 * scale) : 0;
@@ -181,21 +179,14 @@ async function composeShareImageDataUrl(sourceDataUrl, title, subtitle = '') {
     ctx.fillText(subtitle, width / 2, topbarHeight + subtitleBlockHeight / 2);
   }
 
-  // Rounded, bordered card — same corner radius and specular rim as the
-  // live .result-frame — containing the pattern center-cropped to a
-  // square (never stretched) at its full captured resolution.
+  // Rounded card — same corner radius as the live .result-frame —
+  // containing the pattern center-cropped to a square (never stretched)
+  // at its full captured resolution. No border/rim on the export.
   const cardY = headerHeight;
   ctx.save();
   roundedRectPath(ctx, 0, cardY, width, width, cornerRadius);
   ctx.clip();
   drawImageCover(ctx, image, 0, cardY, width);
-  ctx.restore();
-
-  ctx.save();
-  roundedRectPath(ctx, rimWidth / 2, cardY + rimWidth / 2, width - rimWidth, width - rimWidth, cornerRadius);
-  ctx.lineWidth = rimWidth;
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-  ctx.stroke();
   ctx.restore();
 
   return canvas.toDataURL('image/png');
