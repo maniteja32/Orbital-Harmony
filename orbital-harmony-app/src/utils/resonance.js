@@ -339,6 +339,8 @@ function bestResonanceWindow(innerPeriod, outerPeriod) {
  * simulation-duration constant.
  * @param {number} periodA days (real sidereal period)
  * @param {number} periodB days
+ * @param {number} [dirA] orbitDirection of planet A (+1 prograde, -1 retrograde)
+ * @param {number} [dirB] orbitDirection of planet B
  * @returns {{
  *   totalSimYears: number,   // per-pair simulation span (one resonance window)
  *   traceIntervalDays: number, // sim-days between sampled chords
@@ -351,7 +353,7 @@ function bestResonanceWindow(innerPeriod, outerPeriod) {
  *   closed: boolean,         // true when the window closes within tolerance
  * }}
  */
-export function computePatternPlan(periodA, periodB) {
+export function computePatternPlan(periodA, periodB, dirA = 1, dirB = 1) {
   if (!periodA || !periodB || periodA === periodB) {
     // Degenerate/identical orbits: nothing to resonate — fall back to a
     // calm default so the caller never receives NaN/Infinity.
@@ -369,6 +371,11 @@ export function computePatternPlan(periodA, periodB) {
 
   const innerPeriod = Math.min(periodA, periodB);
   const outerPeriod = Math.max(periodA, periodB);
+  // Direction of whichever planet actually has the shorter/longer period —
+  // periodA/periodB may have been swapped above, so their dir flags must
+  // follow the same swap.
+  const dirInner = periodA <= periodB ? dirA : dirB;
+  const dirOuter = periodA <= periodB ? dirB : dirA;
   const { innerRevs, outerRevs, err } = bestResonanceWindow(innerPeriod, outerPeriod);
 
   // Close on whole OUTER-planet loops: the SLOWER planet sweeps a full 360°
@@ -378,7 +385,6 @@ export function computePatternPlan(periodA, periodB) {
   // while the outer completes its whole orbit → a symmetric sunburst).
   const closureDays = outerRevs * outerPeriod;
   const innerLoops = closureDays / innerPeriod;
-  const petals = Math.max(1, Math.round(Math.abs(innerLoops - outerRevs)));
 
   // CLEAN CLOSURE / SYMMETRY: with the REAL periods the inner planet ends a
   // FRACTION of a loop short of a whole number over the closure, leaving a
@@ -392,6 +398,20 @@ export function computePatternPlan(periodA, periodB) {
   const targetOuterLoops = Math.max(1, Math.round(closureDays / outerPeriod));
   const innerRatePerYear = (targetInnerLoops * DAYS_PER_YEAR) / closureDays;
   const outerRatePerYear = (targetOuterLoops * DAYS_PER_YEAR) / closureDays;
+
+  // TRUE rotational symmetry order of the traced chord figure. A chord
+  // connects a point sweeping at dirInner*targetInnerLoops whole turns to
+  // one sweeping at dirOuter*targetOuterLoops turns over the same closure;
+  // the figure repeats every 1/|dirInner*targetInnerLoops -
+  // dirOuter*targetOuterLoops| of the cycle. When both planets sweep the
+  // SAME direction this is the familiar DIFFERENCE of loop counts, but for
+  // a retrograde/prograde pair (e.g. Venus or Uranus paired with anything
+  // prograde) the two sweeps work AGAINST each other and the true order is
+  // their SUM — using the unsigned difference here (as if every planet
+  // sweeps prograde) undercounts the lobes and starves the chord density
+  // below, which reads as an uneven, lopsided figure even though the raw
+  // angle math itself is already correctly signed.
+  const petals = Math.max(1, Math.round(Math.abs(dirInner * targetInnerLoops - dirOuter * targetOuterLoops)));
 
   // Base (smoothness-optimal) density: smooth envelope for few-petal roses
   // (capped so many petals stay discrete) OR an anti-alias floor for

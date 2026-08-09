@@ -68,7 +68,12 @@ export function computeSimulationPlan({ isCosmic, planetA, planetB, detailLevel 
     };
   }
 
-  const plan = computePatternPlan(a.orbitalPeriodDays, b.orbitalPeriodDays);
+  const plan = computePatternPlan(
+    a.orbitalPeriodDays,
+    b.orbitalPeriodDays,
+    a.orbitDirection ?? 1,
+    b.orbitDirection ?? 1,
+  );
   const adjustedChordCount = Math.max(
     120,
     quantizeChordCount(plan.chordCount * detailMultiplier(detailLevel), plan.petals),
