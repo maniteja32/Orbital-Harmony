@@ -26,14 +26,22 @@ function detailMultiplier(level) {
   return 0.7 + (level / DETAIL_LEVEL_MAX) * 0.6;
 }
 
+// Minimum average chords-per-lobe required before snapping to the FULL
+// true petal count — below this, snapping there would starve the total
+// chord budget (severe undersampling), so a smaller step is used instead.
+const MIN_CHORDS_PER_PETAL = 6;
+
 function quantizeChordCount(rawChordCount, petals) {
-  // Capped at 24: snapping to a multiple of `petals` keeps each petal's
-  // chord coverage even for calm, low-petal roses, but for extreme pairs
-  // (100s of petals) a step that large can round the WHOLE chord count
-  // down to barely ~1x petals (severe undersampling — a sparse spoke
-  // pattern instead of a dense sunburst). A smaller, capped step still
-  // rounds cleanly without crushing the density budget.
-  const step = Math.max(1, Math.min(petals || 1, 24));
+  const p = Math.max(1, petals || 1);
+  // Snapping to a whole multiple of the TRUE petal count is what keeps
+  // every lobe's chord coverage perfectly even — any mismatch (e.g. the
+  // old flat 24-cap rounding a 25-petal figure to a multiple of 24)
+  // leaves a visible seam, most noticeable at moderate petal counts where
+  // each lobe is a large, distinct chunk of the image. Only fall back to
+  // the smaller capped step for extreme, hundreds-of-lobes pairs where the
+  // full count would crush the total below a readable density (there the
+  // mismatch is invisible anyway, buried in the sheer overlap).
+  const step = rawChordCount / p >= MIN_CHORDS_PER_PETAL ? p : Math.max(1, Math.min(p, 24));
   return Math.max(step, Math.round(rawChordCount / step) * step);
 }
 
