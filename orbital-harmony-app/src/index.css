@@ -1591,7 +1591,7 @@ button {
 
 .sim-controls--transport {
   align-items: center;
-  gap: 12px;
+  gap: 16px;
   margin: 0 22px;
   padding: 0 0 max(40px, calc(24px + var(--safe-bottom)));
 }
@@ -2176,7 +2176,7 @@ button {
      Reset/Play/Line transport row (`.sim-controls--transport`) — not
      spread across the full row width. */
   justify-content: center;
-  gap: 12px;
+  gap: 16px;
 }
 
 /* `.back-button`'s own `align-self: flex-start` (meant for its usual
