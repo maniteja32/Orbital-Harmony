@@ -5,15 +5,14 @@
 export const LINE_STYLE_ORDER = ['solid', 'dashed', 'dots'];
 export const LINE_STYLE_LABEL = { solid: 'Line', dashed: 'Dashed', dots: 'Dots' };
 
-// A boxed line-style "swatch" — a small rounded frame around the stroke
-// sample, the same convention used by any vector app's line-style picker.
-// The frame is what makes it instantly read as a distinct preview/control
-// rather than a stray dash floating in the button (the plain unframed
-// line this replaced was reported as confusing on its own). Butt (square)
-// caps on the dash so short segments read as clean rectangular dashes
-// instead of rounding into dot-like pills, which is what made "dashed"
-// and "dots" look nearly identical.
-const LINE_STYLE_DASH = { solid: undefined, dashed: '3.5 2.5', dots: '0.1 3' };
+// A circular "orbit ring" swatch — draws the actual stroke sample AS the
+// ring itself (solid ring / dashed ring / dotted ring) instead of a
+// straight line in a box. Ties directly into the app's own orbit-ring
+// visuals and reads clearly at a glance: a full circle, a broken circle,
+// or a circle of dots. Butt (square) caps on the dash so short segments
+// read as clean rectangular dashes instead of rounding into dot-like
+// pills, which is what made "dashed" and "dots" look nearly identical.
+const LINE_STYLE_DASH = { solid: undefined, dashed: '4 3', dots: '0.1 3.6' };
 const LINE_STYLE_CAP = { solid: 'round', dashed: 'butt', dots: 'round' };
 
 export function LineStyleIcon({ style }) {
@@ -21,11 +20,12 @@ export function LineStyleIcon({ style }) {
   const cap = LINE_STYLE_CAP[style];
   return (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <rect x="2.5" y="7.5" width="19" height="9" rx="2.5" stroke="currentColor" strokeWidth="1.4" opacity="0.55" />
-      <path
-        d="M5.5 12h13"
+      <circle
+        cx="12"
+        cy="12"
+        r="8"
         stroke="currentColor"
-        strokeWidth="2.5"
+        strokeWidth="2.4"
         strokeLinecap={cap}
         strokeDasharray={dash}
       />
