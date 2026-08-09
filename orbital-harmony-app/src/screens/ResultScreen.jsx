@@ -94,9 +94,11 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails, onS
             startPaused={false}
             miniBodiesIntro
             miniSunScale={0.5}
-            miniPlanetScale={0.8}
+            miniPlanetScale={1.5}
             miniIntroDurationSec={1}
             miniMotionRampSec={2.6}
+            initialSunScale={0.5}
+            initialPlanetScale={1.5}
             speedDurationSec={speedCfg.durationSec}
             totalSimYears={plan.totalSimYears}
             traceIntervalDays={plan.traceIntervalDays}
