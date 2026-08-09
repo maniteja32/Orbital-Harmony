@@ -36,6 +36,7 @@ export default function App() {
   const patternMode = useAppStore((s) => s.patternMode);
   const setPatternMode = useAppStore((s) => s.setPatternMode);
   const setCosmicDate = useAppStore((s) => s.setCosmicDate);
+  const setLineStyle = useAppStore((s) => s.setLineStyle);
 
   // Warm the shared planet-texture cache the moment the app mounts, while the
   // ~5s loading sequence is on screen. The Solar System engine is only built
@@ -111,7 +112,13 @@ export default function App() {
           {screen === 'result' && (
             <ResultScreen
               onGenerateNew={() => goTo(patternMode === 'cosmic' ? 'cosmic' : 'select')}
-              onBack={() => goTo(patternMode === 'cosmic' ? 'cosmic' : 'settings')}
+              onBack={() => {
+                // Back to the live Simulation screen should resume from its
+                // own default (solid) line style, not whatever was tried
+                // here on the result screen while comparing styles.
+                if (patternMode !== 'cosmic') setLineStyle('solid');
+                goTo(patternMode === 'cosmic' ? 'cosmic' : 'settings');
+              }}
               onViewDetails={() => goTo('details')}
               onShare={() => goTo('share')}
               onSave={() => goTo('collection')}
