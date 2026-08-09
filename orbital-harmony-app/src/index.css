@@ -1624,6 +1624,16 @@ button {
   color: var(--text-primary);
 }
 
+/* Play/Pause is the row's primary action — tinted with the brand accent
+   (same treatment as the Result screen's Share button) so it reads as
+   THE control, not just another icon; overrides both its idle/active
+   states and hover so it stays orange throughout. */
+.sim-controls__play,
+.sim-controls__play.is-active,
+.sim-controls__play:hover {
+  color: var(--accent);
+}
+
 /* ---- Liquid Glass icon buttons (Simulation screen controls) --------------
    Circular, frosted "Liquid Glass" buttons (see components/
    LiquidGlassIconButton.jsx) — line style, play/pause, reset, rocket
