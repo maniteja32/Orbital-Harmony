@@ -60,5 +60,19 @@ export const useAppStore = create((set) => ({
   markSystemIntroPlayed: () => set({ systemIntroPlayed: true }),
 
   resetForNewPattern: () =>
-    set({ screen: 'select', planetA: null, planetB: null, snapshot: null, cosmicDate: null, patternMode: 'explore' }),
+    set({
+      screen: 'select',
+      planetA: null,
+      planetB: null,
+      snapshot: null,
+      cosmicDate: null,
+      patternMode: 'explore',
+      // Preload Celestial Complexity back to the default (5) every new
+      // pattern — detailMultiplier(5) is a neutral 1.0x, the exact setting
+      // the Pattern Gallery preview uses, so leaving this untouched always
+      // reproduces that pair's gallery-tuned mandala. Without this reset,
+      // a complexity tweak on one pair would silently carry over and
+      // change the NEXT pair's default result too.
+      detailLevel: initialSelection.detailLevel,
+    }),
 }));
