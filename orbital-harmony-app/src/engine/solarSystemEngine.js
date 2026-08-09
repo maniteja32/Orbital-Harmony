@@ -30,7 +30,11 @@ import { buildStarfield } from './starfieldBackdrop.js';
 const LINE_STYLES = {
   solid: { dashSize: 1, gapSize: 0 },
   dashed: { dashSize: 3, gapSize: 1.6 },
-  dots: { dashSize: 0.3, gapSize: 2.2 },
+  // Halved from 0.3 — at the old size each dot's dash length rendered as
+  // a visibly elongated blip (bigger than the round-cap circle it was
+  // meant to read as), not a compact dot. Gap widened to match so dots
+  // stay sparse rather than crowding closer together as they shrink.
+  dots: { dashSize: 0.15, gapSize: 2.6 },
 };
 
 // Canvas-2D equivalents used ONLY by captureDataURL's chord redraw (see
@@ -38,11 +42,14 @@ const LINE_STYLES = {
 // a completely different space than the WebGL material's per-chord world
 // distance above (ctx.setLineDash() works in screen pixels). "dots" uses
 // a near-zero dash so, combined with the round line cap, each mark
-// renders as a small circle instead of a short line segment.
+// renders as a small circle instead of a short line segment; `widthScale`
+// shrinks that circle's diameter (which otherwise = the full chord
+// lineWidth, reading as noticeably bigger than the live view's dots)
+// without touching the other styles' stroke weight.
 const CANVAS_DASH_STYLES = {
   solid: null,
   dashed: { dash: 7, gap: 5, cap: 'butt' },
-  dots: { dash: 0.01, gap: 6, cap: 'round' },
+  dots: { dash: 0.01, gap: 6, cap: 'round', widthScale: 0.85 },
 };
 import { loadPlanetTexture, buildPlanetBody } from './planetFactory.js';
 
@@ -1542,13 +1549,13 @@ export function createSolarSystemEngine(canvas, opts) {
 
       if (patternLines && patternCount > 0) {
         ctx.strokeStyle = `rgba(255,255,255,${patternOpacity})`;
-        ctx.lineWidth = PATTERN_LINE_WIDTH * captureRatio;
         ctx.lineJoin = 'round';
         // Apply the CURRENTLY SELECTED line style (see CANVAS_DASH_STYLES)
         // instead of always stroking solid chords — previously this ignored
         // `currentLineStyle` entirely, so a saved/shared pattern always
         // reverted to a solid line even when Dashed or Dots was selected.
         const dashStyle = CANVAS_DASH_STYLES[currentLineStyle];
+        ctx.lineWidth = PATTERN_LINE_WIDTH * captureRatio * (dashStyle?.widthScale ?? 1);
         if (dashStyle) {
           ctx.setLineDash([dashStyle.dash * captureRatio, dashStyle.gap * captureRatio]);
           ctx.lineCap = dashStyle.cap;
