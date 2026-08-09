@@ -150,6 +150,8 @@ export default function SimulationScreen({ onComplete, onBack }) {
           miniPlanetScale={0.8}
           miniIntroDurationSec={1}
           miniMotionRampSec={2.6}
+          initialSunScale={0.5}
+          initialPlanetScale={1.5}
           speedDurationSec={speedCfg.durationSec}
           totalSimYears={totalSimYears}
           traceIntervalDays={traceIntervalDays}

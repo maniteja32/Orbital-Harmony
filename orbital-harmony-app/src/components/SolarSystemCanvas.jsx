@@ -33,6 +33,8 @@ const SolarSystemCanvas = forwardRef(function SolarSystemCanvas(
     miniPlanetScale,
     miniIntroDurationSec,
     miniMotionRampSec,
+    initialSunScale,
+    initialPlanetScale,
     patternStartDate,
     cosmicSnapshotDate,
     onComplete,
@@ -68,6 +70,8 @@ const SolarSystemCanvas = forwardRef(function SolarSystemCanvas(
       miniPlanetScale,
       miniIntroDurationSec,
       miniMotionRampSec,
+      initialSunScale,
+      initialPlanetScale,
       patternStartDate,
       cosmicSnapshotDate,
     });

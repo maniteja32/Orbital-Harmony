@@ -276,6 +276,8 @@ export function createSolarSystemEngine(canvas, opts) {
     miniPlanetScale = 0.58,
     miniIntroDurationSec = 1.15,
     miniMotionRampSec = 2.6,
+    initialSunScale = 1,
+    initialPlanetScale = 1,
     patternStartDate = undefined,
     cosmicSnapshotDate = undefined,
   } = opts;
@@ -478,8 +480,8 @@ export function createSolarSystemEngine(canvas, opts) {
 
   function applyMiniBodyScale(t) {
     const easedT = THREE.MathUtils.clamp(t, 0, 1);
-    const sunScale = THREE.MathUtils.lerp(1, miniSunScale, easedT);
-    const planetScale = THREE.MathUtils.lerp(1, miniPlanetScale, easedT);
+    const sunScale = THREE.MathUtils.lerp(initialSunScale, miniSunScale, easedT);
+    const planetScale = THREE.MathUtils.lerp(initialPlanetScale, miniPlanetScale, easedT);
 
     sunMesh.scale.setScalar(sunScale);
     sunGlowSprites.forEach((sprite) => {
