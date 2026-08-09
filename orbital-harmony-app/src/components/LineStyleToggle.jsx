@@ -5,62 +5,58 @@
 export const LINE_STYLE_ORDER = ['solid', 'dashed', 'dots'];
 export const LINE_STYLE_LABEL = { solid: 'Line', dashed: 'Dashed', dots: 'Dots' };
 
-// A circular "orbit ring" swatch — draws the actual stroke sample AS the
-// ring itself (solid ring / dashed ring / dotted ring) instead of a
-// straight line in a box. Ties directly into the app's own orbit-ring
-// visuals and reads clearly at a glance: a full circle, a ring of bold
-// petal-like dashes, or a ring of varied-size dots (echoing a halftone
-// dot-swirl reference) — a distinct SHAPE per style rather than three
-// subtly different dasharray values on the same thin stroke.
-// 12 dots so the 4-size alternation (12 / 4 = 3 exact cycles) repeats
-// evenly all the way around with no seam — 14 didn't divide evenly by 4,
-// leaving one mismatched dot where the pattern wrapped.
-const DOTS_RING_COUNT = 12;
-const DOTS_RING_RADIUS = 8;
-// Alternating big/small radii around the ring — the varied dot size (not
-// just evenly repeating dots) is what reads as a rich "dot swirl" rather
-// than a plain perforated line.
-const DOTS_RING_SIZES = [1.55, 0.85, 1.15, 0.7];
+// The original four-petal "flower" swatch (the app's own pattern figures
+// read as flower-like rosettes) restored per feedback, now with the SAME
+// evenly-divided dash math used elsewhere: dash/gap is derived from each
+// shape's OWN measured length divided into a WHOLE number of repeats, so
+// the pattern starts and ends symmetrically with no odd cut-off segment
+// (the previous raw '4.5 3' / '0.1 3' dasharrays didn't evenly divide
+// either shape's true length, which is what read as uneven/asymmetric).
+const FLOWER_PATH_D = 'M12 16.5A4.5 4.5 0 1 1 7.5 12 4.5 4.5 0 1 1 12 7.5a4.5 4.5 0 1 1 4.5 4.5 4.5 4.5 0 1 1-4.5 4.5';
+// Measured via path.getTotalLength() in-browser (4 arcs of radius 4.5).
+const FLOWER_PATH_LENGTH = 84.835;
+const FLOWER_CIRCLE_RADIUS = 2.75;
+const FLOWER_CIRCLE_CIRCUMFERENCE = 2 * Math.PI * FLOWER_CIRCLE_RADIUS;
 
-function DotsRing() {
-  return Array.from({ length: DOTS_RING_COUNT }, (_, i) => {
-    const angle = (i / DOTS_RING_COUNT) * Math.PI * 2 - Math.PI / 2;
-    const cx = 12 + DOTS_RING_RADIUS * Math.cos(angle);
-    const cy = 12 + DOTS_RING_RADIUS * Math.sin(angle);
-    const r = DOTS_RING_SIZES[i % DOTS_RING_SIZES.length];
-    return <circle key={i} cx={cx} cy={cy} r={r} fill="currentColor" />;
-  });
+// Counts are multiples of 4 to align with the flower's own 4-fold
+// symmetry (one quarter-turn always looks identical to the next).
+function evenDash(totalLength, count, dashRatio = 0.62) {
+  const period = totalLength / count;
+  const dash = dashRatio == null ? 0.1 : period * dashRatio;
+  return `${dash} ${period - dash}`;
 }
-
-// A raw dasharray like '5.5 3.5' rarely tiles evenly around a circle's
-// circumference, leaving one visibly shorter/longer "seam" dash where the
-// path closes — exactly what made the dashed ring look asymmetric. Instead
-// derive dash+gap from the circumference divided into a WHOLE number of
-// repeats, guaranteeing every dash is identical with no seam.
-const DASHED_RING_RADIUS = 8;
-const DASHED_RING_COUNT = 8;
-const DASHED_RING_PERIOD = (2 * Math.PI * DASHED_RING_RADIUS) / DASHED_RING_COUNT;
-const DASHED_RING_DASH = DASHED_RING_PERIOD * 0.62;
-const DASHED_RING_GAP = DASHED_RING_PERIOD - DASHED_RING_DASH;
+const LINE_STYLE_PATH_DASH = {
+  solid: undefined,
+  dashed: evenDash(FLOWER_PATH_LENGTH, 8),
+  dots: evenDash(FLOWER_PATH_LENGTH, 16, null),
+};
+const LINE_STYLE_CIRCLE_DASH = {
+  solid: undefined,
+  dashed: evenDash(FLOWER_CIRCLE_CIRCUMFERENCE, 4),
+  dots: evenDash(FLOWER_CIRCLE_CIRCUMFERENCE, 8, null),
+};
+const LINE_STYLE_CAP = { solid: 'round', dashed: 'butt', dots: 'round' };
 
 export function LineStyleIcon({ style }) {
-  if (style === 'dots') {
-    return (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <DotsRing />
-      </svg>
-    );
-  }
+  const cap = LINE_STYLE_CAP[style];
   return (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d={FLOWER_PATH_D}
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap={cap}
+        strokeLinejoin="round"
+        strokeDasharray={LINE_STYLE_PATH_DASH[style]}
+      />
       <circle
         cx="12"
         cy="12"
-        r={style === 'dashed' ? DASHED_RING_RADIUS : 8}
+        r={FLOWER_CIRCLE_RADIUS}
         stroke="currentColor"
-        strokeWidth={style === 'dashed' ? 3.2 : 2.4}
-        strokeLinecap={style === 'dashed' ? 'butt' : 'round'}
-        strokeDasharray={style === 'dashed' ? `${DASHED_RING_DASH} ${DASHED_RING_GAP}` : undefined}
+        strokeWidth="2"
+        strokeLinecap={cap}
+        strokeDasharray={LINE_STYLE_CIRCLE_DASH[style]}
       />
     </svg>
   );
