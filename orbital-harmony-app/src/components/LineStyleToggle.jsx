@@ -12,7 +12,10 @@ export const LINE_STYLE_LABEL = { solid: 'Line', dashed: 'Dashed', dots: 'Dots' 
 // petal-like dashes, or a ring of varied-size dots (echoing a halftone
 // dot-swirl reference) — a distinct SHAPE per style rather than three
 // subtly different dasharray values on the same thin stroke.
-const DOTS_RING_COUNT = 14;
+// 12 dots so the 4-size alternation (12 / 4 = 3 exact cycles) repeats
+// evenly all the way around with no seam — 14 didn't divide evenly by 4,
+// leaving one mismatched dot where the pattern wrapped.
+const DOTS_RING_COUNT = 12;
 const DOTS_RING_RADIUS = 8;
 // Alternating big/small radii around the ring — the varied dot size (not
 // just evenly repeating dots) is what reads as a rich "dot swirl" rather
@@ -29,6 +32,17 @@ function DotsRing() {
   });
 }
 
+// A raw dasharray like '5.5 3.5' rarely tiles evenly around a circle's
+// circumference, leaving one visibly shorter/longer "seam" dash where the
+// path closes — exactly what made the dashed ring look asymmetric. Instead
+// derive dash+gap from the circumference divided into a WHOLE number of
+// repeats, guaranteeing every dash is identical with no seam.
+const DASHED_RING_RADIUS = 8;
+const DASHED_RING_COUNT = 8;
+const DASHED_RING_PERIOD = (2 * Math.PI * DASHED_RING_RADIUS) / DASHED_RING_COUNT;
+const DASHED_RING_DASH = DASHED_RING_PERIOD * 0.62;
+const DASHED_RING_GAP = DASHED_RING_PERIOD - DASHED_RING_DASH;
+
 export function LineStyleIcon({ style }) {
   if (style === 'dots') {
     return (
@@ -42,11 +56,11 @@ export function LineStyleIcon({ style }) {
       <circle
         cx="12"
         cy="12"
-        r="8"
+        r={style === 'dashed' ? DASHED_RING_RADIUS : 8}
         stroke="currentColor"
         strokeWidth={style === 'dashed' ? 3.2 : 2.4}
         strokeLinecap={style === 'dashed' ? 'butt' : 'round'}
-        strokeDasharray={style === 'dashed' ? '5.5 3.5' : undefined}
+        strokeDasharray={style === 'dashed' ? `${DASHED_RING_DASH} ${DASHED_RING_GAP}` : undefined}
       />
     </svg>
   );
