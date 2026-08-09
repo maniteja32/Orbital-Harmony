@@ -142,6 +142,7 @@ export default function SimulationScreen({ onComplete, onBack }) {
           tracePattern={!isCosmic}
           physicalPattern={physicalPattern}
           connectAllPlanets={false}
+          showMoon={false}
           cosmicSnapshotDate={isCosmic ? (cosmicDate ?? undefined) : undefined}
           startPaused={true}
           miniBodiesIntro

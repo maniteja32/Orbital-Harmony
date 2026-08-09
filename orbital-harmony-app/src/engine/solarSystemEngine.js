@@ -169,7 +169,7 @@ function browseAngularSpeed(periodDays) {
   return (Math.PI * 2) / orbitSeconds;
 }
 
-function buildPlanet(data, startDate) {
+function buildPlanet(data, startDate, showMoon = true) {
   const pivot = new THREE.Group();
   // Real orbital position (see utils/currentPosition.js) instead of a
   // random angle — planets start where they actually are in their real
@@ -191,7 +191,7 @@ function buildPlanet(data, startDate) {
   tiltAnchor.add(axialTilt);
 
   let moonPivot = null;
-  if (data.hasMoon) {
+  if (data.hasMoon && showMoon) {
     moonPivot = new THREE.Group();
     moonPivot.rotation.y = Math.random() * Math.PI * 2;
     const moonGeo = new THREE.SphereGeometry(data.radius * 0.27, 32, 32);
@@ -242,6 +242,7 @@ function orbitDirection(data) {
  * @param {boolean} [opts.interactive]
  * @param {boolean} [opts.tracePattern]
  * @param {boolean} [opts.showOrbitRings]
+ * @param {boolean} [opts.showMoon]
  * @param {boolean} [opts.cinematicIntro]
  * @param {boolean} [opts.orthographic] - true top-down projection (no
  *   perspective distortion/foreshortening at all) instead of the default
@@ -259,6 +260,7 @@ export function createSolarSystemEngine(canvas, opts) {
     physicalPattern = false,
     connectAllPlanets = false,
     showOrbitRings = true,
+    showMoon = true,
     cinematicIntro = false,
     startSettled = false,
     orthographic = false,
@@ -447,7 +449,7 @@ export function createSolarSystemEngine(canvas, opts) {
   }
 
   const planets = planetDatas.map((data) => {
-    const planet = buildPlanet(data, patternStartDate);
+    const planet = buildPlanet(data, patternStartDate, showMoon);
     // Landing screen only (see LANDING_PLANET_SCALE above) — shrink the
     // whole visual body (mesh + rings + clouds/atmosphere, all children of
     // axialTilt) in place, leaving tiltAnchor's `data.distance` position
