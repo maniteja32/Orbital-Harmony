@@ -8,16 +8,35 @@ export const LINE_STYLE_LABEL = { solid: 'Line', dashed: 'Dashed', dots: 'Dots' 
 // A circular "orbit ring" swatch — draws the actual stroke sample AS the
 // ring itself (solid ring / dashed ring / dotted ring) instead of a
 // straight line in a box. Ties directly into the app's own orbit-ring
-// visuals and reads clearly at a glance: a full circle, a broken circle,
-// or a circle of dots. Butt (square) caps on the dash so short segments
-// read as clean rectangular dashes instead of rounding into dot-like
-// pills, which is what made "dashed" and "dots" look nearly identical.
-const LINE_STYLE_DASH = { solid: undefined, dashed: '4 3', dots: '0.1 3.6' };
-const LINE_STYLE_CAP = { solid: 'round', dashed: 'butt', dots: 'round' };
+// visuals and reads clearly at a glance: a full circle, a ring of bold
+// petal-like dashes, or a ring of varied-size dots (echoing a halftone
+// dot-swirl reference) — a distinct SHAPE per style rather than three
+// subtly different dasharray values on the same thin stroke.
+const DOTS_RING_COUNT = 14;
+const DOTS_RING_RADIUS = 8;
+// Alternating big/small radii around the ring — the varied dot size (not
+// just evenly repeating dots) is what reads as a rich "dot swirl" rather
+// than a plain perforated line.
+const DOTS_RING_SIZES = [1.55, 0.85, 1.15, 0.7];
+
+function DotsRing() {
+  return Array.from({ length: DOTS_RING_COUNT }, (_, i) => {
+    const angle = (i / DOTS_RING_COUNT) * Math.PI * 2 - Math.PI / 2;
+    const cx = 12 + DOTS_RING_RADIUS * Math.cos(angle);
+    const cy = 12 + DOTS_RING_RADIUS * Math.sin(angle);
+    const r = DOTS_RING_SIZES[i % DOTS_RING_SIZES.length];
+    return <circle key={i} cx={cx} cy={cy} r={r} fill="currentColor" />;
+  });
+}
 
 export function LineStyleIcon({ style }) {
-  const dash = LINE_STYLE_DASH[style];
-  const cap = LINE_STYLE_CAP[style];
+  if (style === 'dots') {
+    return (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <DotsRing />
+      </svg>
+    );
+  }
   return (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <circle
@@ -25,9 +44,9 @@ export function LineStyleIcon({ style }) {
         cy="12"
         r="8"
         stroke="currentColor"
-        strokeWidth="2.4"
-        strokeLinecap={cap}
-        strokeDasharray={dash}
+        strokeWidth={style === 'dashed' ? 3.2 : 2.4}
+        strokeLinecap={style === 'dashed' ? 'butt' : 'round'}
+        strokeDasharray={style === 'dashed' ? '5.5 3.5' : undefined}
       />
     </svg>
   );
