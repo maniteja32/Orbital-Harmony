@@ -41,8 +41,8 @@ const LINE_STYLES = {
   // rendered at all while tracing and only "appeared" once the capture's
   // fixed-pixel dash (see CANVAS_DASH_STYLES) took over — the mark itself
   // must be large enough in WORLD units to survive that projection.
-  // gapSize halved (2.6 -> 1.3) for a tighter, denser dot spacing.
-  dots: { dashSize: 0.4, gapSize: 1.3, widthScale: 2 },
+  // gapSize reduced 2.6 -> 1.3 -> 0.8 for progressively tighter dot spacing.
+  dots: { dashSize: 0.4, gapSize: 0.8, widthScale: 2 },
 };
 
 // Capture-only rendering embellishments for captureDataURL's chord redraw
