@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Heart, Share2 } from 'lucide-react';
+import { Heart, Info, Share2 } from 'lucide-react';
 import { GlassButton } from '../components/ui/glasscn/glass-button.jsx';
 import { LiquidGlass } from '../components/ui/glasscn/liquid-glass.jsx';
 import { TopNavigationBar } from '../components/TopNavigationBar.jsx';
@@ -386,13 +386,14 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails, onS
       ) : (
         <div className="result-actions">
           <div className="result-actions__primary-row">
-            <GlassButton
-              tone="primary"
-              className="w-full h-11 text-base font-medium"
+            <button
+              type="button"
+              className="back-button back-button--icon"
               onClick={onViewDetails}
+              aria-label="View details"
             >
-              View Details
-            </GlassButton>
+              <Info size={18} strokeWidth={2} aria-hidden="true" />
+            </button>
             <LineStyleToggleButton lineStyle={lineStyle} onChange={handleLineStyleChange} />
             <button
               type="button"
