@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Pause, Play, RotateCcw } from 'lucide-react';
+import { Pause, Play } from 'lucide-react';
 import SolarSystemCanvas from '../components/SolarSystemCanvas.jsx';
 import { TopNavigationBar } from '../components/TopNavigationBar.jsx';
 import { LineStyleToggleButton } from '../components/LineStyleToggle.jsx';
@@ -30,6 +30,18 @@ const SLIDER_THUMB_SIZE = 18;
 function sliderFillWidth(percent) {
   const half = SLIDER_THUMB_SIZE / 2;
   return `calc(${half}px + ${percent / 100} * (100% - ${SLIDER_THUMB_SIZE}px))`;
+}
+
+// A RotateCcw lookalike with a wider gap between the arrowhead and the
+// circular sweep than lucide's stock icon, so the two ends read as
+// distinct rather than nearly touching.
+function ResetIcon({ size = 18 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-7.5 3.5L3 9" />
+      <path d="M2.2 3.8v5.4h5.4" />
+    </svg>
+  );
 }
 
 /** Live simulation preview screen for Explore/Cosmic flows.
@@ -223,7 +235,7 @@ export default function SimulationScreen({ onComplete, onBack }) {
           onClick={resetPattern}
           aria-label="Reset pattern"
         >
-          <RotateCcw size={18} strokeWidth={2} aria-hidden="true" />
+          <ResetIcon size={18} aria-hidden="true" />
         </button>
         <button
           type="button"
