@@ -95,6 +95,21 @@ function roundedRectPath(ctx, x, y, w, h, radius) {
   ctx.closePath();
 }
 
+// The captured pattern snapshot isn't guaranteed to be square (the WebGL
+// canvas is sized off its container, which can be taller than wide) — the
+// on-screen card only LOOKS square because CSS crops it via `aspect-ratio:
+// 1/1` + `object-fit: cover`. Stretching that source straight into a
+// square destination (plain drawImage) squashes the circular pattern into
+// an oval. This reproduces the same centered crop-not-stretch behavior.
+function drawImageCover(ctx, image, dx, dy, dSize) {
+  const sw = image.naturalWidth || image.width;
+  const sh = image.naturalHeight || image.height;
+  const cropSize = Math.min(sw, sh);
+  const sx = (sw - cropSize) / 2;
+  const sy = (sh - cropSize) / 2;
+  ctx.drawImage(image, sx, sy, cropSize, cropSize, dx, dy, dSize, dSize);
+}
+
 async function ensureFontLoaded(fontShorthand) {
   if (!document.fonts) return;
   try {
@@ -124,7 +139,10 @@ const REFERENCE_RIM_WIDTH = 0.8;
  *  resolution with no extra scaling. */
 async function composeShareImageDataUrl(sourceDataUrl, title, subtitle = '') {
   const image = await loadImage(sourceDataUrl);
-  const width = image.naturalWidth || image.width;
+  // Match the on-screen square crop exactly: use the smaller of the two
+  // captured dimensions so the export never stretches OR upscales past
+  // what was actually captured.
+  const width = Math.min(image.naturalWidth || image.width, image.naturalHeight || image.height);
   const scale = width / REFERENCE_CARD_WIDTH;
 
   const topbarHeight = Math.round(REFERENCE_TOPBAR_HEIGHT * scale);
@@ -164,14 +182,13 @@ async function composeShareImageDataUrl(sourceDataUrl, title, subtitle = '') {
   }
 
   // Rounded, bordered card — same corner radius and specular rim as the
-  // live .result-frame — containing the pattern at its full captured
-  // resolution (drawImage source/destination sizes match exactly, so
-  // nothing is rescaled or resampled).
+  // live .result-frame — containing the pattern center-cropped to a
+  // square (never stretched) at its full captured resolution.
   const cardY = headerHeight;
   ctx.save();
   roundedRectPath(ctx, 0, cardY, width, width, cornerRadius);
   ctx.clip();
-  ctx.drawImage(image, 0, cardY, width, width);
+  drawImageCover(ctx, image, 0, cardY, width);
   ctx.restore();
 
   ctx.save();
