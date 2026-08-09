@@ -29,7 +29,7 @@ import { buildStarfield } from './starfieldBackdrop.js';
 // the two apart at a glance.
 const LINE_STYLES = {
   solid: { dashSize: 1, gapSize: 0 },
-  dashed: { dashSize: 3, gapSize: 1.6 },
+  dashed: { dashSize: 2, gapSize: 1 },
   // Halved from 0.3 — at the old size each dot's dash length rendered as
   // a visibly elongated blip (bigger than the round-cap circle it was
   // meant to read as), not a compact dot. Gap widened to match so dots
@@ -48,7 +48,7 @@ const LINE_STYLES = {
 // without touching the other styles' stroke weight.
 const CANVAS_DASH_STYLES = {
   solid: null,
-  dashed: { dash: 7, gap: 5, cap: 'butt' },
+  dashed: { dash: 2, gap: 1, cap: 'butt' },
   dots: { dash: 0.01, gap: 6, cap: 'round', widthScale: 0.85 },
 };
 import { loadPlanetTexture, buildPlanetBody } from './planetFactory.js';
