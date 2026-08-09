@@ -143,52 +143,55 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails, onS
       )}
 
       <LiquidGlass className="result-frame rounded-[24px] w-full bg-white/[0.05]" style={RESULT_FRAME_RIM}>
-        {regenerating ? (
-          <SolarSystemCanvas
-            key={regenKey}
-            ref={canvasRef}
-            planetKeys={plan.planetKeys}
-            tracePattern
-            physicalPattern={plan.physicalPattern}
-            connectAllPlanets={false}
-            startPaused={false}
-            miniBodiesIntro
-            miniSunScale={0.5}
-            miniPlanetScale={1.5}
-            miniIntroDurationSec={1}
-            miniMotionRampSec={2.6}
-            initialSunScale={0.5}
-            initialPlanetScale={1.5}
-            speedDurationSec={speedCfg.durationSec}
-            totalSimYears={plan.totalSimYears}
-            traceIntervalDays={plan.traceIntervalDays}
-            patternOpacity={plan.patternOpacity}
-            patternRates={plan.patternRates}
-            initialSpeedMultiplier={REGENERATE_SPEED_MULTIPLIER}
-            patternStartDate={cosmicDate ?? undefined}
-            onComplete={handleRegenerateComplete}
-            className="screen__canvas"
-          />
-        ) : snapshot ? (
-          <img src={snapshot} alt={title} />
-        ) : (
-          <div className="result-frame__placeholder" />
-        )}
-      </LiquidGlass>
+        <div className="result-frame__media">
+          {regenerating ? (
+            <SolarSystemCanvas
+              key={regenKey}
+              ref={canvasRef}
+              planetKeys={plan.planetKeys}
+              tracePattern
+              physicalPattern={plan.physicalPattern}
+              connectAllPlanets={false}
+              startPaused={false}
+              miniBodiesIntro
+              miniSunScale={0.5}
+              miniPlanetScale={1.5}
+              miniIntroDurationSec={1}
+              miniMotionRampSec={2.6}
+              initialSunScale={0.5}
+              initialPlanetScale={1.5}
+              speedDurationSec={speedCfg.durationSec}
+              totalSimYears={plan.totalSimYears}
+              traceIntervalDays={plan.traceIntervalDays}
+              patternOpacity={plan.patternOpacity}
+              patternRates={plan.patternRates}
+              initialSpeedMultiplier={REGENERATE_SPEED_MULTIPLIER}
+              patternStartDate={cosmicDate ?? undefined}
+              onComplete={handleRegenerateComplete}
+              className="screen__canvas"
+            />
+          ) : snapshot ? (
+            <img src={snapshot} alt={title} />
+          ) : (
+            <div className="result-frame__placeholder" />
+          )}
+        </div>
 
         {!isCosmic && (
-        <div className="knowledge-card knowledge-card--compact">
+          <div className="result-frame__facts">
             <span className="knowledge-card__title">Fun fact</span>
-          <div className="knowledge-card__body">
+            <span className="result-frame__combo">{title}</span>
+            <div className="knowledge-card__body">
               {factEntries.map((entry) => (
                 <div className="knowledge-card__entry" key={entry.name}>
                   <span className="knowledge-card__entry-title">{entry.name}</span>
                   <p className="knowledge-card__fact">{entry.fact}</p>
                 </div>
               ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </LiquidGlass>
 
       {isCosmic ? (
         <div className="result-actions result-actions--cosmic">

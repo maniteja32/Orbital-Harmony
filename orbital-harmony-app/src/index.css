@@ -2078,11 +2078,11 @@ button {
 
 .result-frame {
   position: relative;
-  display: block;
+  display: flex;
+  flex-direction: column;
   border-radius: 24px;
   overflow: hidden;
   background: #000;
-  aspect-ratio: 1 / 1;
   /* Without this, a flex column's default flex-shrink:1 has almost no
      content-based minimum to resist shrinking (the img/placeholder inside
      has no intrinsic height of its own), so on short mobile viewports
@@ -2095,7 +2095,14 @@ button {
   flex-shrink: 0;
 }
 
-.result-frame img,
+.result-frame__media {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  background: #000;
+  overflow: hidden;
+}
+
+.result-frame__media img,
 .result-frame__placeholder {
   width: 100%;
   height: 100%;
@@ -2105,6 +2112,22 @@ button {
      with no bars, keeping the pattern as large as possible. */
   object-fit: cover;
   display: block;
+}
+
+.result-frame__facts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 12px 14px;
+  background: rgba(10, 10, 14, 0.74);
+  border-top: 1px solid var(--glass-border);
+}
+
+.result-frame__combo {
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
 }
 
 .result-meta {
@@ -3679,6 +3702,7 @@ button {
   font-weight: 600;
   letter-spacing: 0.02em;
   text-transform: uppercase;
+  text-align: center;
 }
 
 .knowledge-card--compact .knowledge-card__eyebrow {
