@@ -36,11 +36,12 @@ const LINE_STYLES = {
   // widthScale doubles the stroke thickness (see setLineStyle and
   // CANVAS_DASH_STYLES) so a dot reads as a clearly visible mark rather
   // than a barely-visible speck, in both the live trace and the capture.
-  // dashSize kept far shorter than the line is thick so even the WebGL
-  // fat-line's square-cut dash reads as a compact mark, not an elongated
-  // dash — was 0.15, which on longer chords still stretched into a
-  // visible little bar rather than a dot.
-  dots: { dashSize: 0.05, gapSize: 2.6, widthScale: 2 },
+  // dashSize raised from 0.05 — that was so tiny it fell below a pixel
+  // for most chords at the live view's typical zoom, so dots barely
+  // rendered at all while tracing and only "appeared" once the capture's
+  // fixed-pixel dash (see CANVAS_DASH_STYLES) took over — the mark itself
+  // must be large enough in WORLD units to survive that projection.
+  dots: { dashSize: 0.4, gapSize: 2.6, widthScale: 2 },
 };
 
 // Capture-only rendering embellishments for captureDataURL's chord redraw
