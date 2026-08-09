@@ -4,17 +4,24 @@ import { GlassButton } from '../components/ui/glasscn/glass-button.jsx';
 import { TopNavigationBar } from '../components/TopNavigationBar.jsx';
 import { PatternGlyph } from '../components/PatternGlyph.jsx';
 import { PLANETS, PLANETS_BY_KEY } from '../data/planets.js';
-import { computePatternPlan, findResonance } from '../utils/resonance.js';
+import { findResonance } from '../utils/resonance.js';
+import { computeSimulationPlan } from '../utils/simulationPlan.js';
 import { useAppStore } from '../store/useAppStore.js';
 
 /** Screen 7 — Pattern Details: a plain-language description + the
- *  pattern's real generation parameters. (The old Settings tab — Speed/
- *  Density presets — was removed: it edited store fields the live
- *  Simulation screen no longer reads, so it had zero effect on the
- *  actual regenerated pattern.) The "Did you know?" fact card now
- *  expands inline below, instead of navigating to a separate screen. */
+ *  pattern's real generation parameters. Parameters are derived from
+ *  computeSimulationPlan (the SAME function that actually generates the
+ *  displayed pattern on the Simulation/Result screens, factoring in
+ *  detailLevel) rather than the raw resonance math alone — otherwise the
+ *  numbers shown here could drift from what was really used whenever the
+ *  Celestial Complexity slider wasn't at its default value. (The old
+ *  Settings tab — Speed/Density presets — was removed for the same
+ *  reason: it edited store fields the live Simulation screen no longer
+ *  reads.) The "Did you know?" fact card expands inline below, instead
+ *  of navigating to a separate screen. */
 export default function PatternDetailsScreen({ onBack, onRegenerate }) {
-  const { planetA, planetB } = useAppStore();
+  const { planetA, planetB, patternMode, detailLevel } = useAppStore();
+  const isCosmic = patternMode === 'cosmic';
   const [showKnowledge, setShowKnowledge] = useState(false);
   const facts = useMemo(
     () => PLANETS.map((p) => ({ key: p.key, name: p.name, color: p.color, fact: p.fact })),
@@ -32,13 +39,16 @@ export default function PatternDetailsScreen({ onBack, onRegenerate }) {
   const b = planetB ? PLANETS_BY_KEY[planetB] : null;
   const title = a && b ? `${a.name} × ${b.name}` : 'Cosmic Signature';
 
-  const { plan, resonance } = useMemo(() => {
-    if (!a || !b) return { plan: null, resonance: null };
-    return {
-      plan: computePatternPlan(a.orbitalPeriodDays, b.orbitalPeriodDays),
-      resonance: findResonance(a.orbitalPeriodDays, b.orbitalPeriodDays),
-    };
+  const resonance = useMemo(() => {
+    if (!a || !b) return null;
+    return findResonance(a.orbitalPeriodDays, b.orbitalPeriodDays);
   }, [a, b]);
+
+  const simPlan = useMemo(
+    () => computeSimulationPlan({ isCosmic, planetA, planetB, detailLevel }),
+    [isCosmic, planetA, planetB, detailLevel]
+  );
+  const pointsGenerated = Math.round((simPlan.totalSimYears * 365.25) / simPlan.traceIntervalDays);
 
   const about = a && b
     ? `This pattern is traced by the orbital motion of ${a.name} and ${b.name}. The ratio between their orbital periods${
@@ -46,15 +56,16 @@ export default function PatternDetailsScreen({ onBack, onRegenerate }) {
       } is what shapes this geometry: every time the two planets line up, a new chord is drawn, and those chords weave into the figure you see.`
     : 'This Cosmic Signature is drawn from the positions of all the planets at your chosen moment, connecting them into a single closed figure unique to that date.';
 
-  const params = plan
+  const params = isCosmic
     ? [
-        { label: 'Trace Interval', value: `${plan.traceIntervalDays.toFixed(1)} days` },
-        { label: 'Total Duration', value: `${plan.totalSimYears.toFixed(1)} years` },
-        { label: 'Points Generated', value: plan.chordCount.toLocaleString() },
+        { label: 'Planets Connected', value: '8' },
+        { label: 'Total Duration', value: `${simPlan.totalSimYears.toFixed(1)} years` },
+        { label: 'Points Generated', value: pointsGenerated.toLocaleString() },
       ]
     : [
-        { label: 'Planets Connected', value: '8' },
-        { label: 'Total Duration', value: '12.0 years' },
+        { label: 'Trace Interval', value: `${simPlan.traceIntervalDays.toFixed(1)} days` },
+        { label: 'Total Duration', value: `${simPlan.totalSimYears.toFixed(1)} years` },
+        { label: 'Points Generated', value: pointsGenerated.toLocaleString() },
       ];
 
   return (
