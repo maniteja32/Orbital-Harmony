@@ -84,39 +84,103 @@ function drawWrappedText(ctx, text, centerX, startY, maxWidth, lineHeight, maxLi
   });
 }
 
+function roundedRectPath(ctx, x, y, w, h, radius) {
+  const r = Math.min(radius, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+async function ensureFontLoaded(fontShorthand) {
+  if (!document.fonts) return;
+  try {
+    await document.fonts.load(fontShorthand);
+    await document.fonts.ready;
+  } catch {
+    /* best effort — falls back to whatever the browser has ready */
+  }
+}
+
+// Reference dimensions the on-screen topbar title + result-frame are
+// styled at (see .topbar-title / .result-frame / .screen's 18px gap in
+// index.css) — every exported size below is this same layout scaled up
+// to the captured pattern's real width, so the export is a faithful
+// reproduction of the on-screen card instead of an invented one.
+const REFERENCE_CARD_WIDTH = 350;
+const REFERENCE_TOPBAR_HEIGHT = 44;
+const REFERENCE_SCREEN_GAP = 18;
+const REFERENCE_TITLE_FONT_SIZE = 18;
+const REFERENCE_CARD_RADIUS = 24;
+const REFERENCE_RIM_WIDTH = 0.8;
+
+/** Reproduces the on-screen top-bar title + rounded/bordered result card
+ *  (same fonts, proportions and corner radius as index.css) as a single
+ *  flat image for sharing/downloading — everything except the back
+ *  button, and the pattern itself is drawn at its native captured
+ *  resolution with no extra scaling. */
 async function composeShareImageDataUrl(sourceDataUrl, title, subtitle = '') {
   const image = await loadImage(sourceDataUrl);
   const width = image.naturalWidth || image.width;
-  const headerHeight = Math.max(112, Math.round(width * 0.2));
+  const scale = width / REFERENCE_CARD_WIDTH;
+
+  const topbarHeight = Math.round(REFERENCE_TOPBAR_HEIGHT * scale);
+  const gap = Math.round(REFERENCE_SCREEN_GAP * scale);
+  const titleFontSize = Math.round(REFERENCE_TITLE_FONT_SIZE * scale);
+  const cornerRadius = Math.round(REFERENCE_CARD_RADIUS * scale);
+  const rimWidth = Math.max(1, REFERENCE_RIM_WIDTH * scale);
+
+  const subtitleFontSize = Math.round(14 * scale);
+  const subtitleBlockHeight = subtitle ? Math.round(30 * scale) : 0;
+  const headerHeight = topbarHeight + subtitleBlockHeight + gap;
+
   const canvas = document.createElement('canvas');
   canvas.width = width;
-  canvas.height = width + headerHeight;
+  canvas.height = headerHeight + width;
 
   const ctx = canvas.getContext('2d');
   if (!ctx) return sourceDataUrl;
 
-  ctx.fillStyle = '#06070a';
+  // Same near-black page background the app is styled on (--bg), so the
+  // header reads as part of one continuous scene, not a bar stuck on top.
+  ctx.fillStyle = '#030308';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  const headerGradient = ctx.createLinearGradient(0, 0, 0, headerHeight);
-  headerGradient.addColorStop(0, 'rgba(12, 16, 24, 0.98)');
-  headerGradient.addColorStop(1, 'rgba(12, 16, 24, 0.82)');
-  ctx.fillStyle = headerGradient;
-  ctx.fillRect(0, 0, canvas.width, headerHeight);
-
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.96)';
+  await ensureFontLoaded(`400 ${titleFontSize}px Syncopate`);
+  ctx.fillStyle = '#f5f6fa';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.font = `600 ${Math.max(30, Math.round(width * 0.06))}px system-ui, -apple-system, BlinkMacSystemFont, sans-serif`;
-  drawWrappedText(ctx, title, width / 2, headerHeight * 0.48, width * 0.84, Math.round(width * 0.066), 2);
+  ctx.font = `400 ${titleFontSize}px Syncopate, 'Funnel Display', -apple-system, sans-serif`;
+  drawWrappedText(ctx, title, width / 2, topbarHeight / 2, width * 0.88, titleFontSize * 1.3, 2);
 
   if (subtitle) {
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.72)';
-    ctx.font = `500 ${Math.max(16, Math.round(width * 0.03))}px system-ui, -apple-system, BlinkMacSystemFont, sans-serif`;
-    ctx.fillText(subtitle, width / 2, headerHeight * 0.78);
+    await ensureFontLoaded(`600 ${subtitleFontSize}px 'Funnel Display'`);
+    ctx.fillStyle = '#f5f6fa';
+    ctx.font = `600 ${subtitleFontSize}px 'Funnel Display', -apple-system, sans-serif`;
+    ctx.fillText(subtitle, width / 2, topbarHeight + subtitleBlockHeight / 2);
   }
 
-  ctx.drawImage(image, 0, headerHeight, width, width);
+  // Rounded, bordered card — same corner radius and specular rim as the
+  // live .result-frame — containing the pattern at its full captured
+  // resolution (drawImage source/destination sizes match exactly, so
+  // nothing is rescaled or resampled).
+  const cardY = headerHeight;
+  ctx.save();
+  roundedRectPath(ctx, 0, cardY, width, width, cornerRadius);
+  ctx.clip();
+  ctx.drawImage(image, 0, cardY, width, width);
+  ctx.restore();
+
+  ctx.save();
+  roundedRectPath(ctx, rimWidth / 2, cardY + rimWidth / 2, width - rimWidth, width - rimWidth, cornerRadius);
+  ctx.lineWidth = rimWidth;
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+  ctx.stroke();
+  ctx.restore();
+
   return canvas.toDataURL('image/png');
 }
 
