@@ -27,6 +27,14 @@
     import { PLANETS, PLANETS_BY_KEY } from '/src/data/planets.js';
     import { currentOrbitAngleRad } from '/src/utils/currentPosition.js';
     import { computePatternPlan, PATTERN_LINE_WIDTH } from '/src/utils/resonance.js';
+    import { computeSimulationPlan } from '/src/utils/simulationPlan.js';
+
+    // Matches the app's default Celestial Complexity slider position, so
+    // this preview's chord count/opacity are the SAME computeSimulationPlan
+    // output the live app actually renders (not the unadjusted, unquantized
+    // computePatternPlan numbers, which used to make this preview diverge
+    // from the real generated pattern).
+    const PREVIEW_DETAIL_LEVEL = 5;
 
     const DPY = 365.25, TWO_PI = Math.PI * 2;
     // Same 2-planet pattern-mode radius scaling as solarSystemEngine.js:
@@ -46,6 +54,9 @@
     function build(ka, kb) {
       const a = PLANETS_BY_KEY[ka], b = PLANETS_BY_KEY[kb];
       const p = computePatternPlan(a.orbitalPeriodDays, b.orbitalPeriodDays);
+      const sim = computeSimulationPlan({ isCosmic: false, planetA: ka, planetB: kb, detailLevel: PREVIEW_DETAIL_LEVEL });
+      const chordCount = Math.round((sim.totalSimYears * DPY) / sim.traceIntervalDays);
+      const lineOpacity = sim.patternOpacity;
       const innerIsA = a.orbitalPeriodDays <= b.orbitalPeriodDays;
       const maxAU = Math.max(a.realDistanceAU, b.realDistanceAU);
       const minAU = Math.min(a.realDistanceAU, b.realDistanceAU);
@@ -55,7 +66,7 @@
       const outerP = Math.max(a.orbitalPeriodDays, b.orbitalPeriodDays);
       const angIn = currentOrbitAngleRad(innerIsA ? a : b);
       const angOut = currentOrbitAngleRad(innerIsA ? b : a);
-      const closureDays = p.totalSimYears * DPY;
+      const closureDays = sim.totalSimYears * DPY;
       // Whole-loop clean closure (matches the engine's idealized rates).
       const tInner = Math.max(1, Math.round(closureDays / innerP));
       const tOuter = Math.max(1, Math.round(closureDays / outerP));
@@ -71,16 +82,18 @@
       for (const r of [rIn, rOut]) { ctx.beginPath(); ctx.arc(0, 0, r * scale, 0, TWO_PI); ctx.stroke(); }
       // sun dot
       ctx.fillStyle = 'rgba(255,210,120,0.9)'; ctx.beginPath(); ctx.arc(0, 0, 2.4, 0, TWO_PI); ctx.fill();
-      // pattern
-      ctx.strokeStyle = `rgba(255,255,255,${(0.92 * p.lineOpacity).toFixed(3)})`;
+      // pattern — lineOpacity is the EXACT patternOpacity the live engine's
+      // LineMaterial uses (already includes the reveal-screen dimming), so
+      // stroke alpha matches the real app 1:1 (no extra 0.92 fudge factor).
+      ctx.strokeStyle = `rgba(255,255,255,${lineOpacity.toFixed(3)})`;
       // Shared with the live engine via PATTERN_LINE_WIDTH so every pair
       // renders at the SAME stroke weight on both surfaces; round caps/joins
       // match the engine's smooth, even line quality.
       ctx.lineWidth = PATTERN_LINE_WIDTH;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
-      const stepF = 1 / p.chordCount;
-      for (let i = 0; i <= p.chordCount; i++) {
+      const stepF = 1 / chordCount;
+      for (let i = 0; i <= chordCount; i++) {
         const f = i * stepF;
         const ai = angIn + f * tInner * TWO_PI;
         const ao = angOut + f * tOuter * TWO_PI;
@@ -89,7 +102,7 @@
         ctx.lineTo(rOut * Math.cos(ao) * scale, -rOut * Math.sin(ao) * scale);
         ctx.stroke();
       }
-      return { cv, p };
+      return { cv, p, chordCount, lineOpacity };
     }
 
     const grid = document.getElementById('grid');
@@ -99,12 +112,12 @@
     }).sort((x, y) => x.years - y.years);
 
     for (const { ka, kb } of rows) {
-      const { cv, p } = build(ka, kb);
+      const { cv, p, chordCount, lineOpacity } = build(ka, kb);
       const fig = document.createElement('figure');
       fig.appendChild(cv);
       const cap = document.createElement('figcaption');
       const yrs = p.totalSimYears >= 100 ? `${Math.round(p.totalSimYears)}` : p.totalSimYears.toFixed(1);
-      cap.innerHTML = `<b>${ka} × ${kb}</b><span class="meta">${p.innerRevs}:${p.outerRevs} · ${p.petals} lobes · ${yrs} yr · ${p.chordCount} lines${p.lineOpacity < 0.99 ? ` · ${Math.round(p.lineOpacity*100)}% opacity` : ''}</span>`;
+      cap.innerHTML = `<b>${ka} × ${kb}</b><span class="meta">${p.innerRevs}:${p.outerRevs} · ${p.petals} lobes · ${yrs} yr · ${chordCount} lines${lineOpacity < 0.99 ? ` · ${Math.round(lineOpacity*100)}% opacity` : ''}</span>`;
       fig.appendChild(cap);
       grid.appendChild(fig);
     }

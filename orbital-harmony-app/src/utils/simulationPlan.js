@@ -27,7 +27,13 @@ function detailMultiplier(level) {
 }
 
 function quantizeChordCount(rawChordCount, petals) {
-  const step = Math.max(1, petals || 1);
+  // Capped at 24: snapping to a multiple of `petals` keeps each petal's
+  // chord coverage even for calm, low-petal roses, but for extreme pairs
+  // (100s of petals) a step that large can round the WHOLE chord count
+  // down to barely ~1x petals (severe undersampling — a sparse spoke
+  // pattern instead of a dense sunburst). A smaller, capped step still
+  // rounds cleanly without crushing the density budget.
+  const step = Math.max(1, Math.min(petals || 1, 24));
   return Math.max(step, Math.round(rawChordCount / step) * step);
 }
 

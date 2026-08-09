@@ -220,11 +220,17 @@ const PLAN = {
   //    extreme-ratio sunburst (e.g. Mercury:Neptune, ~684 inner loops) is
   //    sampled finely enough to render as clean rays rather than a stacking
   //    streak, without ballooning the total.
+  // chordsPerInnerLoop/maxChords raised (1.3->4, 820->3000): at the old
+  // values the most extreme pairs (267-684 loops) got barely ~1 chord per
+  // petal — mathematically correct but visually a sparse, spoke-like
+  // scribble rather than a dense sunburst. ~3 chords/petal reads as a
+  // proper radiant flower; still comfortably under the 40000-chord GPU
+  // buffer cap in solarSystemEngine.js.
   chordsPerPetal: 80,
   smoothCap: 420,
-  chordsPerInnerLoop: 1.3,
+  chordsPerInnerLoop: 4,
   minChords: 300,
-  maxChords: 820,
+  maxChords: 3000,
   // --- PATTERN BEAUTY OPTIMIZATION layer -----------------------------------
   // Separates simulation accuracy (the full resonance closure above, always
   // computed) from RENDERING density: the most beautiful figure is not the
