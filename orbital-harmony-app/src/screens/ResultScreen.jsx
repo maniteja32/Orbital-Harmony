@@ -356,7 +356,7 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails, onS
             <div className="select-actions__button">
               <GlassButton
                 tone="secondary"
-                className="w-full h-11 text-base font-medium"
+                className="w-full h-12 text-base font-medium"
                 onClick={onSave}
                 aria-label="Save signature"
               >
@@ -367,7 +367,7 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails, onS
             <div className="select-actions__button">
               <GlassButton
                 tone="secondary"
-                className="w-full h-11 text-base font-medium"
+                className="w-full h-12 text-base font-medium"
                 onClick={nativeShare}
                 aria-label="Share signature"
               >
@@ -378,7 +378,7 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails, onS
           </div>
 
           <div className="result-actions__primary-row">
-            <GlassButton tone="primary" className="w-full h-11 text-base font-medium" onClick={handleGenerateNew}>
+            <GlassButton tone="primary" className="w-full h-12 text-base font-medium" onClick={handleGenerateNew}>
               Generate New Signature
             </GlassButton>
           </div>
@@ -393,7 +393,7 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails, onS
               onClick={nativeShare}
               aria-label="Share this pattern"
             >
-              <Share2 size={22} strokeWidth={2} aria-hidden="true" />
+              <Share2 size={28} strokeWidth={2} aria-hidden="true" />
             </button>
             <button
               type="button"
@@ -401,7 +401,7 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails, onS
               onClick={onViewDetails}
               aria-label="View details"
             >
-              <Info size={18} strokeWidth={2} aria-hidden="true" />
+              <Info size={24} strokeWidth={2} aria-hidden="true" />
             </button>
           </div>
           <button type="button" className="btn-frosted-pill" onClick={handleGenerateNew}>

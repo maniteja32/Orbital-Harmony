@@ -22,7 +22,7 @@ export default function ProfileScreen({ onBack }) {
           onClick={onBack}
           aria-label="Back to home"
         >
-          <ArrowLeft size={18} strokeWidth={2} aria-hidden="true" />
+          <ArrowLeft size={24} strokeWidth={2} aria-hidden="true" />
         </button>
       </div>
 

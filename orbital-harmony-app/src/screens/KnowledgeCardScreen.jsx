@@ -37,7 +37,7 @@ export default function KnowledgeCardScreen({ onClose }) {
             onClick={onClose}
             aria-label="Close"
           >
-            <X size={20} strokeWidth={2} aria-hidden="true" />
+            <X size={24} strokeWidth={2} aria-hidden="true" />
           </button>
         </div>
 

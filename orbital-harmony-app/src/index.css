@@ -52,7 +52,7 @@
   --radius-lg: 26px;
   --radius-md: 18px;
   --radius-sm: 12px;
-  --back-button-size: 44px;
+  --back-button-size: 48px;
   /* All UI copy (subtitles, body) AND capsule buttons use Funnel Display.
      Display headings stay Syncopate. */
   --font-ui: 'Funnel Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -221,7 +221,7 @@ button {
   align-items: center;
   justify-content: center;
   width: 100%;
-  height: 44px;
+  height: 48px;
   border-radius: var(--radius-lg);
   border: none;
   color: var(--text-primary);
@@ -470,8 +470,8 @@ button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
   border-radius: 999px;
   color: var(--text-primary);
   background: rgba(3, 3, 8, 0.32);
@@ -488,8 +488,8 @@ button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
   border-radius: 999px;
   color: var(--text-primary);
   background: rgba(3, 3, 8, 0.32);
@@ -1598,8 +1598,9 @@ button {
 
 .sim-controls--transport .back-button {
   align-self: center;
-  /* Bumped from the shared 44px to 48px for a larger touch target on the
-     transport controls (Play/Pause, Reset, Line/Dots). */
+  /* Same 48px shared default as every other icon button in the app now
+     (see `--back-button-size`) — kept explicit here since Play/Pause
+     right next to it is deliberately bigger (64px). */
   width: 48px;
   height: 48px;
   min-height: 48px;
@@ -2231,22 +2232,22 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 44px;
+  height: 48px;
   padding: 0 22px;
   gap: 16px;
   position: relative;
 }
 
 .mode-topbar button:first-child {
-  flex: 0 0 44px;
-  height: 44px;
+  flex: 0 0 48px;
+  height: 48px;
   z-index: 1;
 }
 
 .mode-topbar span:last-child {
-  flex: 0 0 44px;
-  width: 44px;
-  height: 44px;
+  flex: 0 0 48px;
+  width: 48px;
+  height: 48px;
   z-index: 1;
 }
 
@@ -2282,8 +2283,8 @@ button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
   border-radius: 999px;
   border: none;
   color: var(--text-secondary);
@@ -3094,10 +3095,10 @@ button {
 }
 
 .screen--cosmic .screen__actions > .back-button--icon {
-  width: 44px;
-  height: 44px;
-  min-height: 44px;
-  flex: 0 0 44px;
+  width: 48px;
+  height: 48px;
+  min-height: 48px;
+  flex: 0 0 48px;
 }
 
 .screen--select .select-actions__button:first-child,

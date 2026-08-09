@@ -11,11 +11,11 @@ export default function ModeSelectScreen({ onExplore, onCosmic, onBack }) {
     <div className="screen screen--mode">
       <div className="mode-topbar">
         <button type="button" className="back-button" onClick={onBack} aria-label="Back to the Solar System">
-          <ArrowLeft size={18} strokeWidth={2} aria-hidden="true" />
+          <ArrowLeft size={24} strokeWidth={2} aria-hidden="true" />
           Back
         </button>
         <button type="button" className="icon-button" aria-label="About Space Harmony">
-          <Info size={22} strokeWidth={2} aria-hidden="true" />
+          <Info size={24} strokeWidth={2} aria-hidden="true" />
         </button>
       </div>
 

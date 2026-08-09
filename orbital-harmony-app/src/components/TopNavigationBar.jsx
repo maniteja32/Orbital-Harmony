@@ -12,7 +12,7 @@ export function TopNavigationBar({ title, onBack, icon: Icon = ArrowLeft }) {
         onClick={onBack}
         aria-label="Back"
       >
-        <Icon size={18} strokeWidth={2} aria-hidden="true" />
+        <Icon size={24} strokeWidth={2} aria-hidden="true" />
       </button>
       <h1 className="topbar-title">{title}</h1>
       <span />

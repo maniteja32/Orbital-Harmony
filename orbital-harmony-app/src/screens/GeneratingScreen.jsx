@@ -50,7 +50,7 @@ export default function GeneratingScreen({ onDone, onBack }) {
       <div className="mode-topbar">
         {onBack && (
           <button type="button" className="back-button" onClick={onBack} aria-label="Cancel and go back">
-            <ArrowLeft size={18} strokeWidth={2} aria-hidden="true" />
+            <ArrowLeft size={24} strokeWidth={2} aria-hidden="true" />
             Back
           </button>
         )}

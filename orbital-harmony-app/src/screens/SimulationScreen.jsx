@@ -238,9 +238,9 @@ export default function SimulationScreen({ onComplete, onBack }) {
           aria-pressed={!isPaused}
         >
           {isPaused ? (
-            <Play size={24} strokeWidth={2} aria-hidden="true" />
+            <Play size={28} strokeWidth={2} aria-hidden="true" />
           ) : (
-            <Pause size={24} strokeWidth={2} aria-hidden="true" />
+            <Pause size={28} strokeWidth={2} aria-hidden="true" />
           )}
         </button>
         <LineStyleToggleButton lineStyle={lineStyle} onChange={handleLineStyleChange} className="sim-controls__toggle" />
