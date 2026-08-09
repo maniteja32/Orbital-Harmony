@@ -48,7 +48,6 @@ export default function PatternDetailsScreen({ onBack, onRegenerate }) {
     () => computeSimulationPlan({ isCosmic, planetA, planetB, detailLevel }),
     [isCosmic, planetA, planetB, detailLevel]
   );
-  const pointsGenerated = Math.round((simPlan.totalSimYears * 365.25) / simPlan.traceIntervalDays);
 
   const about = a && b
     ? `${a.name} and ${b.name} trace this pattern as they orbit${
@@ -60,12 +59,10 @@ export default function PatternDetailsScreen({ onBack, onRegenerate }) {
     ? [
         { label: 'Planets Connected', value: '8' },
         { label: 'Total Duration', value: `${simPlan.totalSimYears.toFixed(1)} years` },
-        { label: 'Points Generated', value: pointsGenerated.toLocaleString() },
       ]
     : [
         { label: 'Trace Interval', value: `${simPlan.traceIntervalDays.toFixed(1)} days` },
         { label: 'Total Duration', value: `${simPlan.totalSimYears.toFixed(1)} years` },
-        { label: 'Points Generated', value: pointsGenerated.toLocaleString() },
       ];
 
   return (
