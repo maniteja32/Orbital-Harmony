@@ -49,6 +49,16 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails, onS
     [isCosmic, planetA, planetB, detailLevel],
   );
 
+  const params = isCosmic
+    ? [
+        { label: 'Planets Connected', value: '8' },
+        { label: 'Total Duration', value: `${plan.totalSimYears.toFixed(1)} years` },
+      ]
+    : [
+        { label: 'Trace Interval', value: `${plan.traceIntervalDays.toFixed(1)} days` },
+        { label: 'Total Duration', value: `${plan.totalSimYears.toFixed(1)} years` },
+      ];
+
   const canvasRef = useRef(null);
   const [regenerating, setRegenerating] = useState(false);
   const [regenKey, setRegenKey] = useState(0);
@@ -125,6 +135,18 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails, onS
           <div className="result-frame__placeholder" />
         )}
       </LiquidGlass>
+
+      <section className="detail-card">
+        <h2 className="detail-card__title">Parameters</h2>
+        <dl className="param-list">
+          {params.map((p) => (
+            <div className="param-row" key={p.label}>
+              <dt>{p.label}</dt>
+              <dd>{p.value}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
 
       {isCosmic ? (
         <div className="result-actions result-actions--cosmic">

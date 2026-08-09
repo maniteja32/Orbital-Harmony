@@ -5,23 +5,15 @@ import { TopNavigationBar } from '../components/TopNavigationBar.jsx';
 import { PatternGlyph } from '../components/PatternGlyph.jsx';
 import { PLANETS, PLANETS_BY_KEY } from '../data/planets.js';
 import { findResonance } from '../utils/resonance.js';
-import { computeSimulationPlan } from '../utils/simulationPlan.js';
 import { useAppStore } from '../store/useAppStore.js';
 
-/** Screen 7 — Pattern Details: a plain-language description + the
- *  pattern's real generation parameters. Parameters are derived from
- *  computeSimulationPlan (the SAME function that actually generates the
- *  displayed pattern on the Simulation/Result screens, factoring in
- *  detailLevel) rather than the raw resonance math alone — otherwise the
- *  numbers shown here could drift from what was really used whenever the
- *  Celestial Complexity slider wasn't at its default value. (The old
- *  Settings tab — Speed/Density presets — was removed for the same
- *  reason: it edited store fields the live Simulation screen no longer
- *  reads.) The "Did you know?" fact card expands inline below, instead
- *  of navigating to a separate screen. */
+/** Screen 7 — Pattern Details: a plain-language description of the
+ *  pattern (the generation Parameters now live on the Result screen,
+ *  one tap earlier, where the pattern itself is shown). The "Did you
+ *  know?" fact card expands inline below, instead of navigating to a
+ *  separate screen. */
 export default function PatternDetailsScreen({ onBack, onRegenerate }) {
-  const { planetA, planetB, patternMode, detailLevel } = useAppStore();
-  const isCosmic = patternMode === 'cosmic';
+  const { planetA, planetB } = useAppStore();
   const [showKnowledge, setShowKnowledge] = useState(false);
   const facts = useMemo(
     () => PLANETS.map((p) => ({ key: p.key, name: p.name, color: p.color, fact: p.fact })),
@@ -44,26 +36,11 @@ export default function PatternDetailsScreen({ onBack, onRegenerate }) {
     return findResonance(a.orbitalPeriodDays, b.orbitalPeriodDays);
   }, [a, b]);
 
-  const simPlan = useMemo(
-    () => computeSimulationPlan({ isCosmic, planetA, planetB, detailLevel }),
-    [isCosmic, planetA, planetB, detailLevel]
-  );
-
   const about = a && b
     ? `${a.name} and ${b.name} trace this pattern as they orbit${
         resonance ? ` in a ${resonance.longer}:${resonance.shorter} resonance` : ''
       } — each alignment draws a new chord.`
     : 'This Cosmic Signature connects every planet at your chosen moment into one closed figure.';
-
-  const params = isCosmic
-    ? [
-        { label: 'Planets Connected', value: '8' },
-        { label: 'Total Duration', value: `${simPlan.totalSimYears.toFixed(1)} years` },
-      ]
-    : [
-        { label: 'Trace Interval', value: `${simPlan.traceIntervalDays.toFixed(1)} days` },
-        { label: 'Total Duration', value: `${simPlan.totalSimYears.toFixed(1)} years` },
-      ];
 
   return (
     <div className="screen screen--details">
@@ -73,18 +50,6 @@ export default function PatternDetailsScreen({ onBack, onRegenerate }) {
         <section className="detail-card">
           <h2 className="detail-card__title">About this Pattern</h2>
           <p className="detail-card__text">{about}</p>
-        </section>
-
-        <section className="detail-card">
-          <h2 className="detail-card__title">Parameters</h2>
-          <dl className="param-list">
-            {params.map((p) => (
-              <div className="param-row" key={p.label}>
-                <dt>{p.label}</dt>
-                <dd>{p.value}</dd>
-              </div>
-            ))}
-          </dl>
         </section>
 
         {!showKnowledge && (
