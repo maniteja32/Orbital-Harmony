@@ -168,10 +168,10 @@ export default function SimulationScreen({ onComplete, onBack }) {
         <LiquidGlass className="sim-tune-glass rounded-[18px] w-full bg-white/[0.05]" style={TUNE_RIM}>
         <div className="sim-tune-panel__section sim-tune-panel__section--liquid">
           <div className="sim-tune-panel__row">
-            <span className="sim-tune-panel__label">Simulation Speed</span>
+            <span className="sim-tune-panel__label">Flow of Time</span>
             <span className="sim-tune-panel__value">{speedFactor.toFixed(1)}×</span>
           </div>
-          <label className="sim-speed-slider" aria-label="Simulation speed">
+          <label className="sim-speed-slider" aria-label="Flow of time">
             <span className="sim-speed-slider__track" />
             <span className="sim-speed-slider__fill" style={{ width: sliderFillWidth(((speedFactor - 0.6) / 1.4) * 100) }} />
             <input
