@@ -5,12 +5,13 @@
 export const LINE_STYLE_ORDER = ['solid', 'dashed', 'dots'];
 export const LINE_STYLE_LABEL = { solid: 'Line', dashed: 'Dashed', dots: 'Dots' };
 
-// A simple four-petal flower (the app's own pattern figures read as
-// flower-like rosettes) so the icon hints at "pattern style", not just an
-// abstract line. Butt (square) caps on the dash so short segments read as
-// clean rectangular dashes instead of rounding into dot-like pills, which
-// is what made "dashed" and "dots" look nearly identical at this size.
-const LINE_STYLE_DASH = { solid: undefined, dashed: '4.5 3', dots: '0.1 3' };
+// A plain horizontal stroke-preview (the same convention used by any
+// vector app's line-style picker) — instantly reads as "line style" and
+// makes the three options unambiguous at a glance, unlike the previous
+// abstract flower shape. Butt (square) caps on the dash so short segments
+// read as clean rectangular dashes instead of rounding into dot-like
+// pills, which is what made "dashed" and "dots" look nearly identical.
+const LINE_STYLE_DASH = { solid: undefined, dashed: '4 3', dots: '0.1 4' };
 const LINE_STYLE_CAP = { solid: 'round', dashed: 'butt', dots: 'round' };
 
 export function LineStyleIcon({ style }) {
@@ -19,14 +20,12 @@ export function LineStyleIcon({ style }) {
   return (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path
-        d="M12 16.5A4.5 4.5 0 1 1 7.5 12 4.5 4.5 0 1 1 12 7.5a4.5 4.5 0 1 1 4.5 4.5 4.5 4.5 0 1 1-4.5 4.5"
+        d="M3 12h18"
         stroke="currentColor"
-        strokeWidth="2"
+        strokeWidth="2.5"
         strokeLinecap={cap}
-        strokeLinejoin="round"
         strokeDasharray={dash}
       />
-      <circle cx="12" cy="12" r="2.75" stroke="currentColor" strokeWidth="2" strokeLinecap={cap} strokeDasharray={dash} />
     </svg>
   );
 }
