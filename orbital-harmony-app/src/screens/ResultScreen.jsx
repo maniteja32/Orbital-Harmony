@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Heart, Share2 } from 'lucide-react';
 import { GlassButton } from '../components/ui/glasscn/glass-button.jsx';
+import { LiquidGlass } from '../components/ui/glasscn/liquid-glass.jsx';
 import { TopNavigationBar } from '../components/TopNavigationBar.jsx';
 import { LineStyleToggleButton } from '../components/LineStyleToggle.jsx';
 import SolarSystemCanvas from '../components/SolarSystemCanvas.jsx';
@@ -13,6 +14,15 @@ import { useAppStore, SPEED_PRESETS } from '../store/useAppStore.js';
 // a newly picked line style) finishes in well under the original reveal's
 // duration, instead of replaying the full multi-second first reveal.
 const REGENERATE_SPEED_MULTIPLIER = 60;
+
+// Same specular-rim look as every other glass card in the app (see
+// SimulationScreen's TUNE_RIM / SolarSystemScreen's MODE_RIM) so the
+// pattern frame's border reads as part of the same design system instead
+// of a plain flat border.
+const RESULT_FRAME_RIM = {
+  '--liquid-glass-rim-width': '0.8px',
+  '--liquid-glass-rim-light': 'rgba(255, 255, 255, 0.4)',
+};
 
 /** Screen 6 — final pattern with selected planets.
  *  Save/Share live as top-bar icons; "View Details" opens the info/controls
@@ -82,7 +92,7 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails, onS
         </div>
       )}
 
-      <div className="result-frame">
+      <LiquidGlass className="result-frame rounded-[26px] w-full bg-white/[0.05]" style={RESULT_FRAME_RIM}>
         {regenerating ? (
           <SolarSystemCanvas
             key={regenKey}
@@ -114,7 +124,7 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails, onS
         ) : (
           <div className="result-frame__placeholder" />
         )}
-      </div>
+      </LiquidGlass>
 
       {isCosmic ? (
         <div className="result-actions result-actions--cosmic">

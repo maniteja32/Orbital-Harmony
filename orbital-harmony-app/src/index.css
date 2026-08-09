@@ -2071,9 +2071,9 @@ button {
 
 .result-frame {
   position: relative;
+  display: block;
   border-radius: var(--radius-lg);
   overflow: hidden;
-  border: 1px solid var(--glass-border);
   background: #000;
   aspect-ratio: 1 / 1;
   /* Without this, a flex column's default flex-shrink:1 has almost no
