@@ -3509,12 +3509,14 @@ button {
 
 .param-row dt {
   color: var(--text-secondary);
-  font-size: 14px;
+  /* Smallest font size used anywhere in the app (matches e.g. the
+     Simulation screen's slider tick labels) — least important text here. */
+  font-size: 10px;
 }
 
 .param-row dd {
   color: var(--text-primary);
-  font-size: 14px;
+  font-size: 10px;
   font-weight: 600;
 }
 
