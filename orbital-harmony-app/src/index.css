@@ -2162,12 +2162,22 @@ button {
 .result-actions__primary-row {
   display: flex;
   align-items: center;
-  /* Line-style pinned to the left edge, View Details pinned to the right
-     edge — both the same 48px secondary size, so Share (the odd one out)
-     lands visually centered in the remaining space, not just "centered
-     among 3 items" via a plain center-justified row. */
-  justify-content: space-between;
-  gap: 10px;
+  /* Clustered together in the middle, same as the Simulation screen's
+     Reset/Play/Line transport row (`.sim-controls--transport`) — not
+     spread across the full row width. */
+  justify-content: center;
+  gap: 12px;
+}
+
+/* `.back-button`'s own `align-self: flex-start` (meant for its usual
+   top-left placement) otherwise beats this row's `align-items: center`
+   per-item, top-aligning all three instead of centering them — which
+   read as misaligned once Share got bigger than its two 48px neighbours
+   (their tops matched, not their centers). Force true cross-axis
+   centering here so all three share one vertical centerline regardless
+   of their differing heights. */
+.result-actions__primary-row > .back-button {
+  align-self: center;
 }
 
 /* Share is this row's primary action — sized up to match the Simulation
