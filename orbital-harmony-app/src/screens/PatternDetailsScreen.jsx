@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
-import { ArrowLeft, Sparkles } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import { GlassButton } from '../components/ui/glasscn/glass-button.jsx';
+import { TopNavigationBar } from '../components/TopNavigationBar.jsx';
 import { PLANETS_BY_KEY } from '../data/planets.js';
 import { computePatternPlan, findResonance } from '../utils/resonance.js';
 import { useAppStore } from '../store/useAppStore.js';
@@ -46,20 +47,7 @@ export default function PatternDetailsScreen({ onBack, onRegenerate, onKnowledge
 
   return (
     <div className="screen screen--details">
-      <div className="mode-topbar">
-        <button
-          type="button"
-          className="back-button back-button--icon"
-          onClick={onBack}
-          aria-label="Back to your pattern"
-        >
-          <ArrowLeft size={18} strokeWidth={2} aria-hidden="true" />
-        </button>
-      </div>
-
-      <div className="screen__header screen__header--mode">
-        <h1>{title}</h1>
-      </div>
+      <TopNavigationBar title={title} onBack={onBack} />
 
       <div className="details-body">
         <section className="detail-card">
