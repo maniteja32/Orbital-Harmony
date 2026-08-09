@@ -1506,13 +1506,10 @@ export function createSolarSystemEngine(canvas, opts) {
     },
     captureDataURL() {
       // The saved/shared/downloaded image is the traced resonance pattern
-      // itself — planet body markers (those are simulation aids, not part
-      // of the artifact) are hidden. The Sun is intentionally KEPT visible
-      // (already tiny at initialSunScale) as a small anchor dot at the
-      // pattern's center — matching the Pattern Gallery preview's own
-      // small orange centre dot, instead of leaving a blank/muddy gap
-      // where all the chords converge. Only the glow sprites (a soft
-      // haze, not a crisp dot) are hidden so the anchor stays sharp.
+      // itself — planet body markers AND the Sun are simulation aids, not
+      // part of the artifact, so both are hidden for the capture (the Sun
+      // used to be kept as a small anchor dot at the centre, but that's no
+      // longer wanted — the pattern should stand alone with no Sun at all).
       // Hide for this one synchronous render, capture, then restore
       // immediately so the still-running live view (this frame continues
       // rendering for a moment before the screen navigates away) is
@@ -1529,6 +1526,8 @@ export function createSolarSystemEngine(canvas, opts) {
       const captureRatio = Math.max(renderer.getPixelRatio(), 2);
       renderer.setPixelRatio(captureRatio);
       renderer.setSize(width, height, false);
+      const wasSunVisible = sunMesh.visible;
+      sunMesh.visible = false;
       sunGlowSprites.forEach((sprite) => {
         sprite.visible = false;
       });
@@ -1606,6 +1605,7 @@ export function createSolarSystemEngine(canvas, opts) {
       }
 
       const dataUrl = outCanvas.toDataURL('image/png');
+      sunMesh.visible = wasSunVisible;
       sunGlowSprites.forEach((sprite) => {
         sprite.visible = true;
       });
