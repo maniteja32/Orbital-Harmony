@@ -1494,8 +1494,53 @@ export function createSolarSystemEngine(canvas, opts) {
       planets.forEach((planet) => {
         planet.pivot.visible = false;
       });
+      // The chord pattern itself is drawn with the Pattern Gallery's OWN
+      // technique — a separate Canvas 2D stroke() per chord, alpha-blended
+      // on top of one another — instead of WebGL's LineSegments2/LineMaterial
+      // fat-line quads. Both draw the exact same math (same endpoints, same
+      // opacity, same width), but the two rasterizers accumulate overlapping
+      // semi-transparent strokes differently, which was reading as a visibly
+      // different texture at the dense chord-convergence core. Hiding
+      // patternLines for this WebGL pass keeps the background (starfield,
+      // orbit rings, Sun anchor dot) exactly as before; only the chords
+      // themselves are then re-drawn via Canvas 2D on top, using the SAME
+      // sampled `patternPositions` buffer the live trace already produced
+      // (projected through the real camera, so framing matches exactly).
+      const wasPatternVisible = patternLines ? patternLines.visible : false;
+      if (patternLines) patternLines.visible = false;
       renderScene();
-      const dataUrl = renderer.domElement.toDataURL('image/png');
+      if (patternLines) patternLines.visible = wasPatternVisible;
+
+      const physicalWidth = renderer.domElement.width;
+      const physicalHeight = renderer.domElement.height;
+      const outCanvas = document.createElement('canvas');
+      outCanvas.width = physicalWidth;
+      outCanvas.height = physicalHeight;
+      const ctx = outCanvas.getContext('2d');
+      ctx.drawImage(renderer.domElement, 0, 0);
+
+      if (patternLines && patternCount > 0) {
+        ctx.strokeStyle = `rgba(255,255,255,${patternOpacity})`;
+        ctx.lineWidth = PATTERN_LINE_WIDTH * captureRatio;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        const v = new THREE.Vector3();
+        for (let i = 0; i < patternCount; i++) {
+          const base = i * 6;
+          v.set(patternPositions[base], patternPositions[base + 1], patternPositions[base + 2]).project(camera);
+          const ax = (v.x * 0.5 + 0.5) * physicalWidth;
+          const ay = (1 - (v.y * 0.5 + 0.5)) * physicalHeight;
+          v.set(patternPositions[base + 3], patternPositions[base + 4], patternPositions[base + 5]).project(camera);
+          const bx = (v.x * 0.5 + 0.5) * physicalWidth;
+          const by = (1 - (v.y * 0.5 + 0.5)) * physicalHeight;
+          ctx.beginPath();
+          ctx.moveTo(ax, ay);
+          ctx.lineTo(bx, by);
+          ctx.stroke();
+        }
+      }
+
+      const dataUrl = outCanvas.toDataURL('image/png');
       sunGlowSprites.forEach((sprite) => {
         sprite.visible = true;
       });
