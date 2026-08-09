@@ -2162,18 +2162,29 @@ button {
 .result-actions__primary-row {
   display: flex;
   align-items: center;
-  justify-content: center;
+  /* Line-style pinned to the left edge, View Details pinned to the right
+     edge — both the same 48px secondary size, so Share (the odd one out)
+     lands visually centered in the remaining space, not just "centered
+     among 3 items" via a plain center-justified row. */
+  justify-content: space-between;
   gap: 10px;
 }
 
 /* Share is this row's primary action — sized up to match the Simulation
    screen's Play/Pause (64px), same "primary flanked by secondary" language
-   as `.sim-controls--transport` uses for its transport row. */
+   as `.sim-controls--transport` uses for its transport row. Tinted with
+   the brand accent so it reads as THE action on this screen, not just
+   another icon in the row. */
 .result-actions__icon--primary {
   width: 64px;
   height: 64px;
   min-height: 64px;
   flex: 0 0 64px;
+  color: var(--accent);
+}
+
+.result-actions__icon--primary:hover {
+  color: var(--accent);
 }
 
 .result-actions__icon--secondary {
