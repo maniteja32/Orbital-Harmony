@@ -92,7 +92,7 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails, onS
         </div>
       )}
 
-      <LiquidGlass className="result-frame rounded-[26px] w-full bg-white/[0.05]" style={RESULT_FRAME_RIM}>
+      <LiquidGlass className="result-frame rounded-[24px] w-full bg-white/[0.05]" style={RESULT_FRAME_RIM}>
         {regenerating ? (
           <SolarSystemCanvas
             key={regenKey}

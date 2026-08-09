@@ -2072,7 +2072,7 @@ button {
 .result-frame {
   position: relative;
   display: block;
-  border-radius: var(--radius-lg);
+  border-radius: 24px;
   overflow: hidden;
   background: #000;
   aspect-ratio: 1 / 1;
