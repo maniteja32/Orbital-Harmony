@@ -5,13 +5,15 @@
 export const LINE_STYLE_ORDER = ['solid', 'dashed', 'dots'];
 export const LINE_STYLE_LABEL = { solid: 'Line', dashed: 'Dashed', dots: 'Dots' };
 
-// A plain horizontal stroke-preview (the same convention used by any
-// vector app's line-style picker) — instantly reads as "line style" and
-// makes the three options unambiguous at a glance, unlike the previous
-// abstract flower shape. Butt (square) caps on the dash so short segments
-// read as clean rectangular dashes instead of rounding into dot-like
-// pills, which is what made "dashed" and "dots" look nearly identical.
-const LINE_STYLE_DASH = { solid: undefined, dashed: '4 3', dots: '0.1 4' };
+// A boxed line-style "swatch" — a small rounded frame around the stroke
+// sample, the same convention used by any vector app's line-style picker.
+// The frame is what makes it instantly read as a distinct preview/control
+// rather than a stray dash floating in the button (the plain unframed
+// line this replaced was reported as confusing on its own). Butt (square)
+// caps on the dash so short segments read as clean rectangular dashes
+// instead of rounding into dot-like pills, which is what made "dashed"
+// and "dots" look nearly identical.
+const LINE_STYLE_DASH = { solid: undefined, dashed: '3.5 2.5', dots: '0.1 3' };
 const LINE_STYLE_CAP = { solid: 'round', dashed: 'butt', dots: 'round' };
 
 export function LineStyleIcon({ style }) {
@@ -19,8 +21,9 @@ export function LineStyleIcon({ style }) {
   const cap = LINE_STYLE_CAP[style];
   return (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect x="2.5" y="7.5" width="19" height="9" rx="2.5" stroke="currentColor" strokeWidth="1.4" opacity="0.55" />
       <path
-        d="M3 12h18"
+        d="M5.5 12h13"
         stroke="currentColor"
         strokeWidth="2.5"
         strokeLinecap={cap}
