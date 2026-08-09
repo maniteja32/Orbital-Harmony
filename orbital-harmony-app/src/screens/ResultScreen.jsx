@@ -40,6 +40,86 @@ async function dataUrlToFile(dataUrl, filename) {
   return new File([blob], filename, { type: blob.type || 'image/png' });
 }
 
+function loadImage(source) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = reject;
+    image.src = source;
+  });
+}
+
+function drawWrappedText(ctx, text, centerX, startY, maxWidth, lineHeight, maxLines = 2) {
+  const words = text.split(/\s+/).filter(Boolean);
+  const lines = [];
+  let currentLine = '';
+
+  for (const word of words) {
+    const nextLine = currentLine ? `${currentLine} ${word}` : word;
+    if (ctx.measureText(nextLine).width <= maxWidth || !currentLine) {
+      currentLine = nextLine;
+    } else {
+      lines.push(currentLine);
+      currentLine = word;
+    }
+
+    if (lines.length === maxLines - 1) break;
+  }
+
+  if (currentLine) lines.push(currentLine);
+  const clampedLines = lines.slice(0, maxLines);
+
+  if (lines.length > maxLines) {
+    const lastIndex = clampedLines.length - 1;
+    let clipped = clampedLines[lastIndex];
+    while (clipped && ctx.measureText(`${clipped}…`).width > maxWidth) {
+      clipped = clipped.slice(0, -1).trimEnd();
+    }
+    clampedLines[lastIndex] = `${clipped}…`;
+  }
+
+  const firstLineY = startY - ((clampedLines.length - 1) * lineHeight) / 2;
+  clampedLines.forEach((line, index) => {
+    ctx.fillText(line, centerX, firstLineY + index * lineHeight);
+  });
+}
+
+async function composeShareImageDataUrl(sourceDataUrl, title, subtitle = '') {
+  const image = await loadImage(sourceDataUrl);
+  const width = image.naturalWidth || image.width;
+  const headerHeight = Math.max(112, Math.round(width * 0.2));
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = width + headerHeight;
+
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return sourceDataUrl;
+
+  ctx.fillStyle = '#06070a';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  const headerGradient = ctx.createLinearGradient(0, 0, 0, headerHeight);
+  headerGradient.addColorStop(0, 'rgba(12, 16, 24, 0.98)');
+  headerGradient.addColorStop(1, 'rgba(12, 16, 24, 0.82)');
+  ctx.fillStyle = headerGradient;
+  ctx.fillRect(0, 0, canvas.width, headerHeight);
+
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.96)';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = `600 ${Math.max(30, Math.round(width * 0.06))}px system-ui, -apple-system, BlinkMacSystemFont, sans-serif`;
+  drawWrappedText(ctx, title, width / 2, headerHeight * 0.48, width * 0.84, Math.round(width * 0.066), 2);
+
+  if (subtitle) {
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.72)';
+    ctx.font = `500 ${Math.max(16, Math.round(width * 0.03))}px system-ui, -apple-system, BlinkMacSystemFont, sans-serif`;
+    ctx.fillText(subtitle, width / 2, headerHeight * 0.78);
+  }
+
+  ctx.drawImage(image, 0, headerHeight, width, width);
+  return canvas.toDataURL('image/png');
+}
+
 function sanitizeFileName(input) {
   return input.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 }
@@ -114,13 +194,19 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails, onS
 
   const nativeShare = useCallback(async () => {
     if (!snapshot) return;
+    let shareImage = snapshot;
+    try {
+      shareImage = await composeShareImageDataUrl(snapshot, title, isCosmic ? cosmicDateLabel : '');
+    } catch {
+      shareImage = snapshot;
+    }
     if (!navigator.share) {
       // Fallback for environments without Web Share support.
-      downloadDataUrl(snapshot, imageFilename);
+      downloadDataUrl(shareImage, imageFilename);
       return;
     }
     try {
-      const file = await dataUrlToFile(snapshot, imageFilename);
+      const file = await dataUrlToFile(shareImage, imageFilename);
       if (navigator.canShare?.({ files: [file] })) {
         await navigator.share({ title: shareTitle, text: shareTitle, files: [file] });
         return;
@@ -129,7 +215,7 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails, onS
     } catch {
       /* dismissed / unsupported */
     }
-  }, [snapshot, imageFilename, shareTitle]);
+  }, [snapshot, title, isCosmic, cosmicDateLabel, imageFilename, shareTitle]);
 
   return (
     <div className="screen screen--result">
@@ -143,55 +229,52 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails, onS
       )}
 
       <LiquidGlass className="result-frame rounded-[24px] w-full bg-white/[0.05]" style={RESULT_FRAME_RIM}>
-        <div className="result-frame__media">
-          {regenerating ? (
-            <SolarSystemCanvas
-              key={regenKey}
-              ref={canvasRef}
-              planetKeys={plan.planetKeys}
-              tracePattern
-              physicalPattern={plan.physicalPattern}
-              connectAllPlanets={false}
-              startPaused={false}
-              miniBodiesIntro
-              miniSunScale={0.5}
-              miniPlanetScale={1.5}
-              miniIntroDurationSec={1}
-              miniMotionRampSec={2.6}
-              initialSunScale={0.5}
-              initialPlanetScale={1.5}
-              speedDurationSec={speedCfg.durationSec}
-              totalSimYears={plan.totalSimYears}
-              traceIntervalDays={plan.traceIntervalDays}
-              patternOpacity={plan.patternOpacity}
-              patternRates={plan.patternRates}
-              initialSpeedMultiplier={REGENERATE_SPEED_MULTIPLIER}
-              patternStartDate={cosmicDate ?? undefined}
-              onComplete={handleRegenerateComplete}
-              className="screen__canvas"
-            />
-          ) : snapshot ? (
-            <img src={snapshot} alt={title} />
-          ) : (
-            <div className="result-frame__placeholder" />
-          )}
-        </div>
-
-        {!isCosmic && (
-          <div className="result-frame__facts">
-            <span className="knowledge-card__title">Fun fact</span>
-            <span className="result-frame__combo">{title}</span>
-            <div className="knowledge-card__body">
-              {factEntries.map((entry) => (
-                <div className="knowledge-card__entry" key={entry.name}>
-                  <span className="knowledge-card__entry-title">{entry.name}</span>
-                  <p className="knowledge-card__fact">{entry.fact}</p>
-                </div>
-              ))}
-            </div>
-          </div>
+        {regenerating ? (
+          <SolarSystemCanvas
+            key={regenKey}
+            ref={canvasRef}
+            planetKeys={plan.planetKeys}
+            tracePattern
+            physicalPattern={plan.physicalPattern}
+            connectAllPlanets={false}
+            startPaused={false}
+            miniBodiesIntro
+            miniSunScale={0.5}
+            miniPlanetScale={1.5}
+            miniIntroDurationSec={1}
+            miniMotionRampSec={2.6}
+            initialSunScale={0.5}
+            initialPlanetScale={1.5}
+            speedDurationSec={speedCfg.durationSec}
+            totalSimYears={plan.totalSimYears}
+            traceIntervalDays={plan.traceIntervalDays}
+            patternOpacity={plan.patternOpacity}
+            patternRates={plan.patternRates}
+            initialSpeedMultiplier={REGENERATE_SPEED_MULTIPLIER}
+            patternStartDate={cosmicDate ?? undefined}
+            onComplete={handleRegenerateComplete}
+            className="screen__canvas"
+          />
+        ) : snapshot ? (
+          <img src={snapshot} alt={title} />
+        ) : (
+          <div className="result-frame__placeholder" />
         )}
       </LiquidGlass>
+
+      {!isCosmic && (
+        <div className="knowledge-card knowledge-card--compact">
+          <span className="knowledge-card__title">Fun fact</span>
+          <div className="knowledge-card__body">
+            {factEntries.map((entry) => (
+              <div className="knowledge-card__entry" key={entry.name}>
+                <span className="knowledge-card__entry-title">{entry.name}</span>
+                <p className="knowledge-card__fact">{entry.fact}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {isCosmic ? (
         <div className="result-actions result-actions--cosmic">
