@@ -127,7 +127,13 @@ function buildPreviewPlanet(data) {
   // noticeable as a "living" preview; the actual Solar System scene's
   // speeds are untouched.
   const CAROUSEL_SPIN_VISIBILITY_MULTIPLIER = 15;
-  const spinSpeed = (data.rotationSpeed ?? 0.02) * (data.spinDirection ?? 1) * CAROUSEL_SPIN_VISIBILITY_MULTIPLIER;
+  // Every carousel planet spins at Earth's own rate here (rather than its
+  // real, wildly different rotationSpeed) so the row reads as a uniform,
+  // evenly-paced set of spinning globes instead of some looking static
+  // and others racing — direction is still kept per-planet (Venus/Uranus
+  // stay retrograde) since that's a distinct, still-desirable detail.
+  const EARTH_ROTATION_SPEED = 0.02;
+  const spinSpeed = EARTH_ROTATION_SPEED * (data.spinDirection ?? 1) * CAROUSEL_SPIN_VISIBILITY_MULTIPLIER;
 
   return { group, mesh, material, ring, spinSpeed };
 }
