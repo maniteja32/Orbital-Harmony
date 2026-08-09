@@ -190,10 +190,10 @@ export default function SimulationScreen({ onComplete, onBack }) {
           <LiquidGlass className="sim-tune-glass rounded-[18px] w-full bg-white/[0.05]" style={TUNE_RIM}>
           <div className="sim-tune-panel__section sim-tune-panel__section--liquid">
             <div className="sim-tune-panel__row">
-              <span className="sim-tune-panel__label">Pattern Detail</span>
+              <span className="sim-tune-panel__label">Celestial Complexity</span>
               <span className="sim-tune-panel__value">{detailLevel}</span>
             </div>
-            <label className="sim-speed-slider sim-speed-slider--detail" aria-label="Pattern detail">
+            <label className="sim-speed-slider sim-speed-slider--detail" aria-label="Celestial complexity">
               <span className="sim-speed-slider__track" />
               <span className="sim-speed-slider__fill" style={{ width: sliderFillWidth(((detailLevel - DETAIL_LEVEL_MIN) / (DETAIL_LEVEL_MAX - DETAIL_LEVEL_MIN)) * 100) }} />
               <input
