@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Sparkles, X, RotateCw } from 'lucide-react';
+import { Sparkles, X } from 'lucide-react';
 import { GlassButton } from '../components/ui/glasscn/glass-button.jsx';
 import { TopNavigationBar } from '../components/TopNavigationBar.jsx';
 import { PatternGlyph } from '../components/PatternGlyph.jsx';
@@ -24,7 +24,7 @@ export default function PatternDetailsScreen({ onBack, onRegenerate }) {
     const i = facts.findIndex((f) => f.key === planetA);
     return i >= 0 ? i : 0;
   }, [facts, planetA]);
-  const [factIndex, setFactIndex] = useState(startIndex);
+  const [factIndex] = useState(startIndex);
   const currentFact = facts[factIndex % facts.length];
   const factPlanet = PLANETS_BY_KEY[currentFact.key];
 
@@ -112,15 +112,6 @@ export default function PatternDetailsScreen({ onBack, onRegenerate }) {
             </div>
 
             <p className="knowledge-card__fact">{currentFact.fact}</p>
-
-            <button
-              type="button"
-              className="knowledge-card__next"
-              onClick={() => setFactIndex((i) => (i + 1) % facts.length)}
-            >
-              <span>Next fact</span>
-              <RotateCw size={18} strokeWidth={2} aria-hidden="true" />
-            </button>
           </div>
         )}
       </div>
