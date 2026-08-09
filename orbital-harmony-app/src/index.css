@@ -2069,6 +2069,13 @@ button {
   margin: 0 -22px;
 }
 
+/* Same double-padding fix as .screen--result above — Pattern Details also
+   isn't full-bleed, so .mode-topbar's own 22px padding stacks on
+   .screen's 22px padding, doubling the back button's inset. */
+.screen--details .mode-topbar {
+  margin: 0 -22px;
+}
+
 .result-frame {
   position: relative;
   display: block;
