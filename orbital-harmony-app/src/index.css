@@ -3840,6 +3840,17 @@ button {
   gap: 8px;
 }
 
+.result-share-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.result-share-panel .share-targets {
+  margin-top: 0;
+}
+
 /* ---- Profile -------------------------------------------------------------- */
 .profile-scroll {
   flex: 1;

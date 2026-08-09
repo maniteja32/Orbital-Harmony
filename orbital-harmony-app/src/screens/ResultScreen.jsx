@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Heart, Share2 } from 'lucide-react';
+import { Camera, Download, MessageCircle, MoreHorizontal, Heart, Share2 } from 'lucide-react';
 import { GlassButton } from '../components/ui/glasscn/glass-button.jsx';
 import { LiquidGlass } from '../components/ui/glasscn/liquid-glass.jsx';
 import { TopNavigationBar } from '../components/TopNavigationBar.jsx';
@@ -23,6 +23,26 @@ const RESULT_FRAME_RIM = {
   '--liquid-glass-rim-width': '0.8px',
   '--liquid-glass-rim-light': 'rgba(255, 255, 255, 0.4)',
 };
+
+function downloadDataUrl(dataUrl, filename) {
+  if (!dataUrl) return;
+  const link = document.createElement('a');
+  link.href = dataUrl;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+}
+
+async function dataUrlToFile(dataUrl, filename) {
+  const res = await fetch(dataUrl);
+  const blob = await res.blob();
+  return new File([blob], filename, { type: blob.type || 'image/png' });
+}
+
+function sanitizeFileName(input) {
+  return input.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+}
 
 /** Screen 6 — final pattern with selected planets.
  *  Save/Share live as top-bar icons; "View Details" opens the info/controls
@@ -57,6 +77,7 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails, onS
   const canvasRef = useRef(null);
   const [regenerating, setRegenerating] = useState(false);
   const [regenKey, setRegenKey] = useState(0);
+  const [showShareOptions, setShowShareOptions] = useState(false);
   // Explore's non-cosmic chord trace is the only path this can quickly
   // regenerate (Cosmic Signature's intro hold/settle timers run in real
   // seconds regardless of speed multiplier, so it wouldn't actually be
@@ -85,6 +106,35 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails, onS
     resetForNewPattern();
     onGenerateNew();
   }
+
+  const shareTitle = isCosmic
+    ? `Space Harmony — Cosmic Signature${cosmicDateLabel ? ` · ${cosmicDateLabel}` : ''}`
+    : `Space Harmony — ${title}`;
+
+  const imageFilename = `${sanitizeFileName(title || 'cosmic-signature')}.png`;
+
+  const nativeShare = async () => {
+    if (!snapshot) return;
+    try {
+      if (navigator.share) {
+        const file = await dataUrlToFile(snapshot, imageFilename);
+        if (navigator.canShare?.({ files: [file] })) {
+          await navigator.share({ title: shareTitle, text: shareTitle, files: [file] });
+          return;
+        }
+        await navigator.share({ title: shareTitle, text: shareTitle });
+      }
+    } catch {
+      /* dismissed / unsupported */
+    }
+  };
+
+  const shareTargets = [
+    { key: 'download', label: 'Download', icon: Download, onClick: () => downloadDataUrl(snapshot, imageFilename) },
+    { key: 'instagram', label: 'Instagram', icon: Camera, onClick: nativeShare },
+    { key: 'whatsapp', label: 'WhatsApp', icon: MessageCircle, onClick: nativeShare },
+    { key: 'more', label: 'More', icon: MoreHorizontal, onClick: nativeShare },
+  ];
 
   return (
     <div className="screen screen--result">
@@ -145,6 +195,21 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails, onS
         </div>
       )}
 
+      {showShareOptions && (
+        <div className="result-share-panel">
+          <div className="share-targets">
+            {shareTargets.map(({ key, label, icon: Icon, onClick }) => (
+              <button key={key} type="button" className="share-target" onClick={onClick}>
+                <span className="share-target__icon">
+                  <Icon size={22} strokeWidth={1.8} aria-hidden="true" />
+                </span>
+                <span className="share-target__label">{label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {isCosmic ? (
         <div className="result-actions result-actions--cosmic">
           <div className="result-actions__compact-row" aria-label="Secondary actions">
@@ -163,7 +228,7 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails, onS
               <GlassButton
                 tone="secondary"
                 className="w-full h-11 text-base font-medium"
-                onClick={onShare}
+                onClick={() => setShowShareOptions((v) => !v)}
                 aria-label="Share signature"
               >
                 <Share2 size={16} strokeWidth={2} aria-hidden="true" />
@@ -192,7 +257,7 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails, onS
             <button
               type="button"
               className="back-button back-button--icon"
-              onClick={onShare}
+              onClick={() => setShowShareOptions((v) => !v)}
               aria-label="Share this pattern"
             >
               <Share2 size={18} strokeWidth={2} aria-hidden="true" />
