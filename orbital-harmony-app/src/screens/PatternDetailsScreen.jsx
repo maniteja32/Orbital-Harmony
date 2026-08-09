@@ -1,19 +1,17 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { ArrowLeft, Sparkles } from 'lucide-react';
 import { GlassButton } from '../components/ui/glasscn/glass-button.jsx';
 import { PLANETS_BY_KEY } from '../data/planets.js';
 import { computePatternPlan, findResonance } from '../utils/resonance.js';
-import { useAppStore, SPEED_PRESETS, DENSITY_PRESETS } from '../store/useAppStore.js';
+import { useAppStore } from '../store/useAppStore.js';
 
-const SPEED_KEYS = Object.keys(SPEED_PRESETS);
-const DENSITY_KEYS = Object.keys(DENSITY_PRESETS);
-
-/** Screen 7 — Pattern Details. Info tab: a plain-language description +
- *  the pattern's real generation parameters. Settings tab: adjust the
- *  simulation speed / trace density presets before regenerating. */
+/** Screen 7 — Pattern Details: a plain-language description + the
+ *  pattern's real generation parameters. (The old Settings tab — Speed/
+ *  Density presets — was removed: it edited store fields the live
+ *  Simulation screen no longer reads, so it had zero effect on the
+ *  actual regenerated pattern.) */
 export default function PatternDetailsScreen({ onBack, onRegenerate, onKnowledge }) {
-  const { planetA, planetB, speed, density, setSpeed, setDensity } = useAppStore();
-  const [tab, setTab] = useState('info');
+  const { planetA, planetB } = useAppStore();
 
   const a = planetA ? PLANETS_BY_KEY[planetA] : null;
   const b = planetB ? PLANETS_BY_KEY[planetB] : null;
@@ -63,87 +61,28 @@ export default function PatternDetailsScreen({ onBack, onRegenerate, onKnowledge
         <h1>{title}</h1>
       </div>
 
-      <div className="tabs" role="tablist" aria-label="Pattern details">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === 'info'}
-          className={`tab${tab === 'info' ? ' is-active' : ''}`}
-          onClick={() => setTab('info')}
-        >
-          Info
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === 'settings'}
-          className={`tab${tab === 'settings' ? ' is-active' : ''}`}
-          onClick={() => setTab('settings')}
-        >
-          Settings
-        </button>
-      </div>
-
       <div className="details-body">
-        {tab === 'info' ? (
-          <>
-            <section className="detail-card">
-              <h2 className="detail-card__title">About this Pattern</h2>
-              <p className="detail-card__text">{about}</p>
-            </section>
+        <section className="detail-card">
+          <h2 className="detail-card__title">About this Pattern</h2>
+          <p className="detail-card__text">{about}</p>
+        </section>
 
-            <section className="detail-card">
-              <h2 className="detail-card__title">Parameters</h2>
-              <dl className="param-list">
-                {params.map((p) => (
-                  <div className="param-row" key={p.label}>
-                    <dt>{p.label}</dt>
-                    <dd>{p.value}</dd>
-                  </div>
-                ))}
-              </dl>
-            </section>
-
-            <button type="button" className="knowledge-link" onClick={onKnowledge}>
-              <Sparkles size={16} strokeWidth={1.8} aria-hidden="true" />
-              Did you know?
-            </button>
-          </>
-        ) : (
-          <>
-            <section className="detail-card">
-              <h2 className="detail-card__title">Simulation Speed</h2>
-              <div className="chip-row">
-                {SPEED_KEYS.map((key) => (
-                  <button
-                    key={key}
-                    type="button"
-                    className={`select-chip${speed === key ? ' is-active' : ''}`}
-                    onClick={() => setSpeed(key)}
-                  >
-                    {SPEED_PRESETS[key].label}
-                  </button>
-                ))}
+        <section className="detail-card">
+          <h2 className="detail-card__title">Parameters</h2>
+          <dl className="param-list">
+            {params.map((p) => (
+              <div className="param-row" key={p.label}>
+                <dt>{p.label}</dt>
+                <dd>{p.value}</dd>
               </div>
-            </section>
+            ))}
+          </dl>
+        </section>
 
-            <section className="detail-card">
-              <h2 className="detail-card__title">Trace Density</h2>
-              <div className="chip-row">
-                {DENSITY_KEYS.map((key) => (
-                  <button
-                    key={key}
-                    type="button"
-                    className={`select-chip${density === key ? ' is-active' : ''}`}
-                    onClick={() => setDensity(key)}
-                  >
-                    {DENSITY_PRESETS[key].label}
-                  </button>
-                ))}
-              </div>
-            </section>
-          </>
-        )}
+        <button type="button" className="knowledge-link" onClick={onKnowledge}>
+          <Sparkles size={16} strokeWidth={1.8} aria-hidden="true" />
+          Did you know?
+        </button>
       </div>
 
       <div className="screen__actions">
