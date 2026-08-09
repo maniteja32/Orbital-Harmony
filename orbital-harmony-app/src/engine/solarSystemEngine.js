@@ -1465,15 +1465,29 @@ export function createSolarSystemEngine(canvas, opts) {
     },
     captureDataURL() {
       // The saved/shared/downloaded image is the traced resonance pattern
-      // itself — it should NEVER show the Sun or planet markers used to
-      // draw it (those are simulation aids, not part of the artifact).
-      // Hide them for this one synchronous render, capture, then restore
+      // itself — planet body markers (those are simulation aids, not part
+      // of the artifact) are hidden. The Sun is intentionally KEPT visible
+      // (already tiny at initialSunScale) as a small anchor dot at the
+      // pattern's center — matching the Pattern Gallery preview's own
+      // small orange centre dot, instead of leaving a blank/muddy gap
+      // where all the chords converge. Only the glow sprites (a soft
+      // haze, not a crisp dot) are hidden so the anchor stays sharp.
+      // Hide for this one synchronous render, capture, then restore
       // immediately so the still-running live view (this frame continues
       // rendering for a moment before the screen navigates away) is
-      // completely unaffected. Orbit rings are intentionally left visible
-      // — only the Sun + planet bodies (and anything parented to them,
-      // e.g. Earth's moon/clouds/atmosphere) are hidden.
-      sunMesh.visible = false;
+      // completely unaffected. Orbit rings are intentionally left visible.
+      //
+      // SUPERSAMPLE the capture: the live pixel ratio is capped at the
+      // real screen's devicePixelRatio (1x on many test/desktop setups),
+      // which under-resolves the hundreds of thin chords converging near
+      // the centre into a muddy/aliased blob. The Pattern Gallery preview
+      // always rasterizes at a fixed 2x regardless of screen DPR and
+      // looks clean there for exactly this reason. Force at least 2x for
+      // this one-shot render so the SAVED image matches that same
+      // fidelity, independent of the viewing device's real pixel ratio.
+      const captureRatio = Math.max(renderer.getPixelRatio(), 2);
+      renderer.setPixelRatio(captureRatio);
+      renderer.setSize(width, height, false);
       sunGlowSprites.forEach((sprite) => {
         sprite.visible = false;
       });
@@ -1482,13 +1496,14 @@ export function createSolarSystemEngine(canvas, opts) {
       });
       renderScene();
       const dataUrl = renderer.domElement.toDataURL('image/png');
-      sunMesh.visible = true;
       sunGlowSprites.forEach((sprite) => {
         sprite.visible = true;
       });
       planets.forEach((planet) => {
         planet.pivot.visible = true;
       });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.setSize(width, height, false);
       renderScene();
       return dataUrl;
     },
