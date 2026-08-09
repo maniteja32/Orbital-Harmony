@@ -48,13 +48,11 @@ export default function PatternDetailsScreen({ onBack, onRegenerate }) {
 
   const params = plan
     ? [
-        { label: 'Simulation Speed', value: '1.0×' },
         { label: 'Trace Interval', value: `${plan.traceIntervalDays.toFixed(1)} days` },
         { label: 'Total Duration', value: `${plan.totalSimYears.toFixed(1)} years` },
         { label: 'Points Generated', value: plan.chordCount.toLocaleString() },
       ]
     : [
-        { label: 'Simulation Speed', value: '1.0×' },
         { label: 'Planets Connected', value: '8' },
         { label: 'Total Duration', value: '12.0 years' },
       ];
