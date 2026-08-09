@@ -25,34 +25,38 @@ import { buildStarfield } from './starfieldBackdrop.js';
 // no gap ever opens regardless of dashSize. "dots" uses a dash MUCH
 // shorter than its gap (instead of dashed's comparable dash/gap) so it
 // reads as small, clearly separated dots rather than a shorter dashed
-// line — the previous 0.5/1 ratio was too close to dashed's 2/2 to tell
-// the two apart at a glance.
+// line. This is the SINGLE SOURCE OF TRUTH for dash/gap sizing — the
+// live WebGL trace uses these values directly, and captureDataURL's
+// Canvas-2D redraw derives its OWN pixel dash lengths from these same
+// numbers (scaled per-chord to that chord's own projected pixel length,
+// see CANVAS_DASH_STYLES below) so the two never drift apart again.
 const LINE_STYLES = {
   solid: { dashSize: 1, gapSize: 0 },
   dashed: { dashSize: 2, gapSize: 1 },
-  // Halved from 0.3 — at the old size each dot's dash length rendered as
-  // a visibly elongated blip (bigger than the round-cap circle it was
-  // meant to read as), not a compact dot. Gap widened to match so dots
-  // stay sparse rather than crowding closer together as they shrink.
-  // widthScale doubles the stroke thickness (see setLineStyle) to match
-  // CANVAS_DASH_STYLES' doubled dot below — without it the LIVE trace's
-  // dots rendered noticeably smaller/thinner than the final captured
-  // image, reading as a jarring size change the instant it finished.
-  dots: { dashSize: 0.15, gapSize: 2.6, widthScale: 2 },
+  // widthScale doubles the stroke thickness (see setLineStyle and
+  // CANVAS_DASH_STYLES) so a dot reads as a clearly visible mark rather
+  // than a barely-visible speck, in both the live trace and the capture.
+  // dashSize kept far shorter than the line is thick so even the WebGL
+  // fat-line's square-cut dash reads as a compact mark, not an elongated
+  // dash — was 0.15, which on longer chords still stretched into a
+  // visible little bar rather than a dot.
+  dots: { dashSize: 0.05, gapSize: 2.6, widthScale: 2 },
 };
 
-// Canvas-2D equivalents used ONLY by captureDataURL's chord redraw (see
-// below) — expressed as [dash, gap] in absolute pixels (pre-captureRatio),
-// a completely different space than the WebGL material's per-chord world
-// distance above (ctx.setLineDash() works in screen pixels). "dots" uses
-// a near-zero dash so, combined with the round line cap, each mark
-// renders as a small circle; widthScale: 2 doubles that circle's
-// diameter beyond the normal chord lineWidth so it reads clearly as a
-// dot instead of a barely-visible speck.
+// Capture-only rendering embellishments for captureDataURL's chord redraw
+// (see below) — NOT sizing (that comes from LINE_STYLES above, scaled
+// per-chord to screen pixels). "dots" pairs a fixedDashPx (a tiny FIXED
+// pixel length, ignoring LINE_STYLES.dashSize's per-chord scaling) with a
+// round line cap, guaranteeing a true circle regardless of a chord's own
+// length/zoom — proportionally scaling even a small world dashSize could
+// still stretch into a visible little bar on a long chord. The GAP still
+// scales proportionally (see below) so dot spacing/density matches the
+// live trace. widthScale matches the live trace's own doubled linewidth
+// (see setLineStyle) so neither surface looks bigger/smaller.
 const CANVAS_DASH_STYLES = {
   solid: null,
-  dashed: { dash: 2, gap: 1, cap: 'butt' },
-  dots: { dash: 0.01, gap: 6, cap: 'round', widthScale: 2 },
+  dashed: { cap: 'butt' },
+  dots: { cap: 'round', widthScale: 2, fixedDashPx: 0.6 },
 };
 import { loadPlanetTexture, buildPlanetBody } from './planetFactory.js';
 
@@ -1557,19 +1561,14 @@ export function createSolarSystemEngine(canvas, opts) {
       if (patternLines && patternCount > 0) {
         ctx.strokeStyle = `rgba(255,255,255,${patternOpacity})`;
         ctx.lineJoin = 'round';
-        // Apply the CURRENTLY SELECTED line style (see CANVAS_DASH_STYLES)
-        // instead of always stroking solid chords — previously this ignored
-        // `currentLineStyle` entirely, so a saved/shared pattern always
-        // reverted to a solid line even when Dashed or Dots was selected.
+        // Apply the CURRENTLY SELECTED line style instead of always
+        // stroking solid chords — previously this ignored `currentLineStyle`
+        // entirely, so a saved/shared pattern always reverted to a solid
+        // line even when Dashed or Dots was selected.
         const dashStyle = CANVAS_DASH_STYLES[currentLineStyle];
+        const linePreset = LINE_STYLES[currentLineStyle];
         ctx.lineWidth = PATTERN_LINE_WIDTH * captureRatio * (dashStyle?.widthScale ?? 1);
-        if (dashStyle) {
-          ctx.setLineDash([dashStyle.dash * captureRatio, dashStyle.gap * captureRatio]);
-          ctx.lineCap = dashStyle.cap;
-        } else {
-          ctx.setLineDash([]);
-          ctx.lineCap = 'round';
-        }
+        ctx.lineCap = dashStyle?.cap ?? 'round';
         const v = new THREE.Vector3();
         for (let i = 0; i < patternCount; i++) {
           const base = i * 6;
@@ -1579,6 +1578,24 @@ export function createSolarSystemEngine(canvas, opts) {
           v.set(patternPositions[base + 3], patternPositions[base + 4], patternPositions[base + 5]).project(camera);
           const bx = (v.x * 0.5 + 0.5) * physicalWidth;
           const by = (1 - (v.y * 0.5 + 0.5)) * physicalHeight;
+          // Derive THIS chord's dash/gap in screen pixels from the SAME
+          // world-space dashSize/gapSize the live WebGL trace uses (see
+          // LINE_STYLES), scaled by its own projected pixel-per-world-unit
+          // ratio — instead of one FIXED pixel length shared by every
+          // chord regardless of length/zoom. Without this, the captured
+          // image's dash/dot density had no relation to the live trace's
+          // (different unit systems entirely), so the pattern visibly
+          // changed rhythm the instant it finished and swapped to the
+          // captured image.
+          if (dashStyle && currentLineStyle !== 'solid') {
+            const chordWorldLen = patternDistances[i * 2 + 1] || 1;
+            const chordPixelLen = Math.hypot(bx - ax, by - ay) || 1;
+            const pxPerWorld = chordPixelLen / chordWorldLen;
+            const dashPx = dashStyle.fixedDashPx != null ? dashStyle.fixedDashPx * captureRatio : linePreset.dashSize * pxPerWorld;
+            ctx.setLineDash([dashPx, linePreset.gapSize * pxPerWorld]);
+          } else {
+            ctx.setLineDash([]);
+          }
           ctx.beginPath();
           ctx.moveTo(ax, ay);
           ctx.lineTo(bx, by);
