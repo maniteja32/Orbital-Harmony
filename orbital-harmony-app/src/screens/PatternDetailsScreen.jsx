@@ -1,8 +1,9 @@
-import { useMemo } from 'react';
-import { Sparkles } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Sparkles, X, RotateCw } from 'lucide-react';
 import { GlassButton } from '../components/ui/glasscn/glass-button.jsx';
 import { TopNavigationBar } from '../components/TopNavigationBar.jsx';
-import { PLANETS_BY_KEY } from '../data/planets.js';
+import { PatternGlyph } from '../components/PatternGlyph.jsx';
+import { PLANETS, PLANETS_BY_KEY } from '../data/planets.js';
 import { computePatternPlan, findResonance } from '../utils/resonance.js';
 import { useAppStore } from '../store/useAppStore.js';
 
@@ -10,9 +11,22 @@ import { useAppStore } from '../store/useAppStore.js';
  *  pattern's real generation parameters. (The old Settings tab — Speed/
  *  Density presets — was removed: it edited store fields the live
  *  Simulation screen no longer reads, so it had zero effect on the
- *  actual regenerated pattern.) */
-export default function PatternDetailsScreen({ onBack, onRegenerate, onKnowledge }) {
+ *  actual regenerated pattern.) The "Did you know?" fact card now
+ *  expands inline below, instead of navigating to a separate screen. */
+export default function PatternDetailsScreen({ onBack, onRegenerate }) {
   const { planetA, planetB } = useAppStore();
+  const [showKnowledge, setShowKnowledge] = useState(false);
+  const facts = useMemo(
+    () => PLANETS.map((p) => ({ key: p.key, name: p.name, color: p.color, fact: p.fact })),
+    []
+  );
+  const startIndex = useMemo(() => {
+    const i = facts.findIndex((f) => f.key === planetA);
+    return i >= 0 ? i : 0;
+  }, [facts, planetA]);
+  const [factIndex, setFactIndex] = useState(startIndex);
+  const currentFact = facts[factIndex % facts.length];
+  const factPlanet = PLANETS_BY_KEY[currentFact.key];
 
   const a = planetA ? PLANETS_BY_KEY[planetA] : null;
   const b = planetB ? PLANETS_BY_KEY[planetB] : null;
@@ -67,10 +81,50 @@ export default function PatternDetailsScreen({ onBack, onRegenerate, onKnowledge
           </dl>
         </section>
 
-        <button type="button" className="knowledge-link" onClick={onKnowledge}>
-          <Sparkles size={16} strokeWidth={1.8} aria-hidden="true" />
-          Did you know?
-        </button>
+        {!showKnowledge && (
+          <button type="button" className="knowledge-link" onClick={() => setShowKnowledge(true)}>
+            <Sparkles size={16} strokeWidth={1.8} aria-hidden="true" />
+            Did you know?
+          </button>
+        )}
+
+        {showKnowledge && (
+          <div className="knowledge-card">
+            <div className="knowledge-card__top">
+              <span className="knowledge-card__eyebrow">Did you know?</span>
+              <button
+                type="button"
+                className="knowledge-card__close"
+                onClick={() => setShowKnowledge(false)}
+                aria-label="Close"
+              >
+                <X size={20} strokeWidth={2} aria-hidden="true" />
+              </button>
+            </div>
+
+            <div className="knowledge-card__planet">
+              <span
+                className="knowledge-card__orb"
+                style={{ '--planet-color': factPlanet?.color ?? '#8c96ff' }}
+                aria-hidden="true"
+              >
+                <PatternGlyph seedA={5} seedB={factIndex + 2} d={5} size={96} strokeWidth={0.6} />
+              </span>
+              <span className="knowledge-card__name">{currentFact.name}</span>
+            </div>
+
+            <p className="knowledge-card__fact">{currentFact.fact}</p>
+
+            <button
+              type="button"
+              className="knowledge-card__next"
+              onClick={() => setFactIndex((i) => (i + 1) % facts.length)}
+            >
+              <span>Next fact</span>
+              <RotateCw size={18} strokeWidth={2} aria-hidden="true" />
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="screen__actions">

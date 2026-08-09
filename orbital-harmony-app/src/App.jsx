@@ -17,7 +17,6 @@ const PlanetSelectScreen = lazy(() => import('./screens/PlanetSelectScreen.jsx')
 const SimulationScreen = lazy(() => import('./screens/SimulationScreen.jsx'));
 const ResultScreen = lazy(() => import('./screens/ResultScreen.jsx'));
 const PatternDetailsScreen = lazy(() => import('./screens/PatternDetailsScreen.jsx'));
-const KnowledgeCardScreen = lazy(() => import('./screens/KnowledgeCardScreen.jsx'));
 const CollectionScreen = lazy(() => import('./screens/CollectionScreen.jsx'));
 const SharePatternScreen = lazy(() => import('./screens/SharePatternScreen.jsx'));
 const ProfileScreen = lazy(() => import('./screens/ProfileScreen.jsx'));
@@ -122,10 +121,8 @@ export default function App() {
             <PatternDetailsScreen
               onBack={() => goTo('result')}
               onRegenerate={() => goTo('settings')}
-              onKnowledge={() => goTo('knowledge')}
             />
           )}
-          {screen === 'knowledge' && <KnowledgeCardScreen onClose={() => goTo('details')} />}
           {screen === 'collection' && <CollectionScreen onOpen={() => goTo('result')} />}
           {screen === 'share' && <SharePatternScreen onBack={() => goTo('result')} />}
           {screen === 'profile' && <ProfileScreen onBack={() => goTo('system')} />}
