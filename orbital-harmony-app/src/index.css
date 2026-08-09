@@ -3511,13 +3511,15 @@ button {
   color: var(--text-secondary);
   /* Smallest font size used anywhere in the app (matches e.g. the
      Simulation screen's slider tick labels) — least important text here. */
-  font-size: 10px;
+  font-size: 14px;
+  line-height: 1.4;
 }
 
 .param-row dd {
   color: var(--text-primary);
-  font-size: 10px;
+  font-size: 14px;
   font-weight: 600;
+  line-height: 1.4;
 }
 
 .knowledge-link {
@@ -3639,6 +3641,61 @@ button {
   line-height: 1.6;
 }
 
+.knowledge-card--compact {
+  max-width: none;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 24px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: none;
+  box-shadow: none;
+}
+
+.knowledge-card__title {
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.knowledge-card--compact .knowledge-card__eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.knowledge-card--compact .knowledge-card__close {
+  width: 26px;
+  height: 26px;
+}
+
+.knowledge-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.knowledge-card--compact .knowledge-card__fact {
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.knowledge-card__entry {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.knowledge-card__entry-title {
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
 .knowledge-card__next {
   display: flex;
   align-items: center;
@@ -3673,19 +3730,13 @@ button {
 }
 
 .collection-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
   padding: 14px;
   border-radius: var(--radius-md);
-  background: var(--glass-bg);
   border: 1px solid var(--glass-border);
   text-align: center;
   scale: 1;
   transition: scale 0.2s ease, background 0.2s ease;
 }
-
 .collection-card:active {
   scale: 0.97;
 }

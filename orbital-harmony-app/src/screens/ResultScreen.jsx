@@ -39,6 +39,11 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails, onS
   const title = hasPair ? `${planetAData.name} × ${planetBData.name}` : 'Cosmic Signature';
   const cosmicDateLabel = formatCosmicSignatureDate(cosmicDate);
   const speedCfg = SPEED_PRESETS[speed];
+  const factEntries = useMemo(() => {
+    return [planetAData, planetBData]
+      .filter(Boolean)
+      .map((planet) => ({ name: planet.name, fact: planet.fact }));
+  }, [planetAData, planetBData]);
 
   // Same plan the original SimulationScreen reveal used (see
   // computeSimulationPlan) — reproducing it here lets the line-style
@@ -48,16 +53,6 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails, onS
     () => computeSimulationPlan({ isCosmic, planetA, planetB, detailLevel }),
     [isCosmic, planetA, planetB, detailLevel],
   );
-
-  const params = isCosmic
-    ? [
-        { label: 'Planets Connected', value: '8' },
-        { label: 'Total Duration', value: `${plan.totalSimYears.toFixed(1)} years` },
-      ]
-    : [
-        { label: 'Trace Interval', value: `${plan.traceIntervalDays.toFixed(1)} days` },
-        { label: 'Total Duration', value: `${plan.totalSimYears.toFixed(1)} years` },
-      ];
 
   const canvasRef = useRef(null);
   const [regenerating, setRegenerating] = useState(false);
@@ -136,17 +131,19 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails, onS
         )}
       </LiquidGlass>
 
-      <section className="detail-card">
-        <h2 className="detail-card__title">Parameters</h2>
-        <dl className="param-list">
-          {params.map((p) => (
-            <div className="param-row" key={p.label}>
-              <dt>{p.label}</dt>
-              <dd>{p.value}</dd>
-            </div>
-          ))}
-        </dl>
-      </section>
+        {!isCosmic && (
+        <div className="knowledge-card knowledge-card--compact">
+            <span className="knowledge-card__title">Fun fact</span>
+          <div className="knowledge-card__body">
+              {factEntries.map((entry) => (
+                <div className="knowledge-card__entry" key={entry.name}>
+                  <span className="knowledge-card__entry-title">{entry.name}</span>
+                  <p className="knowledge-card__fact">{entry.fact}</p>
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
 
       {isCosmic ? (
         <div className="result-actions result-actions--cosmic">

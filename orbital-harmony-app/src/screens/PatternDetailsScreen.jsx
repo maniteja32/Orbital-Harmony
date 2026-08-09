@@ -1,46 +1,48 @@
-import { useMemo, useState } from 'react';
-import { Sparkles, X } from 'lucide-react';
+import { useMemo } from 'react';
 import { GlassButton } from '../components/ui/glasscn/glass-button.jsx';
 import { TopNavigationBar } from '../components/TopNavigationBar.jsx';
-import { PatternGlyph } from '../components/PatternGlyph.jsx';
-import { PLANETS, PLANETS_BY_KEY } from '../data/planets.js';
+import { PLANETS_BY_KEY } from '../data/planets.js';
 import { findResonance } from '../utils/resonance.js';
+import { computeSimulationPlan } from '../utils/simulationPlan.js';
 import { useAppStore } from '../store/useAppStore.js';
 
 /** Screen 7 — Pattern Details: a plain-language description of the
- *  pattern (the generation Parameters now live on the Result screen,
- *  one tap earlier, where the pattern itself is shown). The "Did you
- *  know?" fact card expands inline below, instead of navigating to a
- *  separate screen. */
+ *  pattern. The generation Parameters live here, one tap earlier than the
+ *  result view, so the pattern summary and its tuning details stay together. */
 export default function PatternDetailsScreen({ onBack, onRegenerate }) {
-  const { planetA, planetB } = useAppStore();
-  const [showKnowledge, setShowKnowledge] = useState(false);
-  const facts = useMemo(
-    () => PLANETS.map((p) => ({ key: p.key, name: p.name, color: p.color, fact: p.fact })),
-    []
-  );
-  const startIndex = useMemo(() => {
-    const i = facts.findIndex((f) => f.key === planetA);
-    return i >= 0 ? i : 0;
-  }, [facts, planetA]);
-  const [factIndex] = useState(startIndex);
-  const currentFact = facts[factIndex % facts.length];
-  const factPlanet = PLANETS_BY_KEY[currentFact.key];
-
+  const { planetA, planetB, patternMode, detailLevel } = useAppStore();
   const a = planetA ? PLANETS_BY_KEY[planetA] : null;
   const b = planetB ? PLANETS_BY_KEY[planetB] : null;
   const title = a && b ? `${a.name} × ${b.name}` : 'Cosmic Signature';
+  const plan = useMemo(
+    () => computeSimulationPlan({ isCosmic: patternMode === 'cosmic', planetA, planetB, detailLevel }),
+    [patternMode, planetA, planetB, detailLevel],
+  );
+  const isCosmic = patternMode === 'cosmic';
+  const params = patternMode === 'cosmic'
+    ? [
+        { label: 'Planets Connected', value: '8' },
+        { label: 'Total Duration', value: `${plan.totalSimYears.toFixed(1)} years` },
+      ]
+    : [
+        { label: 'Trace Interval', value: `${plan.traceIntervalDays.toFixed(1)} days` },
+        { label: 'Total Duration', value: `${plan.totalSimYears.toFixed(1)} years` },
+      ];
 
   const resonance = useMemo(() => {
     if (!a || !b) return null;
     return findResonance(a.orbitalPeriodDays, b.orbitalPeriodDays);
   }, [a, b]);
 
-  const about = a && b
-    ? `${a.name} and ${b.name} trace this pattern as they orbit${
-        resonance ? ` in a ${resonance.longer}:${resonance.shorter} resonance` : ''
-      } — each alignment draws a new chord.`
-    : 'This Cosmic Signature connects every planet at your chosen moment into one closed figure.';
+  const generationSummary = isCosmic
+    ? 'This screen uses the full planetary set and samples the system across the chosen date window. Each pass through the simulation adds a new path segment, and repeated passes build the final layered shape.'
+    : 'This pattern is produced by simulating the selected pair over a fixed time span. The app samples their orbital positions at regular intervals and draws a chord each time the geometry aligns.';
+
+  const whyItLooksLikeThis = isCosmic
+    ? 'Cosmic Signature patterns are denser because all eight planets are part of the same capture. That increases overlap, which makes the final image feel richer and more complex.'
+    : resonance
+      ? `The ${resonance.longer}:${resonance.shorter} resonance keeps the motion repeating in a stable rhythm, so the chord lines stack into a clear geometric form.`
+      : 'When two planets do not lock into a simple resonance, the chord lines drift more slowly and the pattern becomes broader and more open.';
 
   return (
     <div className="screen screen--details">
@@ -48,45 +50,29 @@ export default function PatternDetailsScreen({ onBack, onRegenerate }) {
 
       <div className="details-body">
         <section className="detail-card">
-          <h2 className="detail-card__title">About this Pattern</h2>
-          <p className="detail-card__text">{about}</p>
+          <h2 className="detail-card__title">How it is built</h2>
+          <p className="detail-card__text">{generationSummary}</p>
         </section>
 
-        {!showKnowledge && (
-          <button type="button" className="knowledge-link" onClick={() => setShowKnowledge(true)}>
-            <Sparkles size={16} strokeWidth={1.8} aria-hidden="true" />
-            Did you know?
-          </button>
-        )}
+        <section className="detail-card">
+          <h2 className="detail-card__title">Why it looks this way</h2>
+          <p className="detail-card__text">{whyItLooksLikeThis}</p>
+        </section>
 
-        {showKnowledge && (
-          <div className="knowledge-card">
-            <div className="knowledge-card__top">
-              <span className="knowledge-card__eyebrow">Did you know?</span>
-              <button
-                type="button"
-                className="knowledge-card__close"
-                onClick={() => setShowKnowledge(false)}
-                aria-label="Close"
-              >
-                <X size={20} strokeWidth={2} aria-hidden="true" />
-              </button>
-            </div>
-
-            <div className="knowledge-card__planet">
-              <span
-                className="knowledge-card__orb"
-                style={{ '--planet-color': factPlanet?.color ?? '#8c96ff' }}
-                aria-hidden="true"
-              >
-                <PatternGlyph seedA={5} seedB={factIndex + 2} d={5} size={96} strokeWidth={0.6} />
-              </span>
-              <span className="knowledge-card__name">{currentFact.name}</span>
-            </div>
-
-            <p className="knowledge-card__fact">{currentFact.fact}</p>
-          </div>
-        )}
+        <section className="detail-card">
+          <h2 className="detail-card__title">Live parameters</h2>
+          <p className="detail-card__text">
+            These values come from the current selection and determine the final geometry of the pattern.
+          </p>
+          <dl className="param-list">
+            {params.map((p) => (
+              <div className="param-row" key={p.label}>
+                <dt>{p.label}</dt>
+                <dd>{p.value}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
       </div>
 
       <div className="screen__actions">
