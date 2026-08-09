@@ -146,11 +146,11 @@ export default function SimulationScreen({ onComplete, onBack }) {
           cosmicSnapshotDate={isCosmic ? (cosmicDate ?? undefined) : undefined}
           startPaused={true}
           miniBodiesIntro
-          miniSunScale={0.5}
+          miniSunScale={0.15}
           miniPlanetScale={1.5}
           miniIntroDurationSec={1}
           miniMotionRampSec={2.6}
-          initialSunScale={0.5}
+          initialSunScale={0.15}
           initialPlanetScale={1.5}
           speedDurationSec={speedCfg.durationSec}
           totalSimYears={totalSimYears}
