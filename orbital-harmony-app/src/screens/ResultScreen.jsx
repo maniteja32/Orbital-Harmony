@@ -120,14 +120,15 @@ async function ensureFontLoaded(fontShorthand) {
   }
 }
 
-// Reference dimensions the on-screen topbar title + result-frame are
-// styled at (see .topbar-title / .result-frame / .screen's 18px gap in
-// index.css) — every exported size below is this same layout scaled up
-// to the captured pattern's real width, so the export is a faithful
-// reproduction of the on-screen card instead of an invented one.
+// Reference dimensions the on-screen title + result-frame are styled at
+// (see .topbar-title / .result-frame in index.css) — every exported
+// size below is this same layout scaled up to the captured pattern's
+// real width. The header itself is deliberately snug (not the full
+// 44px topbar + 18px gap the on-screen layout uses) so the title sits
+// close above the card instead of floating in empty space.
 const REFERENCE_CARD_WIDTH = 350;
-const REFERENCE_TOPBAR_HEIGHT = 44;
-const REFERENCE_SCREEN_GAP = 18;
+const REFERENCE_HEADER_TOP_PADDING = 20;
+const REFERENCE_HEADER_BOTTOM_PADDING = 12;
 const REFERENCE_TITLE_FONT_SIZE = 18;
 const REFERENCE_CARD_RADIUS = 24;
 
@@ -144,14 +145,15 @@ async function composeShareImageDataUrl(sourceDataUrl, title, subtitle = '') {
   const width = Math.min(image.naturalWidth || image.width, image.naturalHeight || image.height);
   const scale = width / REFERENCE_CARD_WIDTH;
 
-  const topbarHeight = Math.round(REFERENCE_TOPBAR_HEIGHT * scale);
-  const gap = Math.round(REFERENCE_SCREEN_GAP * scale);
+  const topPadding = Math.round(REFERENCE_HEADER_TOP_PADDING * scale);
+  const bottomPadding = Math.round(REFERENCE_HEADER_BOTTOM_PADDING * scale);
   const titleFontSize = Math.round(REFERENCE_TITLE_FONT_SIZE * scale);
+  const titleBlockHeight = Math.round(titleFontSize * 1.3);
   const cornerRadius = Math.round(REFERENCE_CARD_RADIUS * scale);
 
   const subtitleFontSize = Math.round(14 * scale);
-  const subtitleBlockHeight = subtitle ? Math.round(30 * scale) : 0;
-  const headerHeight = topbarHeight + subtitleBlockHeight + gap;
+  const subtitleBlockHeight = subtitle ? Math.round(24 * scale) : 0;
+  const headerHeight = topPadding + titleBlockHeight + subtitleBlockHeight + bottomPadding;
 
   const canvas = document.createElement('canvas');
   canvas.width = width;
@@ -170,13 +172,13 @@ async function composeShareImageDataUrl(sourceDataUrl, title, subtitle = '') {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.font = `400 ${titleFontSize}px Syncopate, 'Funnel Display', -apple-system, sans-serif`;
-  drawWrappedText(ctx, title, width / 2, topbarHeight / 2, width * 0.88, titleFontSize * 1.3, 2);
+  drawWrappedText(ctx, title, width / 2, topPadding + titleBlockHeight / 2, width * 0.88, titleFontSize * 1.3, 2);
 
   if (subtitle) {
     await ensureFontLoaded(`600 ${subtitleFontSize}px 'Funnel Display'`);
     ctx.fillStyle = '#f5f6fa';
     ctx.font = `600 ${subtitleFontSize}px 'Funnel Display', -apple-system, sans-serif`;
-    ctx.fillText(subtitle, width / 2, topbarHeight + subtitleBlockHeight / 2);
+    ctx.fillText(subtitle, width / 2, topPadding + titleBlockHeight + subtitleBlockHeight / 2);
   }
 
   // Rounded card — same corner radius as the live .result-frame —
