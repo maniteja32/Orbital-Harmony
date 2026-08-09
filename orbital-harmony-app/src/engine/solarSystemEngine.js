@@ -34,7 +34,11 @@ const LINE_STYLES = {
   // a visibly elongated blip (bigger than the round-cap circle it was
   // meant to read as), not a compact dot. Gap widened to match so dots
   // stay sparse rather than crowding closer together as they shrink.
-  dots: { dashSize: 0.15, gapSize: 2.6 },
+  // widthScale doubles the stroke thickness (see setLineStyle) to match
+  // CANVAS_DASH_STYLES' doubled dot below — without it the LIVE trace's
+  // dots rendered noticeably smaller/thinner than the final captured
+  // image, reading as a jarring size change the instant it finished.
+  dots: { dashSize: 0.15, gapSize: 2.6, widthScale: 2 },
 };
 
 // Canvas-2D equivalents used ONLY by captureDataURL's chord redraw (see
@@ -1444,6 +1448,10 @@ export function createSolarSystemEngine(canvas, opts) {
       const preset = LINE_STYLES[currentLineStyle];
       patternLines.material.dashSize = preset.dashSize;
       patternLines.material.gapSize = preset.gapSize;
+      // Matches CANVAS_DASH_STYLES' widthScale so the live trace's stroke
+      // weight already looks like the final captured image, instead of
+      // jumping thicker/thinner the moment it's swapped in.
+      patternLines.material.linewidth = PATTERN_LINE_WIDTH * (preset.widthScale ?? 1);
     },
     // Live playback-rate multiplier for an already-running pattern reveal
     // (e.g. driven by a "rocket" speed slider) — see baseSimDaysPerRealSecond
