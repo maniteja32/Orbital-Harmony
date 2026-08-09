@@ -2092,13 +2092,11 @@ button {
 .result-frame__placeholder {
   width: 100%;
   height: 100%;
-  /* `contain` (not `cover`): the snapshot is captured from the Simulation
-     screen's tall rectangular canvas, so cropping it to fill this square
-     frame (`cover`) cut away the empty margin above/below the system and
-     made the pattern read noticeably more "zoomed in" here than it looked
-     live. Showing the full captured frame uncropped keeps the pattern at
-     the same relative scale the user actually saw during simulation. */
-  object-fit: contain;
+  /* `cover` (not `contain`): `contain` avoided cropping but shrank the
+     pattern and left visible letterboxed bars of starfield background —
+     worse than the original. `cover` fills the square frame edge-to-edge
+     with no bars, keeping the pattern as large as possible. */
+  object-fit: cover;
   display: block;
 }
 
