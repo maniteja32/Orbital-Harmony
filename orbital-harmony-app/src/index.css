@@ -2060,6 +2060,7 @@ button {
 }
 
 .result-frame {
+  position: relative;
   border-radius: var(--radius-lg);
   overflow: hidden;
   border: 1px solid var(--glass-border);

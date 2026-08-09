@@ -4,8 +4,8 @@ import SolarSystemCanvas from '../components/SolarSystemCanvas.jsx';
 import { TopNavigationBar } from '../components/TopNavigationBar.jsx';
 import { LineStyleToggleButton } from '../components/LineStyleToggle.jsx';
 import { LiquidGlass } from '../components/ui/glasscn/liquid-glass.jsx';
-import { PLANETS, PLANETS_BY_KEY } from '../data/planets.js';
-import { computePatternPlan } from '../utils/resonance.js';
+import { PLANETS_BY_KEY } from '../data/planets.js';
+import { computeSimulationPlan, DETAIL_LEVEL_MIN, DETAIL_LEVEL_MAX } from '../utils/simulationPlan.js';
 import { useAppStore, SPEED_PRESETS } from '../store/useAppStore.js';
 
 // Rim tuning for the tuning-panel cards' LiquidGlass surface — matches the
@@ -18,18 +18,6 @@ const TUNE_RIM = {
 };
 
 const DEFAULT_SPEED_MULTIPLIER = 3;
-const DETAIL_LEVEL_MIN = 1;
-const DETAIL_LEVEL_MAX = 10;
-const SIMULATION_PATTERN_OPACITY_MULTIPLIER = 0.8;
-
-function detailMultiplier(level) {
-  return 0.7 + (level / DETAIL_LEVEL_MAX) * 0.6;
-}
-
-function quantizeChordCount(rawChordCount, petals) {
-  const step = Math.max(1, petals || 1);
-  return Math.max(step, Math.round(rawChordCount / step) * step);
-}
 
 // A naive `${percent}%` fill width overshoots/undershoots the native range
 // thumb's actual center at any value other than 0/100 — the browser insets
@@ -43,21 +31,6 @@ function sliderFillWidth(percent) {
   const half = SLIDER_THUMB_SIZE / 2;
   return `calc(${half}px + ${percent / 100} * (100% - ${SLIDER_THUMB_SIZE}px))`;
 }
-
-// Fallback only — used if a selected planet can't be resolved (shouldn't
-// happen in the normal flow). The Explore pattern's real span/density are
-// computed PER PAIR from the two planets' actual orbital periods (see
-// computePatternPlan) so every pair traces its own complete resonance
-// figure, rather than an arbitrary fixed number of years.
-const FALLBACK_SIM_YEARS = 8;
-const FALLBACK_TRACE_INTERVAL_DAYS = 3;
-
-// Cosmic Signature — connects ALL planets (positioned at their real birth
-// date/time locations) in a closed loop and sweeps the wired figure over a
-// fixed span. ~1 Jupiter orbit lets the inner planets loop many times (rich
-// web) while the slow outer planets act as drifting anchors.
-const SIGNATURE_YEARS = 12;
-const SIGNATURE_SAMPLES = 260;
 
 /** Live simulation preview screen for Explore/Cosmic flows.
  * Runs the tracer and captures the generated image when complete.
@@ -90,9 +63,12 @@ export default function SimulationScreen({ onComplete, onBack }) {
   const hasPair = Boolean(planetAData && planetBData);
   const pairTitle = isCosmic ? 'Cosmic Signature' : hasPair ? `${planetAData.name} × ${planetBData.name}` : '';
 
-  const planetKeys = useMemo(
-    () => (isCosmic ? PLANETS.map((p) => p.key) : [planetA, planetB]),
-    [isCosmic, planetA, planetB],
+  // Run length + chord density + real/artistic tracing mode — SINGLE
+  // SOURCE OF TRUTH shared with ResultScreen (see computeSimulationPlan)
+  // so a later on-demand regenerate there reproduces this EXACT pattern.
+  const { planetKeys, physicalPattern, totalSimYears, traceIntervalDays, patternOpacity, patternRates } = useMemo(
+    () => computeSimulationPlan({ isCosmic, planetA, planetB, detailLevel }),
+    [isCosmic, planetA, planetB, detailLevel],
   );
 
   // Applies the persisted line-style choice (see useAppStore) to a freshly
@@ -101,53 +77,6 @@ export default function SimulationScreen({ onComplete, onBack }) {
     canvasRef.current?.setLineStyle(lineStyle);
   }, [planetKeys]);
   const speedCfg = SPEED_PRESETS[speed];
-
-  // Run length + chord density. Cosmic mode sweeps the all-planets figure
-  // over a fixed span; Explore derives its span + sampling PER PAIR from the
-  // two planets' REAL orbital periods (computePatternPlan) — detecting the
-  // resonance cycle and running exactly long enough for the geometry to
-  // return to its initial configuration, with a chord count + adaptive line
-  // opacity bounded so the figure is fully revealed but never overdraws into
-  // a solid white mesh. No fixed/arbitrary duration is used.
-  const { totalSimYears, traceIntervalDays, patternOpacity, patternRates } = useMemo(() => {
-    if (isCosmic) {
-      return {
-        totalSimYears: SIGNATURE_YEARS,
-        traceIntervalDays: (SIGNATURE_YEARS * 365.25) / SIGNATURE_SAMPLES,
-        patternOpacity: SIMULATION_PATTERN_OPACITY_MULTIPLIER,
-        patternRates: undefined,
-      };
-    }
-    const a = PLANETS_BY_KEY[planetA];
-    const b = PLANETS_BY_KEY[planetB];
-    if (!a || !b) {
-      return { totalSimYears: FALLBACK_SIM_YEARS, traceIntervalDays: FALLBACK_TRACE_INTERVAL_DAYS, patternOpacity: SIMULATION_PATTERN_OPACITY_MULTIPLIER, patternRates: undefined };
-    }
-    const plan = computePatternPlan(a.orbitalPeriodDays, b.orbitalPeriodDays);
-    const adjustedChordCount = Math.max(
-      120,
-      quantizeChordCount(plan.chordCount * detailMultiplier(detailLevel), plan.petals),
-    );
-    // Idealized whole-loop rates (see computePatternPlan) keyed by planet, so
-    // the engine drives each of the two planets at the rate that shuts the
-    // figure exactly — a clean, gap-free, rotationally-symmetric pattern.
-    const aInner = a.orbitalPeriodDays <= b.orbitalPeriodDays;
-    return {
-      totalSimYears: plan.totalSimYears,
-      traceIntervalDays: (plan.totalSimYears * 365.25) / adjustedChordCount,
-      patternOpacity: plan.lineOpacity * SIMULATION_PATTERN_OPACITY_MULTIPLIER,
-      patternRates: {
-        [aInner ? planetA : planetB]: plan.innerRatePerYear,
-        [aInner ? planetB : planetA]: plan.outerRatePerYear,
-      },
-    };
-  }, [detailLevel, isCosmic, planetA, planetB]);
-
-  // Explore now traces the pair's TRUE resonance geometry (real orbital
-  // periods), matching the per-pair span computed above; Cosmic already
-  // uses real positions/periods. `physicalPattern` switches the engine's
-  // tracer from the old compressed artistic rates to real orbital motion.
-  const physicalPattern = isCosmic || (!!PLANETS_BY_KEY[planetA] && !!PLANETS_BY_KEY[planetB]);
 
   const handleEngineComplete = useCallback(() => {
     if (doneRef.current) return;
