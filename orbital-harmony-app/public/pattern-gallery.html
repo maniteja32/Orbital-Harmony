@@ -29,8 +29,11 @@
     import { computePatternPlan, PATTERN_LINE_WIDTH } from '/src/utils/resonance.js';
 
     const DPY = 365.25, TWO_PI = Math.PI * 2;
-    // Same tight "pattern layout" orbit radii the engine remaps to.
-    const LEGACY = { mercury:16, venus:21, earth:25, mars:31, jupiter:42, saturn:55, uranus:67, neptune:78 };
+    // Same 2-planet pattern-mode radius scaling as solarSystemEngine.js:
+    // outer planet = 100% reference radius, inner scaled by real AU ratio
+    // (NOT the old hand-tuned LEGACY table, which no longer matches the
+    // live engine and made this preview diverge from the real pattern).
+    const PATTERN_REFERENCE_DISTANCE = 50;
 
     // All unique pairs, ordered by closure span (calm → epic).
     const keys = PLANETS.map(p => p.key);
@@ -44,8 +47,10 @@
       const a = PLANETS_BY_KEY[ka], b = PLANETS_BY_KEY[kb];
       const p = computePatternPlan(a.orbitalPeriodDays, b.orbitalPeriodDays);
       const innerIsA = a.orbitalPeriodDays <= b.orbitalPeriodDays;
-      const rIn = innerIsA ? LEGACY[ka] : LEGACY[kb];
-      const rOut = innerIsA ? LEGACY[kb] : LEGACY[ka];
+      const maxAU = Math.max(a.realDistanceAU, b.realDistanceAU);
+      const minAU = Math.min(a.realDistanceAU, b.realDistanceAU);
+      const rOut = PATTERN_REFERENCE_DISTANCE;
+      const rIn = (minAU / maxAU) * PATTERN_REFERENCE_DISTANCE;
       const innerP = Math.min(a.orbitalPeriodDays, b.orbitalPeriodDays);
       const outerP = Math.max(a.orbitalPeriodDays, b.orbitalPeriodDays);
       const angIn = currentOrbitAngleRad(innerIsA ? a : b);
