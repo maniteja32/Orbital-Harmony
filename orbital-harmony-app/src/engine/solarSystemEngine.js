@@ -42,14 +42,12 @@ const LINE_STYLES = {
 // a completely different space than the WebGL material's per-chord world
 // distance above (ctx.setLineDash() works in screen pixels). "dots" uses
 // a near-zero dash so, combined with the round line cap, each mark
-// renders as a small circle instead of a short line segment; `widthScale`
-// shrinks that circle's diameter (which otherwise = the full chord
-// lineWidth, reading as noticeably bigger than the live view's dots)
-// without touching the other styles' stroke weight.
+// renders as a small circle at the full chord lineWidth (widthScale: 1)
+// — a true round dot, not a shrunken or elongated mark.
 const CANVAS_DASH_STYLES = {
   solid: null,
   dashed: { dash: 2, gap: 1, cap: 'butt' },
-  dots: { dash: 0.01, gap: 6, cap: 'round', widthScale: 0.85 },
+  dots: { dash: 0.01, gap: 6, cap: 'round', widthScale: 1 },
 };
 import { loadPlanetTexture, buildPlanetBody } from './planetFactory.js';
 
