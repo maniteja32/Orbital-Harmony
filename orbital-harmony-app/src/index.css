@@ -3642,6 +3642,8 @@ button {
 }
 
 .knowledge-card--compact {
+  position: relative;
+  isolation: isolate;
   max-width: none;
   gap: 6px;
   padding: 10px 12px;
@@ -3649,8 +3651,26 @@ button {
   background: var(--glass-bg);
   backdrop-filter: blur(16px) saturate(140%);
   -webkit-backdrop-filter: blur(16px) saturate(140%);
-  border: none;
+  border: 1px solid var(--glass-border);
   box-shadow: none;
+}
+
+.knowledge-card--compact::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 0.8px;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 300% at 4% 0, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0) 55%),
+    radial-gradient(120% 300% at 96% 100%, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0) 55%),
+    radial-gradient(95% 250% at 96% 0, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0) 48%),
+    radial-gradient(95% 250% at 4% 100%, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0) 48%),
+    linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
 }
 
 .knowledge-card__title {
@@ -3838,17 +3858,6 @@ button {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-}
-
-.result-share-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-top: 6px;
-}
-
-.result-share-panel .share-targets {
-  margin-top: 0;
 }
 
 /* ---- Profile -------------------------------------------------------------- */

@@ -47,8 +47,13 @@ struct WebView: UIViewRepresentable {
         webView.navigationDelegate = context.coordinator
         webView.uiDelegate = context.coordinator
 
-        let initialURL = URL(string: "\(LocalFileSchemeHandler.scheme)://\(LocalFileSchemeHandler.host)/index.html")!
-        webView.load(URLRequest(url: initialURL))
+        // Cache-bust the shell URL so WKWebView does not occasionally reuse
+        // an older cached index.html that references stale hashed JS chunks,
+        // which can cause an empty screen after a bundle refresh.
+        let cacheBust = ProcessInfo.processInfo.globallyUniqueString
+        let initialURL = URL(string: "\(LocalFileSchemeHandler.scheme)://\(LocalFileSchemeHandler.host)/index.html?v=\(cacheBust)")!
+        let request = URLRequest(url: initialURL, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 30)
+        webView.load(request)
         return webView
     }
 

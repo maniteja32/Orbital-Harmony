@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Camera, Download, MessageCircle, MoreHorizontal, Heart, Share2 } from 'lucide-react';
+import { Heart, Share2 } from 'lucide-react';
 import { GlassButton } from '../components/ui/glasscn/glass-button.jsx';
 import { LiquidGlass } from '../components/ui/glasscn/liquid-glass.jsx';
 import { TopNavigationBar } from '../components/TopNavigationBar.jsx';
@@ -77,7 +77,6 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails, onS
   const canvasRef = useRef(null);
   const [regenerating, setRegenerating] = useState(false);
   const [regenKey, setRegenKey] = useState(0);
-  const [showShareOptions, setShowShareOptions] = useState(false);
   // Explore's non-cosmic chord trace is the only path this can quickly
   // regenerate (Cosmic Signature's intro hold/settle timers run in real
   // seconds regardless of speed multiplier, so it wouldn't actually be
@@ -113,28 +112,24 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails, onS
 
   const imageFilename = `${sanitizeFileName(title || 'cosmic-signature')}.png`;
 
-  const nativeShare = async () => {
+  const nativeShare = useCallback(async () => {
     if (!snapshot) return;
+    if (!navigator.share) {
+      // Fallback for environments without Web Share support.
+      downloadDataUrl(snapshot, imageFilename);
+      return;
+    }
     try {
-      if (navigator.share) {
-        const file = await dataUrlToFile(snapshot, imageFilename);
-        if (navigator.canShare?.({ files: [file] })) {
-          await navigator.share({ title: shareTitle, text: shareTitle, files: [file] });
-          return;
-        }
-        await navigator.share({ title: shareTitle, text: shareTitle });
+      const file = await dataUrlToFile(snapshot, imageFilename);
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ title: shareTitle, text: shareTitle, files: [file] });
+        return;
       }
+      await navigator.share({ title: shareTitle, text: shareTitle });
     } catch {
       /* dismissed / unsupported */
     }
-  };
-
-  const shareTargets = [
-    { key: 'download', label: 'Download', icon: Download, onClick: () => downloadDataUrl(snapshot, imageFilename) },
-    { key: 'instagram', label: 'Instagram', icon: Camera, onClick: nativeShare },
-    { key: 'whatsapp', label: 'WhatsApp', icon: MessageCircle, onClick: nativeShare },
-    { key: 'more', label: 'More', icon: MoreHorizontal, onClick: nativeShare },
-  ];
+  }, [snapshot, imageFilename, shareTitle]);
 
   return (
     <div className="screen screen--result">
@@ -195,21 +190,6 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails, onS
         </div>
       )}
 
-      {showShareOptions && (
-        <div className="result-share-panel">
-          <div className="share-targets">
-            {shareTargets.map(({ key, label, icon: Icon, onClick }) => (
-              <button key={key} type="button" className="share-target" onClick={onClick}>
-                <span className="share-target__icon">
-                  <Icon size={22} strokeWidth={1.8} aria-hidden="true" />
-                </span>
-                <span className="share-target__label">{label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
       {isCosmic ? (
         <div className="result-actions result-actions--cosmic">
           <div className="result-actions__compact-row" aria-label="Secondary actions">
@@ -228,7 +208,7 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails, onS
               <GlassButton
                 tone="secondary"
                 className="w-full h-11 text-base font-medium"
-                onClick={() => setShowShareOptions((v) => !v)}
+                onClick={nativeShare}
                 aria-label="Share signature"
               >
                 <Share2 size={16} strokeWidth={2} aria-hidden="true" />
@@ -257,7 +237,7 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails, onS
             <button
               type="button"
               className="back-button back-button--icon"
-              onClick={() => setShowShareOptions((v) => !v)}
+              onClick={nativeShare}
               aria-label="Share this pattern"
             >
               <Share2 size={18} strokeWidth={2} aria-hidden="true" />
