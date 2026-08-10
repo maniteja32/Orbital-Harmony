@@ -26,6 +26,9 @@ assets.
   (`orbital://app/...`) makes absolute-path references resolve correctly
   back into the bundled files, the same trick hybrid-app frameworks like
   Capacitor/Cordova use under the hood.
+- AI trivia is served by the deployed HTTPS `/api/trivia` function. Because
+  the native origin is `orbital://app`, its public endpoint must be embedded
+  with `VITE_TRIVIA_API_URL`; provider keys remain on the server.
 
 ## Prerequisites
 
@@ -54,11 +57,16 @@ In Xcode:
 Whenever you change anything under `orbital-harmony-app/src`, re-run:
 
 ```sh
-./scripts/rebuild-web.sh
+VITE_TRIVIA_API_URL=https://your-production-domain.example/api/trivia ./scripts/rebuild-web.sh
 ```
 
 This rebuilds the web app, refreshes `OrbitalHarmony/Resources/www`, and
 regenerates the Xcode project. Then just re-run in Xcode.
+
+The deployed API must include `orbital://app` in its
+`TRIVIA_ALLOWED_ORIGINS` server environment variable. If the public endpoint
+is omitted or unavailable, the bundled app uses its existing sourced/local
+trivia fallback.
 
 ## Project layout
 

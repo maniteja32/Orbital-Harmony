@@ -20,6 +20,18 @@ geometric pattern traced by the line connecting them as they orbit the Sun.
   wrapped by `src/components/SolarSystemCanvas.jsx`
 - Zustand for the tiny app-flow store (`src/store/useAppStore.js`)
 - Plain CSS (frosted-glass, dark theme) — no UI framework dependency
+- A Vercel Function at the repository root for grounded OpenAI/Azure OpenAI trivia
+
+## AI trivia
+
+Result trivia is AI-first when the server provider is configured. The backend
+retrieves Wikimedia/Wikipedia evidence, asks OpenAI or Azure OpenAI for a short
+rewrite, validates the selected source, and returns its citation. Existing
+sourced and local generators remain the fallback chain.
+
+Provider keys are server-only. See [AI_TRIVIA_SETUP.md](../AI_TRIVIA_SETUP.md)
+for environment variables, local development, native builds, and security
+details.
 
 ## Develop
 
@@ -40,6 +52,12 @@ already points Vercel at it:
       "outputDirectory": "orbital-harmony-app/dist"
     }
 
-Just import the repo into Vercel (or run `vercel` from the repo root) — no
-extra configuration needed. Alternatively, set the Vercel project's "Root
-Directory" to `orbital-harmony-app` and use the default Vite build settings.
+Import or deploy the repository root so Vercel also discovers `api/trivia.mjs`.
+Set the AI provider variables described in `AI_TRIVIA_SETUP.md`; without them,
+the app remains functional through its existing Wikimedia/Wikipedia fallbacks.
+
+## Validate
+
+    npm run test:ai
+    npm run lint
+    npm run build

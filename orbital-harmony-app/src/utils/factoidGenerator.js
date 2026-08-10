@@ -1,4 +1,5 @@
 import { PLANETS_BY_KEY } from '../data/planets.js';
+import { createLocalDateStory } from './dateStory.js';
 
 const FACTS_BY_PLANET = {
   mercury: [
@@ -84,49 +85,6 @@ const FACTS_BY_PLANET = {
 };
 
 const PAIR_TITLES = ['Cosmic curiosity', 'Orbit surprise', 'Space spark', 'Planet plot twist'];
-const COSMIC_TITLES = ['Your cosmic note', 'A little starlight', 'Your bright reminder', 'A note from your orbit'];
-const COSMIC_NOTES = [
-  {
-    emoji: '✨',
-    name: 'Quiet confidence',
-    message: (year) => `Your story began in ${year}, and every season since has added perspective. Trust the strength that grew quietly.`,
-  },
-  {
-    emoji: '🌱',
-    name: 'Gentle momentum',
-    message: (year) => `You have been becoming since ${year}. Small, repeated choices can carry you farther than one perfect leap.`,
-  },
-  {
-    emoji: '🌟',
-    name: 'Resilient glow',
-    message: (year) => `The world of ${year} could not predict who you would become. Leave room for your next chapter to surprise you too.`,
-  },
-  {
-    emoji: '🧭',
-    name: 'Your own compass',
-    message: (year) => `Your path started in ${year}, but it never had to match anyone else's pace. Keep choosing what feels honest and alive.`,
-  },
-  {
-    emoji: '🌅',
-    name: 'Brave beginnings',
-    message: (year) => `${year} was your first page, not your definition. You are allowed to begin again whenever growth asks you to.`,
-  },
-  {
-    emoji: '💫',
-    name: 'Creative gravity',
-    message: (year) => `Since ${year}, your ideas have gathered a perspective only you could build. Give the unusual ones room to orbit.`,
-  },
-  {
-    emoji: '☀️',
-    name: 'Warm courage',
-    message: (year) => `A life unfolding since ${year} has already crossed many skies. Let experience become confidence, not weight.`,
-  },
-  {
-    emoji: '🎈',
-    name: 'Playful spark',
-    message: (year) => `Your timeline began in ${year}, and joy belongs in it too. Make room for something delightfully unnecessary.`,
-  },
-];
 
 const historyByScope = new Map();
 
@@ -164,28 +122,8 @@ function toEntry(planet, factIndex) {
   return { name: planet.name, ...selected };
 }
 
-function cosmicDateSeed(date) {
-  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return 0;
-  return date.getUTCFullYear() * 372 + (date.getUTCMonth() + 1) * 31 + date.getUTCDate();
-}
-
-export function createCosmicDateMessage(date) {
-  const hasDate = date instanceof Date && !Number.isNaN(date.getTime());
-  const year = hasDate ? date.getUTCFullYear() : new Date().getUTCFullYear();
-  const seed = cosmicDateSeed(date);
-  const note = COSMIC_NOTES[seed % COSMIC_NOTES.length];
-  const dateKey = hasDate ? date.toISOString().slice(0, 10) : 'timeless';
-
-  return {
-    id: `cosmic-note:${dateKey}`,
-    title: COSMIC_TITLES[Math.floor(seed / COSMIC_NOTES.length) % COSMIC_TITLES.length],
-    titleEmoji: '✨',
-    entries: [{ name: note.name, emoji: note.emoji, fact: note.message(year) }],
-  };
-}
-
 export function createPatternFactoid({ planetA, planetB, isCosmic = false, cosmicDate = null }) {
-  if (isCosmic) return createCosmicDateMessage(cosmicDate);
+  if (isCosmic) return createLocalDateStory(cosmicDate);
 
   const selectedPlanets = [...new Set([planetA, planetB])]
     .map((key) => PLANETS_BY_KEY[key])
@@ -201,7 +139,6 @@ export function createPatternFactoid({ planetA, planetB, isCosmic = false, cosmi
     return {
       id: `${scope}:${index}`,
       title: PAIR_TITLES[index % PAIR_TITLES.length],
-      titleEmoji: '✨',
       entries: [toEntry(planet, index)],
     };
   }
@@ -222,7 +159,6 @@ export function createPatternFactoid({ planetA, planetB, isCosmic = false, cosmi
   return {
     id: `${scope}:${index}`,
     title: PAIR_TITLES[index % PAIR_TITLES.length],
-    titleEmoji: '✨',
     entries: selectedPlanets.map((planet) => entriesByPlanet.get(planet.key)),
   };
 }

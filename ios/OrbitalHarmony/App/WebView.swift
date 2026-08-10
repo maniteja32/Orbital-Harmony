@@ -82,5 +82,20 @@ struct WebView: UIViewRepresentable {
             }
             decisionHandler(.allow)
         }
+
+        func webView(
+            _ webView: WKWebView,
+            createWebViewWith configuration: WKWebViewConfiguration,
+            for navigationAction: WKNavigationAction,
+            windowFeatures: WKWindowFeatures
+        ) -> WKWebView? {
+            guard navigationAction.targetFrame == nil,
+                  let url = navigationAction.request.url,
+                  url.scheme == "http" || url.scheme == "https" else {
+                return nil
+            }
+            UIApplication.shared.open(url)
+            return nil
+        }
     }
 }

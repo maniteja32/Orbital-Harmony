@@ -56,7 +56,9 @@ export const PLANETS = [
     distance: 23,
     // Real heliocentric distance in AU — used only for pattern geometry.
     realDistanceAU: 0.72,
-    rotationSpeed: 0.0045,
+    // Boosted for visual legibility: Venus is retrograde, but a near-zero
+    // spin speed made direction almost impossible to perceive at app scale.
+    rotationSpeed: 0.02,
     tilt: 3,
     spinDirection: -1,
     texture: '/textures/venus.jpg',

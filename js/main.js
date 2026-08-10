@@ -38,12 +38,12 @@ import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
 // inaccurate ratio here would trace a smeared/incomplete pattern instead.
 const PLANET_DATA = [
   { name: 'Mercury', radius: 0.6, distance: 16, type: 'mercury', speed: 0.79, rotationSpeed: 0.004, tilt: 0.03, spinDirection: 1 },
-  { name: 'Venus',   radius: 1.1, distance: 21, type: 'venus',   speed: 0.8127, rotationSpeed: 0.0045, tilt: 3, spinDirection: -1 },
+  { name: 'Venus',   radius: 1.1, distance: 21, type: 'venus',   speed: 0.8127, rotationSpeed: 0.02, tilt: 3, spinDirection: -1 },
   { name: 'Earth',   radius: 1.2, distance: 25, type: 'earth',   speed: 0.5,  rotationSpeed: 0.02, tilt: 23.4, spinDirection: 1, hasAtmosphere: true, hasClouds: true, hasMoon: true },
   { name: 'Mars',    radius: 0.8, distance: 31, type: 'mars',    speed: 0.40, rotationSpeed: 0.018, tilt: 25, spinDirection: 1 },
   { name: 'Jupiter', radius: 3.6, distance: 42, type: 'jupiter', speed: 0.22, rotationSpeed: 0.045, tilt: 3, spinDirection: 1 },
   { name: 'Saturn',  radius: 3.0, distance: 55, type: 'saturn',  speed: 0.16, rotationSpeed: 0.042, tilt: 27, spinDirection: 1, hasRings: true },
-  { name: 'Uranus',  radius: 2.0, distance: 67, type: 'uranus',  speed: 0.11, rotationSpeed: 0.03, tilt: 82, spinDirection: 1 },
+  { name: 'Uranus',  radius: 2.0, distance: 67, type: 'uranus',  speed: 0.11, rotationSpeed: 0.03, tilt: 82, spinDirection: -1 },
   { name: 'Neptune', radius: 1.9, distance: 78, type: 'neptune', speed: 0.09, rotationSpeed: 0.032, tilt: 28, spinDirection: 1 },
 ];
 

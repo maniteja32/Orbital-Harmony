@@ -566,7 +566,7 @@ export function createSolarSystemEngine(canvas, opts) {
     20,
   );
   const cosmicSnapshotEnabled = cosmicSnapshotDate instanceof Date && !Number.isNaN(cosmicSnapshotDate.getTime());
-  const COSMIC_OVERVIEW_HOLD_SEC = 2.2;
+  const COSMIC_OVERVIEW_HOLD_SEC = 1;
   const COSMIC_SNAPSHOT_SETTLE_SEC = 7.2;
   const COSMIC_PRE_DRAW_HOLD_SEC = 0.7;
   const COSMIC_SIGNATURE_DRAW_SEC = 2.8;
@@ -813,6 +813,9 @@ export function createSolarSystemEngine(canvas, opts) {
   }
   function easeInOutCubic(t) {
     return t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2;
+  }
+  function easeInOutSine(t) {
+    return -(Math.cos(Math.PI * t) - 1) / 2;
   }
   // Quintic smootherstep (6t^5-15t^4+10t^3): zero 1st AND 2nd derivative at
   // both ends, so a motion eased with it starts and stops with no perceptible
@@ -1186,6 +1189,11 @@ export function createSolarSystemEngine(canvas, opts) {
     timer.update(timestamp);
     const delta = Math.min(timer.getDelta(), 0.05);
 
+    if (paused) {
+      renderScene();
+      return;
+    }
+
     // Detect when Play is first clicked (paused changes from true to false)
     if (shouldScaleAfterPlay && !playInitiated && !paused) {
       playInitiated = true;
@@ -1222,15 +1230,17 @@ export function createSolarSystemEngine(canvas, opts) {
       ? (miniBodiesDone ? THREE.MathUtils.clamp(miniMotionElapsed / Math.max(0.01, miniMotionRampSec), 0, 1) : 0)
       : 1;
 
-    if (paused) {
-      renderScene();
-      return;
-    }
+    const cosmicRewindActive = cosmicSnapshotEnabled && cosmicOverviewDone && !cosmicSettled;
+    const physicalTimeDirection = cosmicSnapshotEnabled
+      ? (cosmicRewindActive ? -1 : 0)
+      : 1;
 
-    sunMesh.rotation.y += delta * 0.03;
-    sunMat.uniforms.time.value += delta;
+    sunMesh.rotation.y += delta * 0.03 * physicalTimeDirection;
+    sunMat.uniforms.time.value += delta * physicalTimeDirection;
     starfield.children.forEach((layer) => {
-      layer.rotation.y += delta * layer.userData.spin;
+      // Keep Cosmic's sky fixed so it acts as a clear reference while every
+      // physical body moves backward through time.
+      if (!cosmicSnapshotEnabled) layer.rotation.y += delta * layer.userData.spin;
       // Advance each layer's twinkle clock (the ~26% of stars with
       // twinkleAmount > 0 scintillate off this uTime uniform).
       if (layer.material.uniforms?.uTime) layer.material.uniforms.uTime.value += delta;
@@ -1252,7 +1262,7 @@ export function createSolarSystemEngine(canvas, opts) {
     } else if (cosmicSnapshotEnabled && !cosmicSettled) {
       cosmicSettleElapsed += delta;
       const t = Math.min(cosmicSettleElapsed / COSMIC_SNAPSHOT_SETTLE_SEC, 1);
-      const eased = easeInOutCubic(t);
+      const eased = easeInOutSine(t);
       planets.forEach((planet, index) => {
         const angle = orbitDirection(planet.data) < 0
           ? cosmicStartAngles[index] + cosmicReverseArcs[index] * eased
@@ -1314,16 +1324,20 @@ export function createSolarSystemEngine(canvas, opts) {
         // Earth is along its orbit, which is what causes the seasons).
         planet.tiltAnchor.rotation.y = -planet.pivot.rotation.y;
       });
-
-      planets.forEach((planet) => {
-        planet.mesh.rotation.y += delta * 60 * planet.data.rotationSpeed * (planet.data.spinDirection ?? 1) * motionRamp;
-        if (planet.clouds) {
-          planet.clouds.rotation.y +=
-            delta * 60 * planet.data.rotationSpeed * 1.4 * (planet.data.spinDirection ?? 1) * motionRamp;
-        }
-        if (planet.moonPivot) planet.moonPivot.rotation.y += delta * 1.4;
-      });
     }
+
+    // Keep axial spin/cloud drift/moon orbit updates outside the orbit-branch
+    // so Cosmic rewind (time direction = -1) also visibly runs these motions
+    // backward instead of appearing static.
+    planets.forEach((planet) => {
+      planet.mesh.rotation.y +=
+        delta * 60 * planet.data.rotationSpeed * (planet.data.spinDirection ?? 1) * motionRamp * physicalTimeDirection;
+      if (planet.clouds) {
+        planet.clouds.rotation.y +=
+          delta * 60 * planet.data.rotationSpeed * 1.4 * (planet.data.spinDirection ?? 1) * motionRamp * physicalTimeDirection;
+      }
+      if (planet.moonPivot) planet.moonPivot.rotation.y += delta * 1.4 * physicalTimeDirection;
+    });
 
     scene.updateMatrixWorld(true);
     

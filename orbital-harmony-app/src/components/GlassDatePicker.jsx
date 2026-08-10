@@ -1,5 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
-import { Calendar, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Calendar, ChevronDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { LiquidGlass } from './ui/glasscn/liquid-glass.jsx';
 
 const MONTHS = [
@@ -75,6 +75,8 @@ export function GlassDatePicker({ value, onChange, max, placeholder = 'Select da
   const maxMonth = maxDate ? maxDate.getMonth() : 11;
   const isAtMaxMonth = Boolean(maxDate && view.year === maxYear && view.month >= maxMonth);
   const isAtMinMonth = view.year === MIN_YEAR && view.month === 0;
+  const isAtMaxYear = view.year >= maxYear;
+  const isAtMinYear = view.year <= MIN_YEAR;
 
   const cells = [];
   for (let i = 0; i < firstWeekday; i += 1) cells.push(null);
@@ -100,6 +102,14 @@ export function GlassDatePicker({ value, onChange, max, placeholder = 'Select da
         return { year: maxYear, month: maxMonth };
       }
       return { year: y, month: m };
+    });
+  }
+
+  function shiftYear(delta) {
+    setView((v) => {
+      const year = Math.min(maxYear, Math.max(MIN_YEAR, v.year + delta));
+      const month = maxDate && year === maxYear && v.month > maxMonth ? maxMonth : v.month;
+      return { year, month };
     });
   }
 
@@ -151,20 +161,36 @@ export function GlassDatePicker({ value, onChange, max, placeholder = 'Select da
       >
           <div className="gdp__nav">
             <h2 id={headingId} className="sr-only">Choose birth date</h2>
-            <LiquidGlass
-              className={`gdp__navGlass rounded-full bg-white/[0.12]${isAtMinMonth ? ' is-disabled' : ''}`}
-              style={NAV_ICON_RIM}
-            >
-              <button
-                type="button"
-                className="gdp__navbtn"
-                onClick={() => shiftMonth(-1)}
-                aria-label="Previous month"
-                disabled={isAtMinMonth}
+            <div className="gdp__navGroup">
+              <LiquidGlass
+                className={`gdp__navGlass rounded-full bg-white/[0.12]${isAtMinYear ? ' is-disabled' : ''}`}
+                style={NAV_ICON_RIM}
               >
-                <ChevronLeft size={18} strokeWidth={2} aria-hidden="true" />
-              </button>
-            </LiquidGlass>
+                <button
+                  type="button"
+                  className="gdp__navbtn"
+                  onClick={() => shiftYear(-1)}
+                  aria-label="Previous year"
+                  disabled={isAtMinYear}
+                >
+                  <ChevronsLeft size={17} strokeWidth={2} aria-hidden="true" />
+                </button>
+              </LiquidGlass>
+              <LiquidGlass
+                className={`gdp__navGlass rounded-full bg-white/[0.12]${isAtMinMonth ? ' is-disabled' : ''}`}
+                style={NAV_ICON_RIM}
+              >
+                <button
+                  type="button"
+                  className="gdp__navbtn"
+                  onClick={() => shiftMonth(-1)}
+                  aria-label="Previous month"
+                  disabled={isAtMinMonth}
+                >
+                  <ChevronLeft size={18} strokeWidth={2} aria-hidden="true" />
+                </button>
+              </LiquidGlass>
+            </div>
 
             <div className="gdp__period" aria-live="polite" aria-atomic="true">
               <div className={`gdp__monthPicker${monthMenuOpen ? ' is-open' : ''}`}>
@@ -254,20 +280,36 @@ export function GlassDatePicker({ value, onChange, max, placeholder = 'Select da
               </div>
             </div>
 
-            <LiquidGlass
-              className={`gdp__navGlass rounded-full bg-white/[0.12]${isAtMaxMonth ? ' is-disabled' : ''}`}
-              style={NAV_ICON_RIM}
-            >
-              <button
-                type="button"
-                className="gdp__navbtn"
-                onClick={() => shiftMonth(1)}
-                aria-label="Next month"
-                disabled={isAtMaxMonth}
+            <div className="gdp__navGroup">
+              <LiquidGlass
+                className={`gdp__navGlass rounded-full bg-white/[0.12]${isAtMaxMonth ? ' is-disabled' : ''}`}
+                style={NAV_ICON_RIM}
               >
-                <ChevronRight size={18} strokeWidth={2} aria-hidden="true" />
-              </button>
-            </LiquidGlass>
+                <button
+                  type="button"
+                  className="gdp__navbtn"
+                  onClick={() => shiftMonth(1)}
+                  aria-label="Next month"
+                  disabled={isAtMaxMonth}
+                >
+                  <ChevronRight size={18} strokeWidth={2} aria-hidden="true" />
+                </button>
+              </LiquidGlass>
+              <LiquidGlass
+                className={`gdp__navGlass rounded-full bg-white/[0.12]${isAtMaxYear ? ' is-disabled' : ''}`}
+                style={NAV_ICON_RIM}
+              >
+                <button
+                  type="button"
+                  className="gdp__navbtn"
+                  onClick={() => shiftYear(1)}
+                  aria-label="Next year"
+                  disabled={isAtMaxYear}
+                >
+                  <ChevronsRight size={17} strokeWidth={2} aria-hidden="true" />
+                </button>
+              </LiquidGlass>
+            </div>
           </div>
 
           <div className="gdp__dow">

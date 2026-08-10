@@ -3,6 +3,11 @@
   "buildCommand": "cd orbital-harmony-app && npm run build",
   "outputDirectory": "orbital-harmony-app/dist",
   "installCommand": "cd orbital-harmony-app && npm ci",
+  "functions": {
+    "api/trivia.mjs": {
+      "maxDuration": 30
+    }
+  },
   "headers": [
     {
       "source": "/",

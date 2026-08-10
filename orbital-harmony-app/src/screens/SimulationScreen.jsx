@@ -49,18 +49,6 @@ export default function SimulationScreen({ onComplete, onBack }) {
   const [speedFactor, setSpeedFactor] = useState(1);
   const isCosmic = patternMode === 'cosmic';
 
-  // A detail change remounts SolarSystemCanvas (see its `key` prop below),
-  // which always mounts paused (`startPaused`) — resume it once the fresh
-  // instance is attached so playback actually matches the "Pause" button
-  // handleDetailLevelChange already switches to, instead of staying frozen.
-  const isFirstDetailRender = useRef(true);
-  useEffect(() => {
-    if (isFirstDetailRender.current) {
-      isFirstDetailRender.current = false;
-      return;
-    }
-    canvasRef.current?.setPaused(false);
-  }, [detailLevel]);
   const planetAData = PLANETS_BY_KEY[planetA];
   const planetBData = PLANETS_BY_KEY[planetB];
   const hasPair = Boolean(planetAData && planetBData);
@@ -111,13 +99,9 @@ export default function SimulationScreen({ onComplete, onBack }) {
     const nextLevel = Number(event.target.value);
     if (nextLevel === detailLevel) return;
     doneRef.current = false;
+    setPaused(true);
     setDetailLevel(nextLevel);
-    // Changing detail remounts the canvas at a fresh detail level (see the
-    // `key` prop below), restarting the whole pattern from scratch — it
-    // should resume playing immediately, so the transport correctly shows
-    // "Pause" (in progress) rather than "Play" (idle).
-    setIsPaused(false);
-  }, [detailLevel, setDetailLevel]);
+  }, [detailLevel, setDetailLevel, setPaused]);
 
   const resetPattern = useCallback(() => {
     // Reset rewinds to the beginning and pauses (ready to play again).
@@ -147,7 +131,7 @@ export default function SimulationScreen({ onComplete, onBack }) {
           showMoon={false}
           cosmicSnapshotDate={isCosmic ? (cosmicDate ?? undefined) : undefined}
           compositionOffsetY={0.06}
-          startPaused={true}
+          startPaused={isPaused}
           miniBodiesIntro
           miniSunScale={0.15}
           miniPlanetScale={1.5}

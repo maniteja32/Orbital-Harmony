@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Info, Share2 } from 'lucide-react';
+import { ExternalLink, Info, Share2 } from 'lucide-react';
 import { GlassButton } from '../components/ui/glasscn/glass-button.jsx';
 import { LiquidGlass } from '../components/ui/glasscn/liquid-glass.jsx';
 import { TopNavigationBar } from '../components/TopNavigationBar.jsx';
 import { LineStyleToggleButton } from '../components/LineStyleToggle.jsx';
 import SolarSystemCanvas from '../components/SolarSystemCanvas.jsx';
 import { PLANETS_BY_KEY } from '../data/planets.js';
-import { createCosmicDateMessage } from '../utils/factoidGenerator.js';
 import { formatCosmicSignatureDate } from '../utils/cosmicSignature.js';
+import { createLocalDateStory } from '../utils/dateStory.js';
+import { loadBirthdayTrivia, loadPlanetTrivia } from '../services/triviaService.js';
 import { computeSimulationPlan } from '../utils/simulationPlan.js';
 import { useAppStore, SPEED_PRESETS } from '../store/useAppStore.js';
 
@@ -199,6 +200,40 @@ function sanitizeFileName(input) {
   return input.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 }
 
+function DateStoryCard({ story }) {
+  const insight = story?.insight;
+  if (!insight) return null;
+
+  return (
+    <section
+      className="knowledge-card knowledge-card--compact knowledge-card--date-story"
+      key={story.id}
+      aria-label={story.title}
+    >
+      <span className="sr-only" role="status" aria-live="polite">New date insight loaded.</span>
+      <div className="date-story__panel">
+        <span className="date-story__kicker">{insight.kicker}</span>
+        <span className="date-story__headline">{insight.headline}</span>
+        {insight.meta && <span className="date-story__meta">{insight.meta}</span>}
+        <p className="knowledge-card__fact date-story__fact">{insight.fact}</p>
+        {insight.href ? (
+          <a
+            className="date-story__source"
+            href={insight.href}
+            target="_blank"
+            rel="noreferrer"
+          >
+            {insight.source}
+            <ExternalLink size={11} strokeWidth={2} aria-hidden="true" />
+          </a>
+        ) : (
+          <span className="date-story__source date-story__source--local">{insight.source}</span>
+        )}
+      </div>
+    </section>
+  );
+}
+
 /** Screen 6 — final pattern with selected planets. */
 export default function ResultScreen({ onGenerateNew, onBack, onViewDetails }) {
   const {
@@ -216,19 +251,55 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails }) {
       : 'Orbital Pattern';
   const cosmicDateLabel = formatCosmicSignatureDate(cosmicDate);
   const speedCfg = SPEED_PRESETS[speed];
+  const localDateStory = useMemo(() => createLocalDateStory(cosmicDate), [cosmicDate]);
+  const [dateStory, setDateStory] = useState(localDateStory);
+
+  useEffect(() => {
+    if (!isCosmic) return undefined;
+    const controller = new AbortController();
+    setDateStory(localDateStory);
+
+    loadBirthdayTrivia(cosmicDate, { signal: controller.signal })
+      .then(setDateStory)
+      .catch(() => {
+        // No card is shown when remote date history is unavailable.
+      });
+
+    return () => controller.abort();
+  }, [cosmicDate, isCosmic, localDateStory]);
+
   const fallbackFactoid = useMemo(() => {
-    if (isCosmic) return createCosmicDateMessage(cosmicDate);
     return {
       title: 'Fun facts',
-      titleEmoji: '✨',
       entries: [planetAData, planetBData]
         .filter(Boolean)
         .map((planet) => ({ name: planet.name, emoji: '🪐', fact: planet.fact })),
     };
-  }, [cosmicDate, isCosmic, planetAData, planetBData]);
-  const displayedFactoid = resultFactoid ?? fallbackFactoid;
-  const factEntries = displayedFactoid.entries;
-  const factTitle = displayedFactoid.title;
+  }, [planetAData, planetBData]);
+  const localExploreFactoid = resultFactoid ?? fallbackFactoid;
+  const [exploreFactoid, setExploreFactoid] = useState(localExploreFactoid);
+
+  useEffect(() => {
+    if (isCosmic) return undefined;
+    const controller = new AbortController();
+    setExploreFactoid(localExploreFactoid);
+
+    loadPlanetTrivia({
+      planetKeys: [planetA, planetB],
+      fallbackFactoid: localExploreFactoid,
+      signal: controller.signal,
+    })
+      .then(setExploreFactoid)
+      .catch(() => {
+        // The local factoid is already visible and remains the offline fallback.
+      });
+
+    return () => controller.abort();
+  }, [isCosmic, localExploreFactoid, planetA, planetB]);
+
+  const displayedFactoid = isCosmic ? null : exploreFactoid;
+  const factEntries = displayedFactoid?.entries ?? [];
+  const factTitle = displayedFactoid?.title;
 
   // Same plan the original SimulationScreen reveal used (see
   // computeSimulationPlan) — reproducing it here lets the line-style
@@ -347,12 +418,11 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails }) {
         )}
       </LiquidGlass>
 
-      {factEntries.length > 0 && (
+      {isCosmic ? (
+        <DateStoryCard story={dateStory} />
+      ) : factEntries.length > 0 && (
         <div className="knowledge-card knowledge-card--compact" key={displayedFactoid.id}>
           <span className="knowledge-card__title">
-            <span className="knowledge-card__title-emoji" aria-hidden="true">
-              {displayedFactoid.titleEmoji ?? '✨'}
-            </span>
             {factTitle}
           </span>
           <div className="knowledge-card__body">
@@ -366,29 +436,37 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails }) {
               </div>
             ))}
           </div>
+          {displayedFactoid.sources?.length > 0 && (
+            <div className="knowledge-card__sources" aria-label="Fact sources">
+              <span>{displayedFactoid.sourceLabel ?? 'Wikipedia · CC BY-SA'}</span>
+              {displayedFactoid.sources.map((source) => (
+                <a href={source.href} target="_blank" rel="noreferrer" key={source.name}>
+                  {source.name}
+                  <ExternalLink size={10} strokeWidth={2} aria-hidden="true" />
+                </a>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
       {isCosmic ? (
         <div className="result-actions result-actions--cosmic">
-          <div className="result-actions__compact-row" aria-label="Secondary actions">
-            <div className="select-actions__button">
-              <GlassButton
-                tone="secondary"
-                className="w-full h-12 text-base font-medium"
-                onClick={nativeShare}
-                aria-label="Share signature"
-              >
-                <Share2 size={16} strokeWidth={2} aria-hidden="true" />
-                Share
-              </GlassButton>
-            </div>
-          </div>
-
           <div className="result-actions__primary-row">
             <GlassButton tone="primary" className="w-full h-12 text-base font-medium" onClick={handleGenerateNew}>
               Generate New Signature
             </GlassButton>
+          </div>
+
+          <div className="result-actions__compact-row" aria-label="Secondary actions">
+            <button
+              type="button"
+              className="back-button back-button--icon result-actions__icon--cosmic-share"
+              onClick={nativeShare}
+              aria-label="Share signature"
+            >
+              <Share2 size={24} strokeWidth={2} aria-hidden="true" />
+            </button>
           </div>
         </div>
       ) : (
