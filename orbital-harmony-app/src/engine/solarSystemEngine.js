@@ -17,7 +17,10 @@ import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
 import { PLANETS_BY_KEY, SUN_TEXTURE, MOON_TEXTURE } from '../data/planets.js';
 import { currentOrbitAngleRad } from '../utils/currentPosition.js';
 import { PATTERN_LINE_WIDTH } from '../utils/resonance.js';
+import { computeBodyScaleLimits, visualBodyRadius } from '../utils/bodyScale.js';
+import { COSMIC_ARTIFACT_LAYERS } from '../utils/cosmicSignature.js';
 import { buildStarfield } from './starfieldBackdrop.js';
+import { createWebGLRenderer } from './webglRenderer.js';
 
 // Pattern-tracer line style presets — dashSize/gapSize are WORLD-space
 // units (matching each chord's own local distance range, see
@@ -218,7 +221,7 @@ function buildPlanet(data, startDate, showMoon = true) {
   // of-truth builder (planetFactory.js) also used by the planet swipe
   // carousel, so a planet looks IDENTICAL everywhere in the app. This
   // engine's camera is top-down, hence tiltAxis: 'z'.
-  const { tiltGroup: axialTilt, mesh, clouds, ring } = buildPlanetBody(data, { tiltAxis: 'z' });
+  const { tiltGroup: axialTilt, mesh, clouds } = buildPlanetBody(data, { tiltAxis: 'z' });
   tiltAnchor.add(axialTilt);
 
   let moonPivot = null;
@@ -259,7 +262,7 @@ function computeRewindTurns(periodDays, minPeriodDays, maxPeriodDays) {
   const fastPlanetBias = (maxLog - pLog) / denom;
   const minTurns = 0.65;
   const maxTurns = 2.35;
-  return minTurns + (maxTurns - minTurns) * fastPlanetBias;
+  return Math.round(minTurns + (maxTurns - minTurns) * fastPlanetBias);
 }
 
 function orbitDirection(data) {
@@ -311,6 +314,7 @@ export function createSolarSystemEngine(canvas, opts) {
     initialPlanetScale = 1,
     patternStartDate = undefined,
     cosmicSnapshotDate = undefined,
+    compositionOffsetY = 0,
   } = opts;
 
   const scene = new THREE.Scene();
@@ -355,7 +359,7 @@ export function createSolarSystemEngine(canvas, opts) {
   // rendering on-demand right before toDataURL (see captureDataURL below).
   // `powerPreference: high-performance` matches the legacy prototype and asks
   // multi-GPU Macs to use the discrete GPU for better quality/throughput.
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+  const renderer = createWebGLRenderer(canvas, { antialias: true, powerPreference: 'high-performance' });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.setSize(width, height, false);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -509,10 +513,24 @@ export function createSolarSystemEngine(canvas, opts) {
   let playInitiated = false;
   let scaleAnimationDelaySec = 0.3; // Delay before scale-down begins after Play
 
+  const { maxSunScale, maxPlanetScaleByKey } = computeBodyScaleLimits(planetDatas, {
+    sunRadius: SUN_RADIUS,
+    showMoon,
+  });
+  const fitSunScale = (requestedScale) => orthographic
+    ? requestedScale
+    : Math.min(requestedScale, maxSunScale);
+  const fitPlanetScale = (planet, requestedScale) => orthographic
+    ? requestedScale
+    : Math.min(requestedScale, maxPlanetScaleByKey[planet.data.key] ?? requestedScale);
+
   function applyMiniBodyScale(t) {
     const easedT = THREE.MathUtils.clamp(t, 0, 1);
-    const sunScale = THREE.MathUtils.lerp(initialSunScale, miniSunScale, easedT);
-    const planetScale = THREE.MathUtils.lerp(initialPlanetScale, miniPlanetScale, easedT);
+    const sunScale = THREE.MathUtils.lerp(
+      fitSunScale(initialSunScale),
+      fitSunScale(miniSunScale),
+      easedT,
+    );
 
     sunMesh.scale.setScalar(sunScale);
     sunGlowSprites.forEach((sprite) => {
@@ -520,20 +538,39 @@ export function createSolarSystemEngine(canvas, opts) {
       sprite.scale.set(baseScale * sunScale, baseScale * sunScale, 1);
     });
     planets.forEach((planet) => {
+      const planetScale = THREE.MathUtils.lerp(
+        fitPlanetScale(planet, initialPlanetScale),
+        fitPlanetScale(planet, miniPlanetScale),
+        easedT,
+      );
       planet.axialTilt.scale.setScalar(planetScale);
     });
   }
 
   if (miniBodiesEnabled) applyMiniBodyScale(0);
 
-  const maxDistance = Math.max(...planets.map((p) => p.data.distance), 20);
+  const frameRadius = Math.max(
+    ...planets.map((planet) => {
+      const bodyRadius = visualBodyRadius(planet.data, showMoon);
+      const frameScale = orthographic
+        ? LANDING_PLANET_SCALE * (LANDING_PLANET_SCALE_BUMP[planet.data.key] ?? 1)
+        : Math.max(
+            fitPlanetScale(planet, initialPlanetScale),
+            fitPlanetScale(planet, miniPlanetScale),
+          );
+      return planet.data.distance + bodyRadius * frameScale;
+    }),
+    SUN_RADIUS * (orthographic
+      ? LANDING_SUN_SCALE
+      : Math.max(fitSunScale(initialSunScale), fitSunScale(miniSunScale))),
+    20,
+  );
   const cosmicSnapshotEnabled = cosmicSnapshotDate instanceof Date && !Number.isNaN(cosmicSnapshotDate.getTime());
   const COSMIC_OVERVIEW_HOLD_SEC = 2.2;
   const COSMIC_SNAPSHOT_SETTLE_SEC = 7.2;
   const COSMIC_PRE_DRAW_HOLD_SEC = 0.7;
   const COSMIC_SIGNATURE_DRAW_SEC = 2.8;
   const COSMIC_ARTIFACT_FORM_SEC = 4.2;
-  const COSMIC_ARTIFACT_COPIES = 36;
 
   const cosmicTargetAngles = cosmicSnapshotEnabled
     ? planets.map((planet) => currentOrbitAngleRad(planet.data, cosmicSnapshotDate))
@@ -602,6 +639,7 @@ export function createSolarSystemEngine(canvas, opts) {
         });
         const line = new THREE.Line(geometry, material);
         line.visible = false;
+        line.userData.baseOpacity = opacity;
         return line;
       };
 
@@ -638,8 +676,8 @@ export function createSolarSystemEngine(canvas, opts) {
         ];
       };
 
-      for (let i = 0; i < COSMIC_ARTIFACT_COPIES; i++) {
-        const rotationY = (i / COSMIC_ARTIFACT_COPIES) * TWO_PI;
+      for (let i = 0; i < COSMIC_ARTIFACT_LAYERS; i++) {
+        const rotationY = (i / COSMIC_ARTIFACT_LAYERS) * TWO_PI;
         const pair = createArtifactLinePair(rotationY);
         pair.forEach((line) => {
           cosmicArtifactLines.push(line);
@@ -648,17 +686,14 @@ export function createSolarSystemEngine(canvas, opts) {
       }
     }
   }
-  // Legacy pattern: frame the outer selected orbit to ~0.83 of the smaller
-  // viewport dimension (margin 1.2) — the whole spiral lives within the outer
-  // orbit, so this fills the frame while leaving a little breathing room for
-  // the outer planet's own sphere. Non-pattern paths keep their prior framing.
-  // For 8-planet browse mode, need more margin to prevent planets from overlapping
-  // visually on screen.
+  // `frameRadius` already includes each outer body's sphere/ring/moon extent.
+  // Values above 1 add breathing room; values below 1 zoom in and crop the
+  // system. Keep every mode above 1 so all rendered bodies remain visible.
   const framingMargin = useLegacyPattern
-    ? 1.2
+    ? 1.1
     : planets.length <= 2
-      ? 1.4
-      : 0.5;
+      ? 1.14
+      : 1.08;
 
   // Same "fixed vertical extent, adaptive horizontal extent" convention as
   // the perspective path below, but for an orthographic camera the FRUSTUM
@@ -673,7 +708,7 @@ export function createSolarSystemEngine(canvas, opts) {
   function orthoHalfHeight(radius, margin, aspect) {
     return (radius * margin) / Math.min(1, aspect);
   }
-  let restFrameRadius = maxDistance;
+  let restFrameRadius = frameRadius;
   let restFrameMargin = framingMargin;
   // Tracks whatever vertical half-height is ACTUALLY on screen right now
   // (updated every time the frustum is explicitly set below, including
@@ -721,7 +756,7 @@ export function createSolarSystemEngine(canvas, opts) {
   // cut off. Fix: solve for the camera distance that fits `maxDistance`
   // within BOTH the vertical AND horizontal half-extents, i.e. divide by
   // whichever of (1, aspect) is smaller.
-  function distanceToFit(aspect, radius = maxDistance, margin = framingMargin) {
+  function distanceToFit(aspect, radius = frameRadius, margin = framingMargin) {
     if (camera.isOrthographicCamera) {
       // An orthographic camera's on-screen scale comes entirely from its
       // frustum (set above), never from distance — this just returns a
@@ -731,6 +766,15 @@ export function createSolarSystemEngine(canvas, opts) {
     }
     const vFovRad = THREE.MathUtils.degToRad(camera.fov);
     return (radius * margin) / (Math.tan(vFovRad / 2) * Math.min(1, aspect));
+  }
+
+  function positionNonInteractiveCamera(viewWidth, viewHeight, offsetY = compositionOffsetY) {
+    const distance = distanceToFit(viewWidth / viewHeight);
+    const verticalHalfExtent = distance * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2);
+    const targetZ = -2 * verticalHalfExtent * offsetY;
+    camera.up.set(0, 0, -1);
+    camera.position.set(0, distance, targetZ + 0.0001);
+    camera.lookAt(0, 0, targetZ);
   }
 
   // Looking straight down the Y axis is a DEGENERATE case for a raw
@@ -776,14 +820,13 @@ export function createSolarSystemEngine(canvas, opts) {
   function smootherStep(t) {
     return t * t * t * (t * (t * 6 - 15) + 10);
   }
-  const earthRefDistance = PLANETS_BY_KEY.earth?.distance ?? maxDistance * 0.35;
   const heroWidePos = heroPosition(dist, HERO_ELEVATION_START_DEG);
   const heroAngledPos = heroPosition(dist, HERO_ELEVATION_END_DEG);
   // Rest state for the landing screen (both the first-time cinematic intro
   // and the returning-visitor `startSettled` framing below land on this
   // exact same framing, so there's never a first-visit vs. repeat-visit
   // scale mismatch).
-  const heroWideHalf = orthoHalfHeight(maxDistance, framingMargin, width / height);
+  const heroWideHalf = orthoHalfHeight(frameRadius, framingMargin, width / height);
   // A wider "establishing shot" frustum used only for the very START of the
   // cinematic intro (top-down hold + the rotate into the angled view) — the
   // intro then slowly ZOOMS IN from this pulled-back establishing shot down
@@ -794,7 +837,7 @@ export function createSolarSystemEngine(canvas, opts) {
   // cropping this initial wide top-down view, which should always show the
   // WHOLE system comfortably regardless of how close the final zoom ends up.
   const INTRO_ESTABLISH_MARGIN = 1.35;
-  const heroEstablishHalf = orthoHalfHeight(maxDistance, INTRO_ESTABLISH_MARGIN, width / height);
+  const heroEstablishHalf = orthoHalfHeight(frameRadius, INTRO_ESTABLISH_MARGIN, width / height);
   // Keep vertical centering controlled by the shared CSS center variable.
   const introLookTarget = new THREE.Vector3(0, 0, 0);
   const INTRO_HOLD_SEC = 0.8;
@@ -875,8 +918,8 @@ export function createSolarSystemEngine(canvas, opts) {
     // OrbitControls (if this screen wants it) is attached once the scripted
     // move finishes — see tick() below.
   } else if (startSettled && interactive) {
-    // Intro already played on a prior load (systemIntroPlayed persisted in
-    // localStorage) — skip the animation and jump STRAIGHT to the full-system
+    // Intro already played earlier in this page session — skip the animation
+    // and jump STRAIGHT to the full-system
     // view with the nice angled hero position, ready for OrbitControls. The
     // zoom-in effect was just a cinematic flourish; the persistent default is
     // the full solar system, not an Earth-centric zoom.
@@ -893,7 +936,7 @@ export function createSolarSystemEngine(canvas, opts) {
       camera.updateProjectionMatrix();
       currentOrthoHalf = half;
       // Keep the full-system framing as the rest state
-      restFrameRadius = maxDistance;
+      restFrameRadius = frameRadius;
       restFrameMargin = framingMargin;
     }
     camera.lookAt(introLookTarget);
@@ -903,9 +946,7 @@ export function createSolarSystemEngine(canvas, opts) {
     camera.position.set(0, dist, dist * 0.001);
     attachOrbitControls();
   } else {
-    camera.up.set(0, 0, -1);
-    camera.position.set(0, dist, 0.0001);
-    camera.lookAt(0, 0, 0);
+    positionNonInteractiveCamera(width, height);
   }
 
   // ---- Pattern tracer (chord between the two active planets) --------------
@@ -1021,7 +1062,8 @@ export function createSolarSystemEngine(canvas, opts) {
   // to complete `totalSimYears` of simulated time in exactly
   // `speedDurationSec` real seconds (deterministic reveal duration); browse
   // mode advances at a fixed, gentle rate for ambient motion.
-  const clock = new THREE.Clock();
+  const timer = new THREE.Timer();
+  timer.connect(document);
   let simDaysElapsed = 0;
   let browseElapsedSec = 0;
   let lastSampledDay = 0;
@@ -1139,9 +1181,10 @@ export function createSolarSystemEngine(canvas, opts) {
     renderer.render(scene, camera);
   }
 
-  function tick() {
+  function tick(timestamp) {
     rafId = requestAnimationFrame(tick);
-    const delta = Math.min(clock.getDelta(), 0.05);
+    timer.update(timestamp);
+    const delta = Math.min(timer.getDelta(), 0.05);
 
     // Detect when Play is first clicked (paused changes from true to false)
     if (shouldScaleAfterPlay && !playInitiated && !paused) {
@@ -1217,7 +1260,14 @@ export function createSolarSystemEngine(canvas, opts) {
         planet.pivot.rotation.y = angle;
         planet.tiltAnchor.rotation.y = -angle;
       });
-      if (t >= 1) cosmicSettled = true;
+      if (t >= 1) {
+        planets.forEach((planet, index) => {
+          const targetAngle = cosmicTargetAngles[index];
+          planet.pivot.rotation.y = targetAngle;
+          planet.tiltAnchor.rotation.y = -targetAngle;
+        });
+        cosmicSettled = true;
+      }
     } else if (cosmicSnapshotEnabled && !cosmicReadyToDraw) {
       planets.forEach((planet, index) => {
         const angle = cosmicTargetAngles[index];
@@ -1299,10 +1349,10 @@ export function createSolarSystemEngine(canvas, opts) {
       const eased = smootherStep(t);
 
       cosmicSignatureLines.forEach((line) => {
-        line.material.opacity = line.material.opacity * (1 - eased * 0.9);
+        line.material.opacity = line.userData.baseOpacity * (1 - eased * 0.9);
       });
 
-      const pairCount = COSMIC_ARTIFACT_COPIES;
+      const pairCount = COSMIC_ARTIFACT_LAYERS;
       for (let i = 0; i < pairCount; i++) {
         const stagger = i / Math.max(1, pairCount - 1);
         const local = THREE.MathUtils.clamp((eased - stagger * 0.5) / 0.5, 0, 1);
@@ -1370,7 +1420,7 @@ export function createSolarSystemEngine(canvas, opts) {
         }
         if (t >= 1) {
           introPhase = 'done';
-          restFrameRadius = maxDistance;
+          restFrameRadius = frameRadius;
           restFrameMargin = framingMargin;
           camera.lookAt(introLookTarget);
           if (interactive) attachOrbitControls(introLookTarget);
@@ -1418,8 +1468,7 @@ export function createSolarSystemEngine(canvas, opts) {
       // fight that. The initial distanceToFit() call above already gives
       // OrbitControls a correctly-framed starting point either way.
       if (!controls) {
-        const dist = distanceToFit(w / h);
-        camera.position.setLength(dist);
+        positionNonInteractiveCamera(w, h);
       }
     }
     camera.updateProjectionMatrix();
@@ -1482,6 +1531,16 @@ export function createSolarSystemEngine(canvas, opts) {
       miniBodiesDone = !miniBodiesEnabled && !shouldScaleAfterPlay;
       miniMotionElapsed = 0;
       playInitiated = false;
+      cosmicOverviewElapsed = 0;
+      cosmicOverviewDone = !cosmicSnapshotEnabled;
+      cosmicSettleElapsed = 0;
+      cosmicPreDrawElapsed = 0;
+      cosmicDrawElapsed = 0;
+      cosmicArtifactElapsed = 0;
+      cosmicSettled = !cosmicSnapshotEnabled;
+      cosmicReadyToDraw = !cosmicSnapshotEnabled;
+      cosmicBaseLinesDone = !cosmicSnapshotEnabled;
+      cosmicArtifactDone = !cosmicSnapshotEnabled;
       if (miniBodiesEnabled) applyMiniBodyScale(0);
       if (patternLines) {
         patternLines.geometry.instanceCount = 0;
@@ -1489,6 +1548,16 @@ export function createSolarSystemEngine(canvas, opts) {
       planets.forEach((planet) => {
         planet.pivot.rotation.y = planet.startAngle;
         planet.tiltAnchor.rotation.y = -planet.startAngle;
+      });
+      cosmicSignatureLines.forEach((line) => {
+        line.visible = false;
+        line.geometry.setDrawRange(0, 2);
+        line.material.opacity = line.userData.baseOpacity;
+      });
+      cosmicArtifactLines.forEach((line) => {
+        line.visible = false;
+        line.geometry.setDrawRange(0, 2);
+        line.material.opacity = 0;
       });
       scene.updateMatrixWorld(true);
       renderScene();
@@ -1523,6 +1592,14 @@ export function createSolarSystemEngine(canvas, opts) {
       // looks clean there for exactly this reason. Force at least 2x for
       // this one-shot render so the SAVED image matches that same
       // fidelity, independent of the viewing device's real pixel ratio.
+      const restoreCameraPosition = camera.position.clone();
+      const restoreCameraQuaternion = camera.quaternion.clone();
+      const centerCapture = !controls && camera.isPerspectiveCamera && compositionOffsetY !== 0;
+      if (centerCapture) {
+        positionNonInteractiveCamera(width, height, 0);
+        camera.updateMatrixWorld(true);
+      }
+
       const captureRatio = Math.max(renderer.getPixelRatio(), 2);
       renderer.setPixelRatio(captureRatio);
       renderer.setSize(width, height, false);
@@ -1612,6 +1689,11 @@ export function createSolarSystemEngine(canvas, opts) {
       planets.forEach((planet) => {
         planet.pivot.visible = true;
       });
+      if (centerCapture) {
+        camera.position.copy(restoreCameraPosition);
+        camera.quaternion.copy(restoreCameraQuaternion);
+        camera.updateMatrixWorld(true);
+      }
       renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
       renderer.setSize(width, height, false);
       renderScene();
@@ -1619,6 +1701,7 @@ export function createSolarSystemEngine(canvas, opts) {
     },
     destroy() {
       if (rafId != null) cancelAnimationFrame(rafId);
+      timer.dispose();
       window.removeEventListener('resize', resize);
       if (onKeyZoom) window.removeEventListener('keydown', onKeyZoom);
       resizeObserver.disconnect();

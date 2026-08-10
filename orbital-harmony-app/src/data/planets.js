@@ -7,15 +7,9 @@
 // orbit angle directly in the engine (accurate relative speeds for free,
 // e.g. Earth/Venus's real 8:13 resonance) and powers the Result screen's
 // resonance-ratio calculation.
-// meanLongitudeDeg is each planet's REAL mean ecliptic longitude (degrees)
-// at the J2000.0 epoch (2000-01-01 12:00 TT) — combined with
-// orbitalPeriodDays this lets the engine compute each planet's actual
-// current real-world orbital position (see utils/currentPosition.js),
-// rather than starting every planet at a random angle. Low-precision
-// values (mean/circular orbit approximation, ignores eccentricity and
-// perturbations) from the standard "Keplerian elements for approximate
-// positions of the major planets" reference — plenty accurate for this
-// visualization, not intended for precision ephemeris use.
+// meanLongitudeDeg is retained as a deterministic fallback for custom-body
+// calculations. Major-planet positions use Astronomy Engine's ephemeris in
+// utils/currentPosition.js.
 // ============================================================================
 
 export const PLANETS = [
@@ -65,9 +59,6 @@ export const PLANETS = [
     rotationSpeed: 0.0045,
     tilt: 3,
     spinDirection: -1,
-    // Retrograde orbital direction for this visualization pass: moves
-    // opposite to the default prograde path used by most planets.
-    orbitDirection: -1,
     texture: '/textures/venus.jpg',
     traceSpeed: 1.6254,
     orbitalPeriodDays: 224.701,
@@ -186,8 +177,6 @@ export const PLANETS = [
     // a retrograde rotator, same category as Venus (just for a different
     // physical reason — extreme tilt vs. a fully flipped-over spin).
     spinDirection: -1,
-    // Retrograde orbital direction for this visualization pass.
-    orbitDirection: -1,
     texture: '/textures/uranus.jpg',
     traceSpeed: 0.22,
     orbitalPeriodDays: 30688.5,

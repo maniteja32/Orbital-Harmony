@@ -1,6 +1,4 @@
 import { useMemo, useState } from 'react';
-import { Home } from 'lucide-react';
-import { GlassButton } from '../components/ui/glasscn/glass-button.jsx';
 import { GlassDatePicker } from '../components/GlassDatePicker.jsx';
 import { TopNavigationBar } from '../components/TopNavigationBar.jsx';
 import { parseCosmicDateInput } from '../utils/cosmicSignature.js';
@@ -33,34 +31,27 @@ export default function CosmicSignatureScreen({ onReveal, onBack }) {
 
   return (
     <div className="screen screen--cosmic">
-      <TopNavigationBar title="Cosmic Signature" onBack={onBack} icon={Home} />
+      <TopNavigationBar title="Cosmic Signature" onBack={onBack} />
 
-      <p className="screen-intro">Enter your birth details</p>
+      <div className="cosmic-picker">
+        <p className="screen-intro">Enter your birth details</p>
 
-      <div className="cosmic-form">
-        <GlassDatePicker
-          value={dateStr}
-          max={maxDate}
-          onChange={setDateStr}
-          placeholder="Select your birth date"
-          minimal={true}
-        />
-
-        <p className="cosmic-hint">
-          Same birth date always generates the same signature.
-        </p>
+        <div className="cosmic-form">
+          <GlassDatePicker
+            value={dateStr}
+            max={maxDate}
+            onChange={setDateStr}
+            placeholder="Select your birth date"
+            minimal={true}
+          />
+        </div>
       </div>
 
       <div className="screen__actions">
         <div className="select-actions__button">
-          <GlassButton
-            tone="primary"
-            className="w-full h-12 text-base font-medium"
-            disabled={!valid}
-            onClick={handleReveal}
-          >
-            Generate Signature
-          </GlassButton>
+          <button type="button" className="btn-frosted-pill" disabled={!valid} onClick={handleReveal}>
+            Continue
+          </button>
         </div>
       </div>
     </div>

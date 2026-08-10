@@ -1,8 +1,8 @@
 {
   "framework": "vite",
-  "buildCommand": "cd orbital-harmony-app && npm run build",
-  "outputDirectory": "orbital-harmony-app/dist",
-  "installCommand": "cd orbital-harmony-app && npm ci",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "installCommand": "npm ci",
   "headers": [
     {
       "source": "/",

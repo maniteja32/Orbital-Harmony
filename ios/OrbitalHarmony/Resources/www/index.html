@@ -1,24 +1,67 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="dark" style="color-scheme: dark; background: #000">
   <head>
     <meta charset="UTF-8" />
+    <meta name="color-scheme" content="dark" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
     <meta name="theme-color" content="#030308" />
     <meta name="description" content="Space Harmony — discover the hidden geometric patterns formed by two planets' orbital motion around the Sun." />
     <title>Space Harmony</title>
+    <style>
+      :root,
+      html,
+      body,
+      #root {
+        min-height: 100%;
+        margin: 0;
+        color-scheme: dark;
+        color: #f5f6fa;
+        background: #030308 !important;
+      }
+
+      .app-fatal {
+        min-height: 100dvh;
+        display: grid;
+        place-content: center;
+        gap: 16px;
+        padding: 24px;
+        box-sizing: border-box;
+        text-align: center;
+        font-family: sans-serif;
+        background: #030308;
+      }
+
+      .app-fatal h1,
+      .app-fatal p {
+        margin: 0;
+      }
+
+      .app-fatal p {
+        max-width: 360px;
+        color: #d8d1c5;
+      }
+
+      .app-fatal button {
+        min-height: 48px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 999px;
+        color: #f5f6fa;
+        background: rgba(255, 255, 255, 0.08);
+      }
+    </style>
     <!-- Fonts are bundled locally (public/fonts/, see index.css @font-face)
          instead of fetched from Google Fonts, to remove the network-fetch
          race that could flash the fallback font in before the real one. -->
-    <script type="module" crossorigin src="/assets/index-BP2w5zq5.js"></script>
+    <script type="module" crossorigin src="/assets/index-eBqui7jw.js"></script>
     <link rel="modulepreload" crossorigin href="/assets/rolldown-runtime-hePW80VL.js">
-    <link rel="modulepreload" crossorigin href="/assets/engine-BaCNxMx7.js">
-    <link rel="modulepreload" crossorigin href="/assets/screens-cosmic-DNxFySt3.js">
-    <link rel="modulepreload" crossorigin href="/assets/vendor-DUgGs_22.js">
-    <link rel="modulepreload" crossorigin href="/assets/screens-details-DbWB5sga.js">
-    <link rel="modulepreload" crossorigin href="/assets/screens-other-CcBpF1Ip.js">
-    <link rel="modulepreload" crossorigin href="/assets/screens-solar-02_8ZNzV.js">
-    <link rel="stylesheet" crossorigin href="/assets/index-CLo1sc_o.css">
+    <link rel="modulepreload" crossorigin href="/assets/engine-Cf3y5q4W.js">
+    <link rel="modulepreload" crossorigin href="/assets/screens-cosmic-CJXDY_Wr.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-5lKB2ojc.js">
+    <link rel="modulepreload" crossorigin href="/assets/screens-details-BWhD6mYo.js">
+    <link rel="modulepreload" crossorigin href="/assets/screens-other-BKwUQ4VC.js">
+    <link rel="modulepreload" crossorigin href="/assets/screens-solar-DXYVUPb4.js">
+    <link rel="stylesheet" crossorigin href="/assets/index-D2amas9U.css">
   </head>
   <body>
     <div id="root"></div>

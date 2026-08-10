@@ -1,7 +1,7 @@
 import { PLANETS, PLANETS_BY_KEY } from '../data/planets.js';
 import { computePatternPlan } from './resonance.js';
 
-// Single source of truth for how a saved selection (planetA/planetB or
+// Single source of truth for how the current selection (planetA/planetB or
 // Cosmic Signature + detailLevel) maps to an actual simulation run — used
 // by BOTH SimulationScreen (the live first reveal) and ResultScreen (to
 // regenerate the exact same pattern on demand, e.g. when switching line
@@ -47,7 +47,7 @@ function quantizeChordCount(rawChordCount, petals) {
 
 /** Derives everything SolarSystemCanvas needs to reproduce ONE specific
  * pattern (planet keys, real/artistic tracing mode, run length + chord
- * density, opacity, per-planet rates) from the saved selection. */
+ * density, opacity, per-planet rates) from the current selection. */
 export function computeSimulationPlan({ isCosmic, planetA, planetB, detailLevel }) {
   const planetKeys = isCosmic ? PLANETS.map((p) => p.key) : [planetA, planetB];
   const physicalPattern = isCosmic || (!!PLANETS_BY_KEY[planetA] && !!PLANETS_BY_KEY[planetB]);

@@ -11,15 +11,11 @@ import SolarSystemScreen from './screens/SolarSystemScreen.jsx';
 
 // Lazy load all screens except LoadingScreen/SolarSystemScreen to reduce
 // initial bundle size.
-const ModeSelectScreen = lazy(() => import('./screens/ModeSelectScreen.jsx'));
 const CosmicSignatureScreen = lazy(() => import('./screens/CosmicSignatureScreen.jsx'));
 const PlanetSelectScreen = lazy(() => import('./screens/PlanetSelectScreen.jsx'));
 const SimulationScreen = lazy(() => import('./screens/SimulationScreen.jsx'));
 const ResultScreen = lazy(() => import('./screens/ResultScreen.jsx'));
 const PatternDetailsScreen = lazy(() => import('./screens/PatternDetailsScreen.jsx'));
-const CollectionScreen = lazy(() => import('./screens/CollectionScreen.jsx'));
-const SharePatternScreen = lazy(() => import('./screens/SharePatternScreen.jsx'));
-const ProfileScreen = lazy(() => import('./screens/ProfileScreen.jsx'));
 
 // Fallback component for lazy-loaded screens
 function ScreenFallback() {
@@ -37,6 +33,15 @@ export default function App() {
   const setPatternMode = useAppStore((s) => s.setPatternMode);
   const setCosmicDate = useAppStore((s) => s.setCosmicDate);
   const setLineStyle = useAppStore((s) => s.setLineStyle);
+
+  useEffect(() => {
+    try {
+      localStorage.removeItem('orbital-harmony');
+      localStorage.removeItem('space-harmony:factoid-history:v1');
+    } catch {
+      /* storage can be unavailable in private browsing contexts */
+    }
+  }, []);
 
   // Warm the shared planet-texture cache the moment the app mounts, while the
   // ~5s loading sequence is on screen. The Solar System engine is only built
@@ -76,9 +81,9 @@ export default function App() {
   }, []);
 
   return (
-    <div className="app-shell" data-screen={screen}>
+    <div className={`app-shell${showLoading ? ' is-loading' : ''}`} data-screen={screen}>
       <canvas ref={ambientRef} className="ambient-stars" aria-hidden="true" />
-      <ScreenTransition key={screen}>
+      <ScreenTransition key={screen} screen={screen}>
         <Suspense fallback={<ScreenFallback />}>
           {screen === 'system' && (
             <SolarSystemScreen
@@ -88,17 +93,6 @@ export default function App() {
                 goTo('select');
               }}
               onCosmic={() => goTo('cosmic')}
-            />
-          )}
-          {screen === 'mode' && (
-            <ModeSelectScreen
-              onExplore={() => {
-                setPatternMode('explore');
-                setCosmicDate(null);
-                goTo('select');
-              }}
-              onCosmic={() => goTo('cosmic')}
-              onBack={() => goTo('system')}
             />
           )}
           {screen === 'select' && <PlanetSelectScreen onNext={() => goTo('settings')} onBack={() => goTo('system')} />}
@@ -120,19 +114,13 @@ export default function App() {
                 goTo(patternMode === 'cosmic' ? 'cosmic' : 'settings');
               }}
               onViewDetails={() => goTo('details')}
-              onShare={() => goTo('share')}
-              onSave={() => goTo('collection')}
             />
           )}
           {screen === 'details' && (
             <PatternDetailsScreen
               onBack={() => goTo('result')}
-              onRegenerate={() => goTo('settings')}
             />
           )}
-          {screen === 'collection' && <CollectionScreen onOpen={() => goTo('result')} />}
-          {screen === 'share' && <SharePatternScreen onBack={() => goTo('result')} />}
-          {screen === 'profile' && <ProfileScreen onBack={() => goTo('system')} />}
         </Suspense>
       </ScreenTransition>
       {showLoading && (

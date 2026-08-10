@@ -37,6 +37,7 @@ const SolarSystemCanvas = forwardRef(function SolarSystemCanvas(
     initialPlanetScale,
     patternStartDate,
     cosmicSnapshotDate,
+    compositionOffsetY = 0,
     onComplete,
     onIntroComplete,
     className,
@@ -74,6 +75,7 @@ const SolarSystemCanvas = forwardRef(function SolarSystemCanvas(
       initialPlanetScale,
       patternStartDate,
       cosmicSnapshotDate,
+      compositionOffsetY,
     });
     engineRef.current = engine;
     if (onComplete) engine.onComplete(onComplete);

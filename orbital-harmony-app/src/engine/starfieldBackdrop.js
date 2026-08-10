@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { createWebGLRenderer } from './webglRenderer.js';
 
 /**
  * Standalone starfield backdrop — the EXACT same star field the Solar System
@@ -349,7 +350,7 @@ export function createStarfieldBackdrop(canvas) {
 
   let { w: width, h: height } = getSize();
 
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  const renderer = createWebGLRenderer(canvas, { antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.setClearColor(0x000000, 0);
   renderer.setSize(width, height, false);

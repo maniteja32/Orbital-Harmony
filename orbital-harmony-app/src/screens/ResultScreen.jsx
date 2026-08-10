@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Heart, Info, Share2 } from 'lucide-react';
+import { Info, Share2 } from 'lucide-react';
 import { GlassButton } from '../components/ui/glasscn/glass-button.jsx';
 import { LiquidGlass } from '../components/ui/glasscn/liquid-glass.jsx';
 import { TopNavigationBar } from '../components/TopNavigationBar.jsx';
 import { LineStyleToggleButton } from '../components/LineStyleToggle.jsx';
 import SolarSystemCanvas from '../components/SolarSystemCanvas.jsx';
 import { PLANETS_BY_KEY } from '../data/planets.js';
+import { createCosmicDateMessage } from '../utils/factoidGenerator.js';
 import { formatCosmicSignatureDate } from '../utils/cosmicSignature.js';
 import { computeSimulationPlan } from '../utils/simulationPlan.js';
 import { useAppStore, SPEED_PRESETS } from '../store/useAppStore.js';
@@ -198,26 +199,36 @@ function sanitizeFileName(input) {
   return input.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 }
 
-/** Screen 6 — final pattern with selected planets.
- *  Save/Share live as top-bar icons; "View Details" opens the info/controls
- *  screen and "Generate New Pattern" restarts the flow. */
-export default function ResultScreen({ onGenerateNew, onBack, onViewDetails, onShare, onSave }) {
+/** Screen 6 — final pattern with selected planets. */
+export default function ResultScreen({ onGenerateNew, onBack, onViewDetails }) {
   const {
     planetA, planetB, speed, detailLevel, snapshot, setSnapshot,
-    resetForNewPattern, patternMode, cosmicDate, lineStyle, setLineStyle,
+    resultFactoid, resetForNewPattern, patternMode, cosmicDate, lineStyle, setLineStyle,
   } = useAppStore();
   const isCosmic = patternMode === 'cosmic';
   const planetAData = PLANETS_BY_KEY[planetA];
   const planetBData = PLANETS_BY_KEY[planetB];
   const hasPair = Boolean(planetAData && planetBData);
-  const title = hasPair ? `${planetAData.name} × ${planetBData.name}` : 'Cosmic Signature';
+  const title = isCosmic
+    ? 'Cosmic Signature'
+    : hasPair
+      ? `${planetAData.name} × ${planetBData.name}`
+      : 'Orbital Pattern';
   const cosmicDateLabel = formatCosmicSignatureDate(cosmicDate);
   const speedCfg = SPEED_PRESETS[speed];
-  const factEntries = useMemo(() => {
-    return [planetAData, planetBData]
-      .filter(Boolean)
-      .map((planet) => ({ name: planet.name, fact: planet.fact }));
-  }, [planetAData, planetBData]);
+  const fallbackFactoid = useMemo(() => {
+    if (isCosmic) return createCosmicDateMessage(cosmicDate);
+    return {
+      title: 'Fun facts',
+      titleEmoji: '✨',
+      entries: [planetAData, planetBData]
+        .filter(Boolean)
+        .map((planet) => ({ name: planet.name, emoji: '🪐', fact: planet.fact })),
+    };
+  }, [cosmicDate, isCosmic, planetAData, planetBData]);
+  const displayedFactoid = resultFactoid ?? fallbackFactoid;
+  const factEntries = displayedFactoid.entries;
+  const factTitle = displayedFactoid.title;
 
   // Same plan the original SimulationScreen reveal used (see
   // computeSimulationPlan) — reproducing it here lets the line-style
@@ -285,14 +296,14 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails, onS
         await navigator.share({ title: shareTitle, text: shareTitle, files: [file] });
         return;
       }
-      await navigator.share({ title: shareTitle, text: shareTitle });
-    } catch {
-      /* dismissed / unsupported */
+      downloadDataUrl(shareImage, imageFilename);
+    } catch (error) {
+      if (error?.name !== 'AbortError') downloadDataUrl(shareImage, imageFilename);
     }
   }, [snapshot, title, isCosmic, cosmicDateLabel, imageFilename, shareTitle]);
 
   return (
-    <div className="screen screen--result">
+    <div className={`screen screen--result${isCosmic ? ' screen--result--cosmic' : ''}`}>
       <TopNavigationBar title={isCosmic ? 'Cosmic Signature' : title} onBack={onBack} />
 
       {isCosmic && (
@@ -336,13 +347,21 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails, onS
         )}
       </LiquidGlass>
 
-      {!isCosmic && (
-        <div className="knowledge-card knowledge-card--compact">
-          <span className="knowledge-card__title">Fun fact</span>
+      {factEntries.length > 0 && (
+        <div className="knowledge-card knowledge-card--compact" key={displayedFactoid.id}>
+          <span className="knowledge-card__title">
+            <span className="knowledge-card__title-emoji" aria-hidden="true">
+              {displayedFactoid.titleEmoji ?? '✨'}
+            </span>
+            {factTitle}
+          </span>
           <div className="knowledge-card__body">
             {factEntries.map((entry) => (
               <div className="knowledge-card__entry" key={entry.name}>
-                <span className="knowledge-card__entry-title">{entry.name}</span>
+                <span className="knowledge-card__entry-title">
+                  <span className="knowledge-card__entry-emoji" aria-hidden="true">{entry.emoji}</span>
+                  {entry.name}
+                </span>
                 <p className="knowledge-card__fact">{entry.fact}</p>
               </div>
             ))}
@@ -353,17 +372,6 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails, onS
       {isCosmic ? (
         <div className="result-actions result-actions--cosmic">
           <div className="result-actions__compact-row" aria-label="Secondary actions">
-            <div className="select-actions__button">
-              <GlassButton
-                tone="secondary"
-                className="w-full h-12 text-base font-medium"
-                onClick={onSave}
-                aria-label="Save signature"
-              >
-                <Heart size={16} strokeWidth={2} aria-hidden="true" />
-                Save
-              </GlassButton>
-            </div>
             <div className="select-actions__button">
               <GlassButton
                 tone="secondary"

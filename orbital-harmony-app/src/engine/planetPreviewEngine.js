@@ -21,6 +21,7 @@
 // ============================================================================
 import * as THREE from 'three';
 import { buildPlanetBody } from './planetFactory.js';
+import { createWebGLRenderer } from './webglRenderer.js';
 
 // Builds one real planet via the shared factory (same texture, material,
 // ring geometry/texture/proportions as the actual Solar System engine) at
@@ -143,7 +144,7 @@ function buildPreviewPlanet(data) {
  * @param {Array} planets - PLANETS data array
  */
 export function createPlanetPreviewRow(canvas, planets) {
-  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+  const renderer = createWebGLRenderer(canvas, { alpha: true, antialias: true });
   renderer.setClearColor(0x000000, 0);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
 
@@ -174,7 +175,8 @@ export function createPlanetPreviewRow(canvas, planets) {
   });
 
   let rafId = null;
-  const clock = new THREE.Clock();
+  const timer = new THREE.Timer();
+  timer.connect(document);
 
   function setLayout(positionsPx) {
     // positionsPx: { [planetKey]: contentRelativeCenterXInPixels }
@@ -225,9 +227,10 @@ export function createPlanetPreviewRow(canvas, planets) {
     }
   }
 
-  function tick() {
+  function tick(timestamp) {
     rafId = requestAnimationFrame(tick);
-    const delta = Math.min(clock.getDelta(), 0.05);
+    timer.update(timestamp);
+    const delta = Math.min(timer.getDelta(), 0.05);
     entries.forEach((entry) => {
       entry.mesh.rotation.y += delta * entry.spinSpeed;
     });
@@ -243,6 +246,7 @@ export function createPlanetPreviewRow(canvas, planets) {
     },
     destroy() {
       if (rafId != null) cancelAnimationFrame(rafId);
+      timer.dispose();
       scene.traverse((obj) => {
         if (obj.geometry) obj.geometry.dispose();
         if (obj.material) {

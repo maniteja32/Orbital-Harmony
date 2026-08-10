@@ -8,18 +8,23 @@
 // ============================================================================
 
 import { PLANETS } from '../data/planets.js';
+import { currentOrbitAngleRad } from './currentPosition.js';
 
-const J2000_EPOCH_MS = Date.UTC(2000, 0, 1, 12, 0, 0);
+export const COSMIC_ARTIFACT_LAYERS = 36;
+export const COSMIC_CONNECTION_COUNT = PLANETS.length + 1;
+
 const DISPLAY_DATE_FORMATTER = new Intl.DateTimeFormat('en-GB', {
   day: '2-digit',
   month: 'short',
   year: 'numeric',
+  timeZone: 'UTC',
 });
 
 /**
  * Parse date input from the Cosmic Signature form.
  *
- * Uses local 12:00 so date-only inputs stay stable.
+ * Uses canonical 12:00 UTC so the same date produces the same signature in
+ * every browser time zone.
  *
  * @param {string} dateStr YYYY-MM-DD
  * @returns {Date | null}
@@ -32,7 +37,7 @@ export function parseCosmicDateInput(dateStr) {
   const day = Number(dayRaw);
   if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) return null;
 
-  const parsed = new Date(year, month - 1, day, 12, 0, 0, 0);
+  const parsed = new Date(Date.UTC(year, month - 1, day, 12, 0, 0, 0));
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
@@ -56,7 +61,7 @@ export function formatCosmicSignatureDate(date) {
  */
 export function buildCelestialSnapshot(date) {
   const orderedPlanets = PLANETS.map((planet) => {
-    const angleRad = heliocentricAngleRad(planet, date);
+    const angleRad = currentOrbitAngleRad(planet, date);
     return {
       key: planet.key,
       name: planet.name,
@@ -189,20 +194,4 @@ export function generateCosmicSignatureDataUrl(date, opts = {}) {
 
   drawCosmicSignature(ctx, date);
   return canvas.toDataURL('image/png');
-}
-
-function heliocentricAngleRad(planet, date) {
-  const period = planet.orbitalPeriodDays;
-  const meanLongitudeDeg = planet.meanLongitudeDeg;
-  if (!period || meanLongitudeDeg == null) return 0;
-
-  const daysSinceEpoch = (date.getTime() - J2000_EPOCH_MS) / 86400000;
-  const angle = (meanLongitudeDeg * Math.PI) / 180 + (daysSinceEpoch / period) * Math.PI * 2;
-  return normalizeAngle(angle);
-}
-
-function normalizeAngle(angle) {
-  const twoPi = Math.PI * 2;
-  const mod = angle % twoPi;
-  return mod < 0 ? mod + twoPi : mod;
 }

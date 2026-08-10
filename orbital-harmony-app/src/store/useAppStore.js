@@ -30,49 +30,36 @@ export const DENSITY_PRESETS = {
 const initialSelection = { planetA: null, planetB: null, speed: 'medium', density: 'detailed', detailLevel: 5 };
 
 export const useAppStore = create((set) => ({
-  screen: 'loading', // loading | system | mode | select | cosmic | settings | result | details | knowledge | collection | share | profile
+  screen: 'loading', // loading | system | select | cosmic | settings | result | details
   ...initialSelection,
-  patternMode: 'explore', // 'explore' (pick two planets) | 'cosmic' (birth-date signature)
-  cosmicDate: null, // Date the Cosmic Signature pattern is anchored to (null = Explore flow)
-  snapshot: null, // captured PNG data URL of the final pattern
-  lineStyle: 'solid', // 'solid' | 'dashed' | 'dots' — shared pattern line style, see LineStyleToggle.jsx
-  // has the Solar System cinematic intro (top-down hold -> rotate -> zoom
-  // in) played yet THIS SESSION? Deliberately NOT persisted to
-  // localStorage — the cinematic intro should play in full every time the
-  // page actually loads/reloads (continuing straight on from the loading
-  // screen's top-down orrery), but should still be skipped if the user
-  // simply navigates back to this screen from elsewhere in the same
-  // session (e.g. Back from Planet Select) so it doesn't replay constantly
-  // mid-session.
+  patternMode: 'explore',
+  cosmicDate: null,
+  snapshot: null,
+  resultFactoid: null,
+  lineStyle: 'solid',
   systemIntroPlayed: false,
 
   goTo: (screen) => set({ screen }),
-
   setPlanetA: (planetA) => set({ planetA }),
   setPlanetB: (planetB) => set({ planetB }),
   setSpeed: (speed) => set({ speed }),
   setDensity: (density) => set({ density }),
   setDetailLevel: (detailLevel) => set({ detailLevel }),
   setSnapshot: (snapshot) => set({ snapshot }),
+  setResultFactoid: (resultFactoid) => set({ resultFactoid }),
   setPatternMode: (patternMode) => set({ patternMode }),
   setCosmicDate: (cosmicDate) => set({ cosmicDate }),
   setLineStyle: (lineStyle) => set({ lineStyle }),
   markSystemIntroPlayed: () => set({ systemIntroPlayed: true }),
 
-  resetForNewPattern: () =>
-    set({
-      screen: 'select',
-      planetA: null,
-      planetB: null,
-      snapshot: null,
-      cosmicDate: null,
-      patternMode: 'explore',
-      // Preload Celestial Complexity back to the default (5) every new
-      // pattern — detailMultiplier(5) is a neutral 1.0x, the exact setting
-      // the Pattern Gallery preview uses, so leaving this untouched always
-      // reproduces that pair's gallery-tuned mandala. Without this reset,
-      // a complexity tweak on one pair would silently carry over and
-      // change the NEXT pair's default result too.
-      detailLevel: initialSelection.detailLevel,
-    }),
+  resetForNewPattern: () => set({
+    screen: 'select',
+    planetA: null,
+    planetB: null,
+    snapshot: null,
+    resultFactoid: null,
+    cosmicDate: null,
+    patternMode: 'explore',
+    detailLevel: initialSelection.detailLevel,
+  }),
 }));

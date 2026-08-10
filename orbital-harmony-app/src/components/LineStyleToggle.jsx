@@ -2,8 +2,8 @@
 // the Simulation screen's live transport row and the Result screen's
 // action row — a single source of truth so the icon/cycle logic and the
 // user's chosen style stay consistent wherever this button appears.
-export const LINE_STYLE_ORDER = ['solid', 'dashed', 'dots'];
-export const LINE_STYLE_LABEL = { solid: 'Line', dashed: 'Dashed', dots: 'Dots' };
+const LINE_STYLE_ORDER = ['solid', 'dashed', 'dots'];
+const LINE_STYLE_LABEL = { solid: 'Line', dashed: 'Dashed', dots: 'Dots' };
 
 // The original four-petal "flower" swatch (the app's own pattern figures
 // read as flower-like rosettes) restored per feedback, now with the SAME
@@ -37,7 +37,7 @@ const LINE_STYLE_CIRCLE_DASH = {
 };
 const LINE_STYLE_CAP = { solid: 'round', dashed: 'butt', dots: 'round' };
 
-export function LineStyleIcon({ style }) {
+function LineStyleIcon({ style }) {
   const cap = LINE_STYLE_CAP[style];
   return (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">

@@ -1,6 +1,4 @@
-import { useState } from 'react';
-import { RotateCw } from 'lucide-react';
-import { PLANETS, PLANETS_BY_KEY } from '../data/planets.js';
+import { PLANETS } from '../data/planets.js';
 import { PlanetSwipeRow } from '../components/PlanetSwipeRow.jsx';
 import { MeteorField } from '../components/MeteorField.jsx';
 import { TopNavigationBar } from '../components/TopNavigationBar.jsx';
@@ -18,12 +16,6 @@ export default function PlanetSelectScreen({ onNext, onBack }) {
   const { planetA, planetB, setPlanetA, setPlanetB } = useAppStore();
 
   const canContinue = Boolean(planetA && planetB && planetA !== planetB);
-
-  // Which of the two picks the "Planet Fact" card is currently showing; the
-  // reroll button flips between them.
-  const [factSlot, setFactSlot] = useState('a');
-  const factKey = factSlot === 'a' ? planetA : planetB;
-  const factPlanet = factKey ? PLANETS_BY_KEY[factKey] : null;
 
   return (
     <div className="screen screen--select">
@@ -54,27 +46,6 @@ export default function PlanetSelectScreen({ onNext, onBack }) {
           />
         </div>
       </div>
-
-      {/* Planet Fact card hidden for now — flip this back to `factPlanet &&`
-          (and it uses factSlot / reroll below) to bring it back. */}
-      {false && factPlanet && (
-        <div className="planet-fact-card">
-          <span className="planet-fact-card__icon" style={{ '--planet-color': factPlanet.color }} aria-hidden="true" />
-          <div className="planet-fact-card__body">
-            <span className="planet-fact-card__label">Planet Fact</span>
-            <span className="planet-fact-card__name">{factPlanet.name}</span>
-            <span className="planet-fact-card__text">{factPlanet.fact}</span>
-          </div>
-          <button
-            type="button"
-            className="planet-fact-card__reroll"
-            onClick={() => setFactSlot((s) => (s === 'a' ? 'b' : 'a'))}
-            aria-label="Show the other planet's fact"
-          >
-            <RotateCw size={16} strokeWidth={2} aria-hidden="true" />
-          </button>
-        </div>
-      )}
 
       <div className="screen__actions">
         <div className="select-actions__button">

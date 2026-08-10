@@ -7,10 +7,8 @@ function gcd(a, b) {
 /**
  * A deterministic hypotrochoid ("spirograph") rosette rendered as a single
  * SVG path — a lightweight stand-in for a real traced pattern thumbnail that
- * needs NO WebGL context (so a whole grid of them in the Collection screen
- * stays cheap and safe on mobile, unlike spinning up one Three.js canvas per
- * card). Different `seedA`/`seedB`/`d` combinations yield visibly different
- * rosettes, so each saved pattern reads as its own distinct figure.
+ * needs NO WebGL context. Different `seedA`/`seedB`/`d` combinations yield
+ * visibly different rosettes.
  */
 export function PatternGlyph({
   seedA = 5,

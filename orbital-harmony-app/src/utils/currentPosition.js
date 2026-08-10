@@ -1,23 +1,35 @@
 // ============================================================================
-// Real-time planetary position — computes each planet's approximate REAL
-// current orbital angle from its J2000.0 mean longitude (data/planets.js)
-// plus its real sidereal orbital period, instead of starting every planet
-// at a random angle. This is a mean/circular-orbit approximation (ignores
-// eccentricity and perturbations) — plenty accurate for this
-// visualization's purpose (planets read as being roughly where they
-// actually are today, relative to each other), not intended for precision
-// ephemeris use.
+// Shared heliocentric planetary longitude. Astronomy Engine supplies the
+// ephemeris for supported planets; the J2000 mean/circular calculation is a
+// deterministic fallback for any future custom body.
 // ============================================================================
 
+import { Body, EclipticLongitude } from 'astronomy-engine';
+
 const J2000_EPOCH_MS = Date.UTC(2000, 0, 1, 12, 0, 0); // 2000-01-01 12:00 UTC
+const ASTRONOMY_BODY_BY_KEY = {
+  mercury: Body.Mercury,
+  venus: Body.Venus,
+  earth: Body.Earth,
+  mars: Body.Mars,
+  jupiter: Body.Jupiter,
+  saturn: Body.Saturn,
+  uranus: Body.Uranus,
+  neptune: Body.Neptune,
+};
 
 /**
- * @param {{ orbitalPeriodDays: number, meanLongitudeDeg?: number, orbitDirection?: number }} data
+ * @param {{ key?: string, orbitalPeriodDays: number, meanLongitudeDeg?: number }} data
  * @param {Date} [now] defaults to the real current time
  * @returns {number} current orbital angle in RADIANS, for direct use as
  *   `pivot.rotation.y`
  */
 export function currentOrbitAngleRad(data, now = new Date()) {
+  const astronomyBody = ASTRONOMY_BODY_BY_KEY[data.key];
+  if (astronomyBody) {
+    return (EclipticLongitude(astronomyBody, now) * Math.PI) / 180;
+  }
+
   // Deterministic fallback when orbital elements are missing. We avoid a
   // random fallback so repeated renders stay reproducible.
   if (data.meanLongitudeDeg == null || !data.orbitalPeriodDays) {
@@ -25,8 +37,7 @@ export function currentOrbitAngleRad(data, now = new Date()) {
   }
   const daysSinceEpoch = (now.getTime() - J2000_EPOCH_MS) / 86400000;
   const meanMotionDegPerDay = 360 / data.orbitalPeriodDays;
-  const orbitDirection = data.orbitDirection ?? 1;
-  const longitudeDeg = data.meanLongitudeDeg + orbitDirection * meanMotionDegPerDay * daysSinceEpoch;
+  const longitudeDeg = data.meanLongitudeDeg + meanMotionDegPerDay * daysSinceEpoch;
   const normalizedDeg = ((longitudeDeg % 360) + 360) % 360;
   return (normalizedDeg * Math.PI) / 180;
 }

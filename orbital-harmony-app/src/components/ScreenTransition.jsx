@@ -1,6 +1,17 @@
-/** Simple, premium crossfade/slide-up transition for whole-screen swaps.
- *  Remounting via `key` (done by the caller) retriggers the CSS animation
- *  below — no animation library needed for a single-direction wizard flow. */
-export default function ScreenTransition({ children }) {
-  return <div className="screen-transition">{children}</div>;
+import { motion, useReducedMotion } from 'motion/react';
+
+/** Premium opacity-only transition for whole-screen swaps. */
+export default function ScreenTransition({ children, screen }) {
+  const reduceMotion = useReducedMotion();
+
+  return (
+    <motion.div
+      className="screen-transition"
+      initial={reduceMotion ? false : { opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={reduceMotion ? { duration: 0 } : { duration: screen === 'system' ? 1.2 : 0.5, ease: 'easeOut' }}
+    >
+      {children}
+    </motion.div>
+  );
 }

@@ -32,10 +32,8 @@ function sameDay(a, b) {
   return a && b && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
-/** A dependency-free, glass-styled date picker. Renders a read-only trigger
- * field; tapping it opens a popover calendar with month + year dropdowns for
- * fast navigation across decades (ideal for birth dates). `value` / `onChange`
- * use 'YYYY-MM-DD' strings; `max` optionally caps the latest selectable day. */
+/** A dependency-free, glass-styled date picker with month + year dropdowns
+ * for fast navigation across decades. */
 export function GlassDatePicker({ value, onChange, max, placeholder = 'Select date', id, minimal = false }) {
   const uid = useId().replace(/:/g, '');
   const dialogId = `gdp-dialog-${uid}`;
@@ -44,43 +42,27 @@ export function GlassDatePicker({ value, onChange, max, placeholder = 'Select da
   const maxDate = useMemo(() => parseYMD(max), [max]);
   const maxYear = maxDate ? maxDate.getFullYear() : new Date().getFullYear();
 
-  const [open, setOpen] = useState(true); // Always open by default
   const [monthMenuOpen, setMonthMenuOpen] = useState(false);
   const [yearMenuOpen, setYearMenuOpen] = useState(false);
   const [view, setView] = useState(() => {
     const base = selected ?? maxDate ?? new Date();
     return { year: base.getFullYear(), month: base.getMonth() };
   });
-  const rootRef = useRef(null);
   const popRef = useRef(null);
 
-  // When (re)opening, jump the view to the selected date (or max/today).
+  // Keep the visible month aligned with externally changed selections.
   useEffect(() => {
-    if (!open) return;
     const base = selected ?? maxDate ?? new Date();
     setView({ year: base.getFullYear(), month: base.getMonth() });
-  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    if (!open) {
-      setMonthMenuOpen(false);
-      setYearMenuOpen(false);
-    }
-  }, [open]);
+  }, [selected, maxDate]);
 
   // Move focus into the calendar when opened (selected day first, otherwise
   // first available day) so keyboard users can interact immediately.
   useEffect(() => {
-    if (!open || !popRef.current) return;
+    if (!popRef.current) return;
     const target = popRef.current.querySelector('.gdp__cell.is-selected:not(:disabled), .gdp__cell:not(:disabled)');
     if (target) target.focus();
-  }, [open, view.year, view.month]);
-
-  // Close on outside click / Escape.
-  useEffect(() => {
-    // Calendar is always open, no need to close it
-    return;
-  }, [open]);
+  }, [view.year, view.month]);
 
   const years = useMemo(() => {
     const arr = [];
@@ -97,6 +79,7 @@ export function GlassDatePicker({ value, onChange, max, placeholder = 'Select da
   const cells = [];
   for (let i = 0; i < firstWeekday; i += 1) cells.push(null);
   for (let d = 1; d <= daysInMonth; d += 1) cells.push(d);
+  while (cells.length < 42) cells.push(null);
 
   function shiftMonth(delta) {
     setView((v) => {
@@ -130,13 +113,7 @@ export function GlassDatePicker({ value, onChange, max, placeholder = 'Select da
     : placeholder;
 
   return (
-    <div className={`gdp${open ? ' is-open' : ''}`} ref={rootRef}>
-      {minimal && selected && (
-        <div className="gdp__selectedDate" aria-live="polite">
-          <span className="gdp__selectedLabel">Selected:</span>
-          <span className="gdp__selectedValue">{label}</span>
-        </div>
-      )}
+    <div className="gdp is-open">
       {!minimal && (
         <LiquidGlass
           className="gdp__triggerGlass rounded-[18px] w-full bg-white/[0.03]"
@@ -151,7 +128,7 @@ export function GlassDatePicker({ value, onChange, max, placeholder = 'Select da
             className={`cosmic-input gdp__trigger${selected ? '' : ' gdp__trigger--empty'}`}
             disabled
             aria-haspopup="dialog"
-            aria-expanded={open}
+            aria-expanded="true"
             aria-controls={dialogId}
           >
             <span>{label}</span>
@@ -305,16 +282,18 @@ export function GlassDatePicker({ value, onChange, max, placeholder = 'Select da
               const dayDate = new Date(view.year, view.month, day, 12, 0, 0);
               const disabled = maxDate ? dayDate > maxDate : false;
               const isSel = sameDay(dayDate, selected);
+              const isToday = sameDay(dayDate, new Date());
               const weekday = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][dayDate.getDay()];
               return (
                 <button
                   key={day}
                   type="button"
-                  className={`gdp__cell${isSel ? ' is-selected' : ''}`}
+                  className={`gdp__cell${isToday ? ' is-today' : ''}${isSel ? ' is-selected' : ''}`}
                   onClick={() => pick(day)}
                   disabled={disabled}
                   role="gridcell"
                   aria-selected={isSel}
+                  aria-current={isToday ? 'date' : undefined}
                   aria-label={`${weekday}, ${day} ${MONTHS[view.month]} ${view.year}`}
                   tabIndex={isSel ? 0 : -1}
                 >
@@ -324,6 +303,16 @@ export function GlassDatePicker({ value, onChange, max, placeholder = 'Select da
             })}
           </div>
         </LiquidGlass>
+      {minimal && (
+        <div
+          className={`gdp__selectedDate${selected ? '' : ' is-placeholder'}`}
+          aria-live="polite"
+          aria-hidden={selected ? undefined : 'true'}
+        >
+          <span className="gdp__selectedLabel">Selected:</span>
+          <span className="gdp__selectedValue">{selected ? label : '00 Mon 0000'}</span>
+        </div>
+      )}
     </div>
   );
 }

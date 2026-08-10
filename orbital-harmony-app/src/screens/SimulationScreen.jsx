@@ -5,6 +5,7 @@ import { TopNavigationBar } from '../components/TopNavigationBar.jsx';
 import { LineStyleToggleButton } from '../components/LineStyleToggle.jsx';
 import { LiquidGlass } from '../components/ui/glasscn/liquid-glass.jsx';
 import { PLANETS_BY_KEY } from '../data/planets.js';
+import { createPatternFactoid } from '../utils/factoidGenerator.js';
 import { computeSimulationPlan, DETAIL_LEVEL_MIN, DETAIL_LEVEL_MAX } from '../utils/simulationPlan.js';
 import { useAppStore, SPEED_PRESETS } from '../store/useAppStore.js';
 
@@ -38,7 +39,10 @@ function sliderFillWidth(percent) {
  * Runs the tracer and captures the generated image when complete.
  */
 export default function SimulationScreen({ onComplete, onBack }) {
-  const { planetA, planetB, speed, detailLevel, setDetailLevel, setSnapshot, cosmicDate, patternMode, lineStyle, setLineStyle } = useAppStore();
+  const {
+    planetA, planetB, speed, detailLevel, setDetailLevel, setSnapshot,
+    setResultFactoid, cosmicDate, patternMode, lineStyle, setLineStyle,
+  } = useAppStore();
   const canvasRef = useRef(null);
   const doneRef = useRef(false);
   const [isPaused, setIsPaused] = useState(true);
@@ -49,8 +53,6 @@ export default function SimulationScreen({ onComplete, onBack }) {
   // which always mounts paused (`startPaused`) — resume it once the fresh
   // instance is attached so playback actually matches the "Pause" button
   // handleDetailLevelChange already switches to, instead of staying frozen.
-  // The fresh instance also always renders `solid` (the material's default),
-  // so re-apply the current Line/Dots choice too.
   const isFirstDetailRender = useRef(true);
   useEffect(() => {
     if (isFirstDetailRender.current) {
@@ -58,7 +60,6 @@ export default function SimulationScreen({ onComplete, onBack }) {
       return;
     }
     canvasRef.current?.setPaused(false);
-    canvasRef.current?.setLineStyle(lineStyle);
   }, [detailLevel]);
   const planetAData = PLANETS_BY_KEY[planetA];
   const planetBData = PLANETS_BY_KEY[planetB];
@@ -77,18 +78,19 @@ export default function SimulationScreen({ onComplete, onBack }) {
   // mounted canvas — the material always initializes as `solid` otherwise.
   useEffect(() => {
     canvasRef.current?.setLineStyle(lineStyle);
-  }, [planetKeys]);
+  }, [lineStyle, planetKeys]);
   const speedCfg = SPEED_PRESETS[speed];
 
   const handleEngineComplete = useCallback(() => {
     if (doneRef.current) return;
     doneRef.current = true;
+    setResultFactoid(createPatternFactoid({ planetA, planetB, isCosmic, cosmicDate }));
     setTimeout(() => {
       const dataUrl = canvasRef.current?.captureDataURL();
       if (dataUrl) setSnapshot(dataUrl);
       onComplete();
     }, 900);
-  }, [onComplete, setSnapshot]);
+  }, [cosmicDate, isCosmic, onComplete, planetA, planetB, setResultFactoid, setSnapshot]);
 
   const setPaused = useCallback((value) => {
     canvasRef.current?.setPaused(value);
@@ -144,6 +146,7 @@ export default function SimulationScreen({ onComplete, onBack }) {
           connectAllPlanets={false}
           showMoon={false}
           cosmicSnapshotDate={isCosmic ? (cosmicDate ?? undefined) : undefined}
+          compositionOffsetY={0.06}
           startPaused={true}
           miniBodiesIntro
           miniSunScale={0.15}
