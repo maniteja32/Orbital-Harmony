@@ -2803,7 +2803,7 @@ button {
   pointer-events: none;
 }
 
-.gdp__cell:not(:disabled):hover {
+.gdp__cell:not(:disabled):not(.is-selected):not(.is-today):hover {
   background: rgba(255, 255, 255, 0.14);
 }
 
@@ -2825,10 +2825,10 @@ button {
 }
 
 .gdp__cell.is-selected {
-  background: linear-gradient(180deg, #ff8a68, var(--accent));
-  color: #170704;
+  background: linear-gradient(180deg, #ff8a68, var(--accent)) !important;
+  color: #170704 !important;
   font-weight: 700;
-  box-shadow: 0 8px 20px -9px var(--accent-glow);
+  box-shadow: 0 8px 20px -9px var(--accent-glow) !important;
 }
 
 /* Minimal date picker - show only selected date text above calendar */
