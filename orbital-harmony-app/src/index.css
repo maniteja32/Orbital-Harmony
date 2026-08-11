@@ -3243,15 +3243,16 @@ button {
   display: inline;
   opacity: 0.45;
   animation: ellipsis-pulse 1.2s ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
   color: var(--nebula);
 }
 
 .loading-ellipsis:nth-child(2) {
-  animation-delay: 0.2s;
+  animation-delay: var(--delay, 0.2s);
 }
 
 .loading-ellipsis:nth-child(3) {
-  animation-delay: 0.4s;
+  animation-delay: var(--delay, 0.4s);
 }
 
 /* During the transition phase the edge vignette fades out so the frame opens
@@ -3810,7 +3811,7 @@ button {
 
 .loading-header .loading-subtitle {
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: 16px;
   line-height: 1.5;
   max-width: 320px;
   margin: 0 auto;

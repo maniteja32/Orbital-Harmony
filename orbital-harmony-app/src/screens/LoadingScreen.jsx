@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import anime from 'anime';
 import { createStarfieldBackdrop } from '../engine/starfieldBackdrop.js';
 
 /**
@@ -113,7 +114,7 @@ export default function LoadingScreen({ onDone, onExited }) {
 
     const planets = ORRERY_PLANETS.map((p) => ({ ...p, angle: Math.random() * Math.PI * 2 }));
 
-    const HOLD_MS = reducedMotion ? 900 : 3400;
+    const HOLD_MS = reducedMotion ? 900 : 4400;
     const TRANSITION_MS = reducedMotion ? 500 : 1700;
     // Kept in exact lockstep with the `.loading-screen` CSS opacity
     // transition duration (1.2s normally, 0.3s under reduced motion — see
@@ -177,6 +178,10 @@ export default function LoadingScreen({ onDone, onExited }) {
     const readyRaf = requestAnimationFrame(() => {
       setReady(true);
       sequenceStart = performance.now();
+      
+      // Start the anime.js animation for smooth orbit deceleration
+      animation.play();
+      
       holdTimer = setTimeout(() => {
         if (fontsSettled) {
           beginTransition();
@@ -191,25 +196,30 @@ export default function LoadingScreen({ onDone, onExited }) {
     let rafId = null;
     let lastTime = performance.now();
     let sunPulseT = 0;
+    
+    // Anime.js animation state
+    const animationState = {
+      speedScale: SPEED_MULT * FAST_SPIN,
+    };
+    
+    const spinDuration = HOLD_MS + TRANSITION_MS;
+    
+    // Create smooth animation using anime.js
+    const animation = anime({
+      targets: animationState,
+      speedScale: SPEED_MULT * SLOW_SPIN,
+      duration: spinDuration,
+      easing: 'easeInOutCubic',
+      autoplay: false, // We'll start it manually
+    });
 
     function draw(now) {
       rafId = requestAnimationFrame(draw);
       const dt = Math.min((now - lastTime) / 1000, 0.05);
       lastTime = now;
 
-      // The orrery starts spinning fast and SMOOTHLY DECELERATES over the
-      // whole loading sequence (hold + transition), easing down to a slow,
-      // calm pace close to the real planets' orbital speed by the time the
-      // crossfade hands off to the landing — so the motion settles INTO the
-      // real system instead of stopping and restarting. `progress` runs 0->1
-      // across HOLD_MS + TRANSITION_MS; easeInOutCubic holds the fast speed
-      // briefly, then bleeds it off and gently settles at SLOW_SPIN.
-      const spinDuration = HOLD_MS + TRANSITION_MS;
-      const progress = sequenceStart == null
-        ? 0
-        : Math.min(1, (now - sequenceStart) / spinDuration);
-      const decel = easeInOutCubic(progress);
-      const speedScale = SPEED_MULT * (FAST_SPIN + (SLOW_SPIN - FAST_SPIN) * decel);
+      // Use the smoothly animated speedScale from anime.js
+      const speedScale = animationState.speedScale;
 
       // ---- Step 1: fade the previous frame toward transparent ----
       // This single low-alpha rect is the entire trail mechanism — see the
@@ -298,6 +308,7 @@ export default function LoadingScreen({ onDone, onExited }) {
       unmounted = true;
       cancelAnimationFrame(rafId);
       cancelAnimationFrame(readyRaf);
+      animation.pause();
       clearTimeout(holdTimer);
       clearTimeout(transitionTimer);
       clearTimeout(doneTimer);
@@ -320,10 +331,12 @@ export default function LoadingScreen({ onDone, onExited }) {
       />
       <div className="loading-header">
         <h1 className="loading-title">Space Harmony</h1>
-        <p className="loading-subtitle">Discover the hidden patterns of planetary motion.</p>
-      </div>
-      <div className={`loading-message${ready ? ' is-visible' : ''}`}>
-        <p>The cosmos is aligning<span className="loading-ellipsis">.</span><span className="loading-ellipsis">.</span><span className="loading-ellipsis">.</span></p>
+        <p className="loading-subtitle">
+          The cosmos is loading
+          <span className="loading-ellipsis" style={{ '--delay': '0s' }}>.</span>
+          <span className="loading-ellipsis" style={{ '--delay': '0.2s' }}>.</span>
+          <span className="loading-ellipsis" style={{ '--delay': '0.4s' }}>.</span>
+        </p>
       </div>
       <div className={`loading-vignette${transitioning ? ' is-dimming' : ''}`} />
     </div>
