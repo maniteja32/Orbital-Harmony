@@ -1,7 +1,6 @@
 import { PLANETS, PLANETS_BY_KEY } from '../data/planets.js';
 import {
   buildCelestialSnapshot,
-  COSMIC_ARTIFACT_LAYERS,
   COSMIC_CONNECTION_COUNT,
   formatCosmicSignatureDate,
 } from './cosmicSignature.js';
@@ -49,7 +48,6 @@ function createCosmicIntelligence(cosmicDate) {
   const snapshot = buildCelestialSnapshot(date);
   const closest = closestAngularPair(snapshot.orderedPlanets);
   const separationDeg = closest ? (closest.separationRad * 180) / Math.PI : 0;
-  const layerStep = 360 / COSMIC_ARTIFACT_LAYERS;
 
   return {
     eyebrow: 'Signature intelligence',
@@ -59,7 +57,6 @@ function createCosmicIntelligence(cosmicDate) {
       { label: 'DOB snapshot', value: formatCosmicSignatureDate(date) },
       { label: 'Planet anchors', value: `${PLANETS.length}` },
       { label: 'Connections', value: `${COSMIC_CONNECTION_COUNT}` },
-      { label: 'Rotational layers', value: `${COSMIC_ARTIFACT_LAYERS}` },
     ],
     insights: [
       {
@@ -73,9 +70,9 @@ function createCosmicIntelligence(cosmicDate) {
         detail: 'This is the smallest longitude gap among all eight planets in the DOB snapshot; it is a geometric observation, not an astrological claim.',
       },
       {
-        title: 'Layer construction',
-        value: `${COSMIC_ARTIFACT_LAYERS} layers · ${layerStep.toFixed(0)}° spacing`,
-        detail: `One ${COSMIC_CONNECTION_COUNT}-segment Sun-to-planets wireframe is repeated at even angular intervals to turn the date snapshot into the final radial signature.`,
+        title: 'Signature shape',
+        value: `${COSMIC_CONNECTION_COUNT}-segment closed loop`,
+        detail: 'A single straight-edged wireframe connects the Sun to each planet anchor in orbital order, then closes back to the start — the final signature shape.',
       },
     ],
   };

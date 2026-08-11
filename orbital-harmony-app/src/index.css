@@ -360,26 +360,12 @@ button {
 
 /* Reserves clearance for the absolutely-positioned topbar above, so
    .planet-picker's flex:1 box (and its vertical centering) starts right
-   below it instead of overlapping. */
+   below it instead of overlapping. Continue always sits directly after
+   that flex:1 box in normal flow, so it's consistently bottom-docked on
+   every viewport (same as the Back/Continue pair on every other screen)
+   instead of shifting position with a height-based breakpoint. */
 .screen--select {
   padding-top: calc(76px + var(--safe-top));
-}
-
-/* On tall/wide desktop viewports .planet-picker's flex:1 fill leaves the
-   Continue button stranded far below the carousels (the leftover space
-   all collects in that one flex box instead of around the whole group).
-   Past this breakpoint, stop stretching .planet-picker and instead center
-   the intro+carousels+actions as a single unit — the same tightly-grouped
-   look mobile gets "for free" since it rarely has enough spare height for
-   the two to visually separate in the first place. */
-@media (min-height: 760px) {
-  .screen--select {
-    justify-content: center;
-  }
-
-  .screen--select .planet-picker {
-    flex: none;
-  }
 }
 
 .eyebrow {
@@ -2179,63 +2165,6 @@ button {
   .screen--result--cosmic .result-date {
     margin-top: 0;
     font-size: 14px;
-  }
-}
-
-@media (min-width: 900px) and (min-height: 700px) {
-  .app-shell[data-screen='result'] > .screen-transition {
-    max-width: min(1000px, 100%);
-  }
-
-  .screen--result {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(300px, 0.72fr);
-    grid-template-rows: 48px minmax(0, 1fr) auto;
-    grid-template-areas:
-      "nav nav"
-      "frame knowledge"
-      "frame actions";
-    column-gap: 24px;
-    row-gap: 18px;
-    padding: calc(28px + var(--safe-top)) 30px max(40px, calc(24px + var(--safe-bottom)));
-    overflow: hidden;
-  }
-
-  .screen--result--cosmic {
-    grid-template-rows: 48px auto minmax(0, 1fr) auto;
-    grid-template-areas:
-      "nav nav"
-      "frame meta"
-      "frame knowledge"
-      "frame actions";
-  }
-
-  .screen--result .mode-topbar {
-    grid-area: nav;
-    margin: 0 -30px;
-  }
-
-  .screen--result .screen__header--mode {
-    grid-area: meta;
-  }
-
-  .screen--result .result-frame {
-    grid-area: frame;
-    width: min(100%, calc(100dvh - 160px));
-    align-self: center;
-    justify-self: center;
-  }
-
-  .screen--result .knowledge-card--compact {
-    grid-area: knowledge;
-    min-width: 0;
-    align-self: center;
-  }
-
-  .screen--result .result-actions {
-    grid-area: actions;
-    align-self: end;
-    margin-top: 0;
   }
 }
 

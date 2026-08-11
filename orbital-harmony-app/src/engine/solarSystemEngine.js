@@ -18,7 +18,6 @@ import { PLANETS_BY_KEY, SUN_TEXTURE, MOON_TEXTURE } from '../data/planets.js';
 import { currentOrbitAngleRad } from '../utils/currentPosition.js';
 import { PATTERN_LINE_WIDTH } from '../utils/resonance.js';
 import { computeBodyScaleLimits, visualBodyRadius } from '../utils/bodyScale.js';
-import { COSMIC_ARTIFACT_LAYERS } from '../utils/cosmicSignature.js';
 import { buildStarfield } from './starfieldBackdrop.js';
 import { createWebGLRenderer } from './webglRenderer.js';
 
@@ -589,7 +588,6 @@ export function createSolarSystemEngine(canvas, opts) {
   const COSMIC_SNAPSHOT_SETTLE_SEC = 7.2;
   const COSMIC_PRE_DRAW_HOLD_SEC = 0.7;
   const COSMIC_SIGNATURE_DRAW_SEC = 2.8;
-  const COSMIC_ARTIFACT_FORM_SEC = 4.2;
 
   const cosmicTargetAngles = cosmicSnapshotEnabled
     ? planets.map((planet) => currentOrbitAngleRad(planet.data, cosmicSnapshotDate))
@@ -617,15 +615,19 @@ export function createSolarSystemEngine(canvas, opts) {
   let cosmicSettleElapsed = 0;
   let cosmicPreDrawElapsed = 0;
   let cosmicDrawElapsed = 0;
-  let cosmicArtifactElapsed = 0;
   let cosmicSettled = !cosmicSnapshotEnabled;
   let cosmicReadyToDraw = !cosmicSnapshotEnabled;
   let cosmicBaseLinesDone = !cosmicSnapshotEnabled;
-  let cosmicArtifactDone = !cosmicSnapshotEnabled;
 
   let cosmicSignatureLines = [];
-  let cosmicArtifactLines = [];
-  let cosmicSignatureVertexCount = 0;
+  // Anchor points (Sun + planets, loop-closed) and their per-segment/total
+  // lengths, used to grow the traced line continuously along its real path
+  // (see the draw loop below) instead of snapping whole straight edges into
+  // view vertex-by-vertex.
+  let cosmicSignatureAnchors = null;
+  let cosmicSignatureSegLengths = null;
+  let cosmicSignatureTotalLength = 0;
+  const cosmicTipPoint = new THREE.Vector3();
   if (cosmicSnapshotEnabled && planets.length >= 2) {
     const order = ['mercury', 'venus', 'earth', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune'];
     const byKey = new Map(planets.map((planet) => [planet.data.key, planet]));
@@ -646,7 +648,14 @@ export function createSolarSystemEngine(canvas, opts) {
       // Keep the cosmic geometry strictly straight: connect anchors directly
       // in sequence, then close the loop by returning to the starting point.
       const signaturePoints = [...anchorPoints, anchorPoints[0].clone()];
-      cosmicSignatureVertexCount = signaturePoints.length;
+      cosmicSignatureAnchors = signaturePoints;
+      cosmicSignatureSegLengths = [];
+      cosmicSignatureTotalLength = 0;
+      for (let i = 0; i < signaturePoints.length - 1; i++) {
+        const segLength = signaturePoints[i].distanceTo(signaturePoints[i + 1]);
+        cosmicSignatureSegLengths.push(segLength);
+        cosmicSignatureTotalLength += segLength;
+      }
 
       const makeSignatureLine = (opacity) => {
         const geometry = new THREE.BufferGeometry().setFromPoints(signaturePoints);
@@ -666,43 +675,13 @@ export function createSolarSystemEngine(canvas, opts) {
       // separate line system — NOT the shared PATTERN_LINE_WIDTH/opacity
       // used by the Explore chord trace) — the low originals read as much
       // fainter/thinner than Explore's denser, brighter pattern.
+      // Left fully opaque and static once drawn — no further mandala/artifact
+      // layering step, just the plain closed loop joining the planets.
       cosmicSignatureLines = [
         makeSignatureLine(0.24),
         makeSignatureLine(0.85),
       ];
       cosmicSignatureLines.forEach((line) => scene.add(line));
-
-      const createArtifactLinePair = (rotationY) => {
-        const makeArtifactLine = (opacity) => {
-          const geometry = new THREE.BufferGeometry().setFromPoints(signaturePoints);
-          geometry.setDrawRange(0, 2);
-          const material = new THREE.LineBasicMaterial({
-            color: 0xffffff,
-            transparent: true,
-            opacity: 0,
-          });
-          const line = new THREE.Line(geometry, material);
-          line.rotation.y = rotationY;
-          line.visible = false;
-          line.userData.baseOpacity = opacity;
-          return line;
-        };
-
-        // Brightened from the original 0.08/0.24 for the same reason.
-        return [
-          makeArtifactLine(0.13),
-          makeArtifactLine(0.38),
-        ];
-      };
-
-      for (let i = 0; i < COSMIC_ARTIFACT_LAYERS; i++) {
-        const rotationY = (i / COSMIC_ARTIFACT_LAYERS) * TWO_PI;
-        const pair = createArtifactLinePair(rotationY);
-        pair.forEach((line) => {
-          cosmicArtifactLines.push(line);
-          scene.add(line);
-        });
-      }
     }
   }
   // `frameRadius` already includes each outer body's sphere/ring/moon extent.
@@ -1369,46 +1348,46 @@ export function createSolarSystemEngine(canvas, opts) {
       cosmicDrawElapsed += delta;
       const t = Math.min(cosmicDrawElapsed / COSMIC_SIGNATURE_DRAW_SEC, 1);
       const eased = smootherStep(t);
-      const drawCount = Math.max(2, Math.floor(2 + eased * (cosmicSignatureVertexCount - 2)));
+      // Walk the cumulative segment lengths to find exactly where the tip
+      // of the line sits along its real path at this instant, then lerp a
+      // moving vertex to that exact point — this is what makes the loop
+      // grow as one continuous, fluid stroke instead of whole straight
+      // edges popping into view one vertex at a time.
+      const targetLength = eased * cosmicSignatureTotalLength;
+      let remaining = targetLength;
+      let segIndex = 0;
+      while (
+        segIndex < cosmicSignatureSegLengths.length - 1 &&
+        remaining > cosmicSignatureSegLengths[segIndex]
+      ) {
+        remaining -= cosmicSignatureSegLengths[segIndex];
+        segIndex++;
+      }
+      const segLength = cosmicSignatureSegLengths[segIndex] || 1;
+      const frac = t >= 1 ? 1 : Math.min(remaining / segLength, 1);
+      cosmicTipPoint.lerpVectors(
+        cosmicSignatureAnchors[segIndex],
+        cosmicSignatureAnchors[segIndex + 1],
+        frac,
+      );
       cosmicSignatureLines.forEach((line) => {
         line.visible = true;
-        line.geometry.setDrawRange(0, drawCount);
+        const posAttr = line.geometry.attributes.position;
+        for (let i = 0; i <= segIndex; i++) {
+          posAttr.setXYZ(i, cosmicSignatureAnchors[i].x, cosmicSignatureAnchors[i].y, cosmicSignatureAnchors[i].z);
+        }
+        posAttr.setXYZ(segIndex + 1, cosmicTipPoint.x, cosmicTipPoint.y, cosmicTipPoint.z);
+        posAttr.needsUpdate = true;
+        line.geometry.setDrawRange(0, segIndex + 2);
       });
       if (t >= 1) cosmicBaseLinesDone = true;
-    }
-
-    if (cosmicSnapshotEnabled && cosmicBaseLinesDone && cosmicArtifactLines.length > 0 && !cosmicArtifactDone) {
-      cosmicArtifactElapsed += delta;
-      const t = Math.min(cosmicArtifactElapsed / COSMIC_ARTIFACT_FORM_SEC, 1);
-      const eased = smootherStep(t);
-
-      cosmicSignatureLines.forEach((line) => {
-        line.material.opacity = line.userData.baseOpacity * (1 - eased * 0.9);
-      });
-
-      const pairCount = COSMIC_ARTIFACT_LAYERS;
-      for (let i = 0; i < pairCount; i++) {
-        const stagger = i / Math.max(1, pairCount - 1);
-        const local = THREE.MathUtils.clamp((eased - stagger * 0.5) / 0.5, 0, 1);
-        const drawCount = Math.max(2, Math.floor(2 + smootherStep(local) * (cosmicSignatureVertexCount - 2)));
-
-        const glowLine = cosmicArtifactLines[i * 2];
-        const coreLine = cosmicArtifactLines[i * 2 + 1];
-        [glowLine, coreLine].forEach((line) => {
-          line.visible = local > 0;
-          line.geometry.setDrawRange(0, drawCount);
-          line.material.opacity = line.userData.baseOpacity * local;
-        });
-      }
-
-      if (t >= 1) cosmicArtifactDone = true;
     }
 
     if (tracePattern && !completed && simDaysElapsed >= totalSimYears * DAYS_PER_YEAR) {
       completed = true;
       if (onCompleteCb) onCompleteCb();
     }
-    if (cosmicSnapshotEnabled && cosmicArtifactDone && !completed) {
+    if (cosmicSnapshotEnabled && cosmicBaseLinesDone && !completed) {
       completed = true;
       if (onCompleteCb) onCompleteCb();
     }
@@ -1570,11 +1549,9 @@ export function createSolarSystemEngine(canvas, opts) {
       cosmicSettleElapsed = 0;
       cosmicPreDrawElapsed = 0;
       cosmicDrawElapsed = 0;
-      cosmicArtifactElapsed = 0;
       cosmicSettled = !cosmicSnapshotEnabled;
       cosmicReadyToDraw = !cosmicSnapshotEnabled;
       cosmicBaseLinesDone = !cosmicSnapshotEnabled;
-      cosmicArtifactDone = !cosmicSnapshotEnabled;
       if (miniBodiesEnabled) applyMiniBodyScale(0);
       if (patternLines) {
         patternLines.geometry.instanceCount = 0;
@@ -1587,11 +1564,6 @@ export function createSolarSystemEngine(canvas, opts) {
         line.visible = false;
         line.geometry.setDrawRange(0, 2);
         line.material.opacity = line.userData.baseOpacity;
-      });
-      cosmicArtifactLines.forEach((line) => {
-        line.visible = false;
-        line.geometry.setDrawRange(0, 2);
-        line.material.opacity = 0;
       });
       scene.updateMatrixWorld(true);
       renderScene();
@@ -1608,11 +1580,12 @@ export function createSolarSystemEngine(canvas, opts) {
       if (introPhase === 'done') cb();
     },
     captureDataURL() {
-      // The saved/shared/downloaded image is the traced resonance pattern
-      // itself — planet body markers AND the Sun are simulation aids, not
-      // part of the artifact, so both are hidden for the capture (the Sun
-      // used to be kept as a small anchor dot at the centre, but that's no
-      // longer wanted — the pattern should stand alone with no Sun at all).
+      // For the Explore two-planet chord trace, the saved/shared/downloaded
+      // image is the traced resonance pattern itself — planet body markers
+      // AND the Sun are simulation aids, not part of the artifact, so both
+      // are hidden for that capture. Cosmic Signature is different: its
+      // whole point is the loop joining the Sun and every planet, so those
+      // bodies are kept visible in its saved/exported image.
       // Hide for this one synchronous render, capture, then restore
       // immediately so the still-running live view (this frame continues
       // rendering for a moment before the screen navigates away) is
@@ -1638,13 +1611,15 @@ export function createSolarSystemEngine(canvas, opts) {
       renderer.setPixelRatio(captureRatio);
       renderer.setSize(width, height, false);
       const wasSunVisible = sunMesh.visible;
-      sunMesh.visible = false;
-      sunGlowSprites.forEach((sprite) => {
-        sprite.visible = false;
-      });
-      planets.forEach((planet) => {
-        planet.pivot.visible = false;
-      });
+      if (!cosmicSnapshotEnabled) {
+        sunMesh.visible = false;
+        sunGlowSprites.forEach((sprite) => {
+          sprite.visible = false;
+        });
+        planets.forEach((planet) => {
+          planet.pivot.visible = false;
+        });
+      }
       // The chord pattern itself is drawn with the Pattern Gallery's OWN
       // technique — a separate Canvas 2D stroke() per chord, alpha-blended
       // on top of one another — instead of WebGL's LineSegments2/LineMaterial

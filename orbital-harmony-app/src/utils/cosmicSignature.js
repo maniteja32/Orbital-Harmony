@@ -10,7 +10,6 @@
 import { PLANETS } from '../data/planets.js';
 import { currentOrbitAngleRad } from './currentPosition.js';
 
-export const COSMIC_ARTIFACT_LAYERS = 36;
 export const COSMIC_CONNECTION_COUNT = PLANETS.length + 1;
 
 const DISPLAY_DATE_FORMATTER = new Intl.DateTimeFormat('en-GB', {
