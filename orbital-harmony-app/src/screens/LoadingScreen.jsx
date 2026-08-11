@@ -49,6 +49,7 @@ function easeInOutCubic(t) {
 export default function LoadingScreen({ onDone, onExited }) {
   const canvasRef = useRef(null);
   const starCanvasRef = useRef(null);
+  const moonRef = useRef(null);
   const onDoneRef = useRef(onDone);
   onDoneRef.current = onDone;
   const onExitedRef = useRef(onExited);
@@ -79,6 +80,13 @@ export default function LoadingScreen({ onDone, onExited }) {
     let centerX = 0;
     let centerY = 0;
     let maxOrbitPx = 0;
+    // Real boundary (in canvas-local px) below which nothing may be drawn —
+    // derived from the moon <img>'s ACTUAL rendered top edge (see below),
+    // not a fixed fraction of the viewport, so the orrery never overlaps the
+    // photo regardless of viewport aspect ratio (on wide/short viewports the
+    // photo's `object-fit: contain` content fills its box's full height,
+    // flush with the box's own top — a fixed fraction alone doesn't track that).
+    let skyMaskY = 0;
 
     // The starfield now lives on a separate WebGL canvas behind this one
     // (see createStarfieldBackdrop above) — it is the SAME star field the
@@ -108,6 +116,18 @@ export default function LoadingScreen({ onDone, onExited }) {
       // deliberately compact (was 0.42) so the whole loading pattern reads
       // as a small, minimal accent rather than a dominant centerpiece.
       maxOrbitPx = Math.min(width, height) * 0.3;
+      // Measure the moon <img>'s real rendered top edge directly rather than
+      // assuming a fixed fraction of the viewport — on wide/short viewports
+      // (e.g. landscape or a wide desktop preview) its `object-fit: contain`
+      // content fills the FULL height of its (30vh-capped) box, flush with
+      // the box's own top edge, well above where a flat "70% of height"
+      // guess would land; a hardcoded fraction let the orrery's outer
+      // ring/dots draw right up against (or past) the photo. A 24px buffer
+      // keeps a clean gap instead of a flush touch. Falls back to the old
+      // 70% heuristic if the ref isn't available yet.
+      const moonEl = moonRef.current;
+      const moonTop = moonEl ? moonEl.getBoundingClientRect().top - canvas.getBoundingClientRect().top : null;
+      skyMaskY = Number.isFinite(moonTop) ? Math.min(moonTop - 24, height * 0.7) : height * 0.7;
     }
     handleResize();
     window.addEventListener('resize', handleResize);
@@ -237,8 +257,8 @@ export default function LoadingScreen({ onDone, onExited }) {
       // rings sit almost flush with the black background, just enough of
       // a hint to imply orbital paths without ever reading as a drawn line.
       // Keep spinner visuals in the sky area so they don't paint over the
-      // lunar foreground texture.
-      const skyMaskY = height * 0.7;
+      // lunar foreground texture — `skyMaskY` is kept in sync with the
+      // moon photo's real rendered top edge by handleResize() above.
       ctx.save();
       ctx.beginPath();
       ctx.rect(0, 0, width, skyMaskY);
@@ -320,6 +340,7 @@ export default function LoadingScreen({ onDone, onExited }) {
     <div className={`loading-screen${leaving ? ' is-leaving' : ''}`}>
       <canvas ref={starCanvasRef} className={`loading-stars${ready ? ' is-ready' : ''}`} />
       <img
+        ref={moonRef}
         src="/textures/loading-moon-photo.jpg"
         alt=""
         className={`loading-moon${ready ? ' is-ready' : ''}`}
