@@ -365,6 +365,23 @@ button {
   padding-top: calc(76px + var(--safe-top));
 }
 
+/* On tall/wide desktop viewports .planet-picker's flex:1 fill leaves the
+   Continue button stranded far below the carousels (the leftover space
+   all collects in that one flex box instead of around the whole group).
+   Past this breakpoint, stop stretching .planet-picker and instead center
+   the intro+carousels+actions as a single unit — the same tightly-grouped
+   look mobile gets "for free" since it rarely has enough spare height for
+   the two to visually separate in the first place. */
+@media (min-height: 760px) {
+  .screen--select {
+    justify-content: center;
+  }
+
+  .screen--select .planet-picker {
+    flex: none;
+  }
+}
+
 .eyebrow {
   font-family: var(--font-display);
   font-size: 11px;

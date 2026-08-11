@@ -565,14 +565,14 @@ export function createSolarSystemEngine(canvas, opts) {
   const frameRadius = Math.max(...planetFrameExtents.map((p) => p.extent), sunFrameExtent, 20);
   // Landing screen on narrow (phone-width) viewports ONLY: settle on a much
   // tighter framing centered on the inner system, deliberately letting the
-  // outermost few orbits (Saturn/Uranus/Neptune) run off both left/right
-  // edges instead of shrinking every planet down to fit them all in — a
-  // requested trade-off, since cramming all 8 orbits into a narrow portrait
-  // frame left every planet too small to read clearly. Sorted by distance
-  // (not orbit-ring order) so this stays correct even if `planetKeys` is
-  // ever passed in a different order.
+  // outermost few orbits (Jupiter/Saturn/Uranus/Neptune) run off both left/
+  // right edges instead of shrinking every planet down to fit them all in —
+  // a requested trade-off, since cramming all 8 orbits into a narrow
+  // portrait frame left every planet too small to read clearly. Sorted by
+  // distance (not orbit-ring order) so this stays correct even if
+  // `planetKeys` is ever passed in a different order.
   const MOBILE_ZOOM_BREAKPOINT_PX = 640;
-  const MOBILE_HIDDEN_OUTER_ORBITS = 3;
+  const MOBILE_HIDDEN_OUTER_ORBITS = 4;
   const isMobileViewport = width <= MOBILE_ZOOM_BREAKPOINT_PX;
   const mobileFrameRadius = (() => {
     const sorted = [...planetFrameExtents].sort((a, b) => a.distance - b.distance);
