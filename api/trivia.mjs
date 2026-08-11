@@ -1,10 +1,5 @@
-import {
-  AiTriviaError,
-  describeAiConfiguration,
-  generateGroundedTrivia,
-} from '../server/aiTriviaService.mjs';
+import { AiTriviaError, generateGroundedTrivia } from '../server/aiTriviaService.mjs';
 
-const requestWindows = new Map();
 const MAX_BODY_BYTES = 8 * 1024;
 
 function header(request, name) {
@@ -12,35 +7,13 @@ function header(request, name) {
   return Array.isArray(value) ? value[0] : value;
 }
 
-function configuredOrigins(env) {
-  return new Set(String(env.TRIVIA_ALLOWED_ORIGINS ?? '')
-    .split(',')
-    .map((origin) => origin.trim())
-    .filter(Boolean));
-}
-
-function isAllowedOrigin(request, origin, env) {
-  if (!origin) return true;
-  if (configuredOrigins(env).has(origin)) return true;
-  try {
-    const originUrl = new URL(origin);
-    const requestHost = String(header(request, 'host') ?? '').toLowerCase();
-    if ((originUrl.protocol === 'https:' || originUrl.protocol === 'http:')
-      && originUrl.host.toLowerCase() === requestHost) return true;
-    if (env.NODE_ENV !== 'production' && originUrl.hostname === 'localhost') return true;
-    return false;
-  } catch {
-    return false;
-  }
-}
-
-function applyResponseHeaders(response, origin, originAllowed) {
+function applyResponseHeaders(response, origin) {
   response.setHeader('Cache-Control', 'no-store');
   response.setHeader('Content-Type', 'application/json; charset=utf-8');
   response.setHeader('Vary', 'Origin');
   response.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   response.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  if (origin && originAllowed) response.setHeader('Access-Control-Allow-Origin', origin);
+  if (origin) response.setHeader('Access-Control-Allow-Origin', origin);
 }
 
 function sendJson(response, status, payload) {
@@ -74,17 +47,13 @@ function validMonthDay(month, day) {
 }
 
 function validateInput(body) {
-  const excludeIds = Array.isArray(body?.excludeIds)
-    ? body.excludeIds.filter((id) => typeof id === 'string' && id.length <= 160).slice(0, 40)
-    : [];
-
   if (body?.kind === 'birthday') {
     const month = Number(body.month);
     const day = Number(body.day);
     if (!validMonthDay(month, day)) {
       throw new AiTriviaError('INVALID_REQUEST', 'A valid month and day are required', 400);
     }
-    return { kind: 'birthday', month, day, excludeIds };
+    return { kind: 'birthday', month, day };
   }
 
   if (body?.kind === 'planets') {
@@ -94,47 +63,15 @@ function validateInput(body) {
     if (planetKeys.length < 1 || planetKeys.length > 2) {
       throw new AiTriviaError('INVALID_REQUEST', 'One or two valid planet keys are required', 400);
     }
-    return { kind: 'planets', planetKeys, excludeIds };
+    return { kind: 'planets', planetKeys };
   }
 
   throw new AiTriviaError('INVALID_REQUEST', 'kind must be birthday or planets', 400);
 }
 
-function clientKey(request) {
-  const forwarded = String(header(request, 'x-forwarded-for') ?? '').split(',')[0].trim();
-  return forwarded || request.socket?.remoteAddress || 'unknown';
-}
-
-function enforceRateLimit(request, env) {
-  const limit = Math.max(1, Number(env.TRIVIA_RATE_LIMIT_PER_10_MINUTES) || 30);
-  const now = Date.now();
-  const key = clientKey(request);
-  const current = requestWindows.get(key);
-  if (!current || now >= current.resetAt) {
-    requestWindows.set(key, { count: 1, resetAt: now + 10 * 60 * 1000 });
-    return;
-  }
-  current.count += 1;
-  if (current.count > limit) {
-    throw new AiTriviaError('RATE_LIMITED', 'Too many trivia requests; try again shortly', 429);
-  }
-  if (requestWindows.size > 1000) {
-    for (const [storedKey, value] of requestWindows) {
-      if (now >= value.resetAt) requestWindows.delete(storedKey);
-    }
-  }
-}
-
 export default async function handler(request, response) {
-  const env = process.env;
   const origin = String(header(request, 'origin') ?? '');
-  const originAllowed = isAllowedOrigin(request, origin, env);
-  applyResponseHeaders(response, origin, originAllowed);
-
-  if (!originAllowed) {
-    sendJson(response, 403, { error: { code: 'ORIGIN_NOT_ALLOWED', message: 'Origin is not allowed' } });
-    return;
-  }
+  applyResponseHeaders(response, origin);
 
   if (request.method === 'OPTIONS') {
     response.status(204).end();
@@ -142,7 +79,7 @@ export default async function handler(request, response) {
   }
 
   if (request.method === 'GET') {
-    sendJson(response, 200, { status: 'ok', ...describeAiConfiguration(env) });
+    sendJson(response, 200, { status: 'ok', configured: true, provider: 'pollinations', model: 'text-free' });
     return;
   }
 
@@ -153,9 +90,8 @@ export default async function handler(request, response) {
   }
 
   try {
-    enforceRateLimit(request, env);
     const input = validateInput(parseBody(request));
-    const trivia = await generateGroundedTrivia(input, { env });
+    const trivia = await generateGroundedTrivia(input);
     sendJson(response, 200, trivia);
   } catch (error) {
     const knownError = error instanceof AiTriviaError
