@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import anime from 'anime';
+import { animate } from 'animejs';
 import { createStarfieldBackdrop } from '../engine/starfieldBackdrop.js';
 
 /**
@@ -205,11 +205,10 @@ export default function LoadingScreen({ onDone, onExited }) {
     const spinDuration = HOLD_MS + TRANSITION_MS;
     
     // Create smooth animation using anime.js
-    const animation = anime({
-      targets: animationState,
+    const animation = animate(animationState, {
       speedScale: SPEED_MULT * SLOW_SPIN,
       duration: spinDuration,
-      easing: 'easeInOutCubic',
+      ease: 'inOutCubic',
       autoplay: false, // We'll start it manually
     });
 
