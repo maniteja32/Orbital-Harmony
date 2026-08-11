@@ -549,22 +549,41 @@ export function createSolarSystemEngine(canvas, opts) {
 
   if (miniBodiesEnabled) applyMiniBodyScale(0);
 
-  const frameRadius = Math.max(
-    ...planets.map((planet) => {
-      const bodyRadius = visualBodyRadius(planet.data, showMoon);
-      const frameScale = orthographic
-        ? LANDING_PLANET_SCALE * (LANDING_PLANET_SCALE_BUMP[planet.data.key] ?? 1)
-        : Math.max(
-            fitPlanetScale(planet, initialPlanetScale),
-            fitPlanetScale(planet, miniPlanetScale),
-          );
-      return planet.data.distance + bodyRadius * frameScale;
-    }),
-    SUN_RADIUS * (orthographic
-      ? LANDING_SUN_SCALE
-      : Math.max(fitSunScale(initialSunScale), fitSunScale(miniSunScale))),
-    20,
-  );
+  const planetFrameExtents = planets.map((planet) => {
+    const bodyRadius = visualBodyRadius(planet.data, showMoon);
+    const frameScale = orthographic
+      ? LANDING_PLANET_SCALE * (LANDING_PLANET_SCALE_BUMP[planet.data.key] ?? 1)
+      : Math.max(
+          fitPlanetScale(planet, initialPlanetScale),
+          fitPlanetScale(planet, miniPlanetScale),
+        );
+    return { distance: planet.data.distance, extent: planet.data.distance + bodyRadius * frameScale };
+  });
+  const sunFrameExtent = SUN_RADIUS * (orthographic
+    ? LANDING_SUN_SCALE
+    : Math.max(fitSunScale(initialSunScale), fitSunScale(miniSunScale)));
+  const frameRadius = Math.max(...planetFrameExtents.map((p) => p.extent), sunFrameExtent, 20);
+  // Landing screen on narrow (phone-width) viewports ONLY: settle on a much
+  // tighter framing centered on the inner system, deliberately letting the
+  // outermost few orbits (Saturn/Uranus/Neptune) run off both left/right
+  // edges instead of shrinking every planet down to fit them all in — a
+  // requested trade-off, since cramming all 8 orbits into a narrow portrait
+  // frame left every planet too small to read clearly. Sorted by distance
+  // (not orbit-ring order) so this stays correct even if `planetKeys` is
+  // ever passed in a different order.
+  const MOBILE_ZOOM_BREAKPOINT_PX = 640;
+  const MOBILE_HIDDEN_OUTER_ORBITS = 3;
+  const isMobileViewport = width <= MOBILE_ZOOM_BREAKPOINT_PX;
+  const mobileFrameRadius = (() => {
+    const sorted = [...planetFrameExtents].sort((a, b) => a.distance - b.distance);
+    const visible = sorted.slice(0, Math.max(sorted.length - MOBILE_HIDDEN_OUTER_ORBITS, 1));
+    return Math.max(...visible.map((p) => p.extent), sunFrameExtent, 20);
+  })();
+  // The framing actually used once the camera is settled (post-intro/at
+  // rest) — tighter on mobile, unchanged everywhere else. The intro's wide
+  // establishing shot still uses the untouched `frameRadius` above so it
+  // keeps showing the whole system before zooming into this closer view.
+  const settledFrameRadius = orthographic && isMobileViewport ? mobileFrameRadius : frameRadius;
   const cosmicSnapshotEnabled = cosmicSnapshotDate instanceof Date && !Number.isNaN(cosmicSnapshotDate.getTime());
   const COSMIC_OVERVIEW_HOLD_SEC = 1;
   const COSMIC_SNAPSHOT_SETTLE_SEC = 7.2;
@@ -708,7 +727,7 @@ export function createSolarSystemEngine(canvas, opts) {
   function orthoHalfHeight(radius, margin, aspect) {
     return (radius * margin) / Math.min(1, aspect);
   }
-  let restFrameRadius = frameRadius;
+  let restFrameRadius = settledFrameRadius;
   let restFrameMargin = framingMargin;
   // Tracks whatever vertical half-height is ACTUALLY on screen right now
   // (updated every time the frustum is explicitly set below, including
@@ -829,7 +848,7 @@ export function createSolarSystemEngine(canvas, opts) {
   // and the returning-visitor `startSettled` framing below land on this
   // exact same framing, so there's never a first-visit vs. repeat-visit
   // scale mismatch).
-  const heroWideHalf = orthoHalfHeight(frameRadius, framingMargin, width / height);
+  const heroWideHalf = orthoHalfHeight(settledFrameRadius, framingMargin, width / height);
   // A wider "establishing shot" frustum used only for the very START of the
   // cinematic intro (top-down hold + the rotate into the angled view) — the
   // intro then slowly ZOOMS IN from this pulled-back establishing shot down
@@ -930,7 +949,8 @@ export function createSolarSystemEngine(canvas, opts) {
     camera.position.copy(heroAngledPos);
     camera.lookAt(introLookTarget);
     if (camera.isOrthographicCamera) {
-      // Use the full-system framing (heroWideHalf), not the zoomed framing
+      // Use the settled rest framing (heroWideHalf) — full-system on desktop,
+      // deliberately tighter/cropped on narrow mobile viewports.
       const half = heroWideHalf;
       camera.left = (-half * width) / height;
       camera.right = (half * width) / height;
@@ -938,8 +958,8 @@ export function createSolarSystemEngine(canvas, opts) {
       camera.bottom = -half;
       camera.updateProjectionMatrix();
       currentOrthoHalf = half;
-      // Keep the full-system framing as the rest state
-      restFrameRadius = frameRadius;
+      // Keep the settled framing as the rest state
+      restFrameRadius = settledFrameRadius;
       restFrameMargin = framingMargin;
     }
     camera.lookAt(introLookTarget);
@@ -1434,7 +1454,7 @@ export function createSolarSystemEngine(canvas, opts) {
         }
         if (t >= 1) {
           introPhase = 'done';
-          restFrameRadius = frameRadius;
+          restFrameRadius = settledFrameRadius;
           restFrameMargin = framingMargin;
           camera.lookAt(introLookTarget);
           if (interactive) attachOrbitControls(introLookTarget);
