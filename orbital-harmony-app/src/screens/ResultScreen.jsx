@@ -376,15 +376,14 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails }) {
   return (
     <div className={`screen screen--result${isCosmic ? ' screen--result--cosmic' : ''}`}>
       <TopNavigationBar title={isCosmic ? 'Cosmic Signature' : title} onBack={onBack} />
-
       {isCosmic && (
-        <div className="screen__header screen__header--mode">
-          <p className="result-date">{cosmicDateLabel || 'Date unavailable'}</p>
-          <p className="result-description">Generated from the planetary arrangement on your birth date.</p>
-        </div>
+        <p className="screen-intro">Planets aligned to your date of birth</p>
       )}
 
       <LiquidGlass className="result-frame rounded-[24px] w-full bg-white/[0.05]" style={RESULT_FRAME_RIM}>
+        {isCosmic && (
+          <p className="result-frame__date-overlay">{cosmicDateLabel || 'No date'}</p>
+        )}
         {regenerating ? (
           <SolarSystemCanvas
             key={regenKey}

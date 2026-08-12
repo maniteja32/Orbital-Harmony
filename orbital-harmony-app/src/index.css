@@ -1901,6 +1901,16 @@ button {
   margin: 0 -22px;
 }
 
+/* Compact override of the shared .screen-intro subtitle (48px top margin,
+   16px text) — this screen is already tight on vertical space (see the
+   knowledge-card brevity notes below), so the Cosmic Signature subtitle
+   sits close under the topbar instead of pushing the frame/actions down. */
+.screen--result--cosmic .screen-intro {
+  margin: 0 0 14px;
+  padding: 0;
+  font-size: 13px;
+}
+
 /* Same double-padding fix as .screen--result above — Pattern Details also
    isn't full-bleed, so .mode-topbar's own 22px padding stacks on
    .screen's 22px padding, doubling the back button's inset. */
@@ -1937,6 +1947,21 @@ button {
      with no bars, keeping the pattern as large as possible. */
   object-fit: cover;
   display: block;
+}
+
+.result-frame__date-overlay {
+  position: absolute;
+  left: 14px;
+  bottom: 12px;
+  z-index: 2;
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #f5f6fa;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.75);
+  pointer-events: none;
 }
 
 .result-meta {
