@@ -47,6 +47,60 @@ function generatePhysicalFacts(planetKey, planetName) {
   ];
 }
 
+// Live physical data from api.le-systeme-solaire.net, used when
+// SOLAR_SYSTEM_API_KEY is configured (server-only env var — never exposed
+// to the client bundle). Falls back to the static PLANET_PHYSICAL_DATA
+// table above whenever the key is missing or the request fails, so this is
+// purely an upgrade over the static table, never a hard dependency.
+const SOLAR_SYSTEM_API = 'https://api.le-systeme-solaire.net/rest/bodies';
+const SOLAR_SYSTEM_BODY_IDS = {
+  mercury: 'mercure',
+  venus: 'venus',
+  earth: 'terre',
+  mars: 'mars',
+  jupiter: 'jupiter',
+  saturn: 'saturne',
+  uranus: 'uranus',
+  neptune: 'neptune',
+};
+const EARTH_SURFACE_GRAVITY = 9.80665;
+
+async function fetchLiveSolarSystemFacts(planetKey, planetName, fetchImpl) {
+  const apiKey = process.env.SOLAR_SYSTEM_API_KEY;
+  const bodyId = SOLAR_SYSTEM_BODY_IDS[planetKey];
+  if (!apiKey || !bodyId) return null;
+  try {
+    const response = await fetchImpl(`${SOLAR_SYSTEM_API}/${bodyId}`, {
+      headers: { Accept: 'application/json', Authorization: `Bearer ${apiKey}` },
+    });
+    if (!response.ok) return null;
+    const body = await response.json();
+
+    const sentences = [];
+    if (typeof body?.gravity === 'number') {
+      sentences.push(`${planetName}'s surface gravity is about ${(body.gravity / EARTH_SURFACE_GRAVITY).toFixed(2)}× Earth's.`);
+    }
+    if (typeof body?.sideralRotation === 'number') {
+      sentences.push(`A day on ${planetName} lasts about ${formatDayLength(Math.abs(body.sideralRotation))}.`);
+    }
+    if (Array.isArray(body?.moons)) {
+      sentences.push(`${planetName} has ${moonPhrase(body.moons.length)}.`);
+    }
+    if (typeof body?.meanRadius === 'number') {
+      sentences.push(`${planetName}'s mean radius is about ${Math.round(body.meanRadius).toLocaleString()} km.`);
+    }
+    if (typeof body?.avgTemp === 'number' && body.avgTemp > 0) {
+      sentences.push(`${planetName}'s average temperature is about ${Math.round(body.avgTemp - 273.15)}°C.`);
+    }
+    if (body?.discoveredBy) {
+      sentences.push(`${planetName} was discovered by ${body.discoveredBy}${body.discoveryDate ? ` in ${body.discoveryDate}` : ''}.`);
+    }
+    return sentences.length > 0 ? sentences : null;
+  } catch {
+    return null;
+  }
+}
+
 const PLANET_ARTICLES = {
   mercury: 'Mercury (planet)',
   venus: 'Venus',
@@ -216,10 +270,13 @@ async function fetchPlanetCandidates({ planetKeys }, fetchImpl) {
       }))
       .sort((first, second) => second.score - first.score)
       .slice(0, 8);
-    // Mix in the local, non-Wikipedia physical-fact sentences (see
-    // PLANET_PHYSICAL_DATA above) so the pool draws from two differently-
+    // Mix in physical-fact sentences (live api.le-systeme-solaire.net data
+    // when SOLAR_SYSTEM_API_KEY is configured, otherwise the static
+    // PLANET_PHYSICAL_DATA table) so the pool draws from two differently-
     // sourced pools instead of Wikipedia extraction alone.
-    const physicalCandidates = generatePhysicalFacts(planetKey, planetName).map((sentence, index) => ({
+    const physicalSentences = (await fetchLiveSolarSystemFacts(planetKey, planetName, fetchImpl))
+      ?? generatePhysicalFacts(planetKey, planetName);
+    const physicalCandidates = physicalSentences.map((sentence, index) => ({
       id: `${planetKey}:physical:${index}`,
       planetKey,
       headline: planetName,
