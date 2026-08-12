@@ -3721,17 +3721,10 @@ button {
   display: inline-flex;
   vertical-align: text-bottom;
   align-items: center;
-  gap: 6px;
   color: var(--text-primary);
   font-size: 14px;
   font-weight: 600;
   line-height: 1.25;
-}
-
-.knowledge-card__entry-emoji {
-  flex: 0 0 auto;
-  font-size: 13px;
-  line-height: 1;
 }
 
 .knowledge-card__next {

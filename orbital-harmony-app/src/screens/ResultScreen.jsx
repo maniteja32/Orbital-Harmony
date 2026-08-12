@@ -429,7 +429,6 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails }) {
               <div className="knowledge-card__entry" key={entry.name}>
                 <p className="knowledge-card__fact">
                   <span className="knowledge-card__entry-title">
-                    <span className="knowledge-card__entry-emoji" aria-hidden="true">{entry.emoji}</span>
                     {entry.name}:
                   </span>{' '}
                   {entry.fact}
