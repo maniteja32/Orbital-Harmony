@@ -666,10 +666,19 @@ export function createSolarSystemEngine(canvas, opts) {
       const makeSignatureLine = (opacity) => {
         const geometry = new THREE.BufferGeometry().setFromPoints(signaturePoints);
         geometry.setDrawRange(0, 2);
-        const material = new THREE.LineBasicMaterial({
+        // LineDashedMaterial (not the fat-line LineSegments2/LineMaterial
+        // used by the Explore chord tracer) — this is a single ~10-vertex
+        // closed loop, not hundreds of overlapping chords, so the plain
+        // Three.js dashed line (and its default thin linewidth, unchanged
+        // from before) is enough to support the same Line/Dashed/Dots
+        // toggle. Initialized to solid; setLineStyle() below updates
+        // dashSize/gapSize to match whatever style is currently selected.
+        const material = new THREE.LineDashedMaterial({
           color: 0xffffff,
           transparent: true,
           opacity,
+          dashSize: LINE_STYLES.solid.dashSize,
+          gapSize: LINE_STYLES.solid.gapSize,
         });
         const line = new THREE.Line(geometry, material);
         line.visible = false;
@@ -1384,6 +1393,11 @@ export function createSolarSystemEngine(canvas, opts) {
         }
         posAttr.setXYZ(segIndex + 1, cosmicTipPoint.x, cosmicTipPoint.y, cosmicTipPoint.z);
         posAttr.needsUpdate = true;
+        // Required by LineDashedMaterial — recomputes the cumulative
+        // per-vertex distance the dash/gap pattern is measured along,
+        // since the geometry's positions (the growing tip) change every
+        // frame during the reveal.
+        line.computeLineDistances();
         line.geometry.setDrawRange(0, segIndex + 2);
       });
       if (t >= 1) cosmicBaseLinesDone = true;
@@ -1518,14 +1532,19 @@ export function createSolarSystemEngine(canvas, opts) {
     // to toggle).
     setLineStyle(style) {
       currentLineStyle = LINE_STYLES[style] ? style : 'solid';
-      if (!patternLines) return;
       const preset = LINE_STYLES[currentLineStyle];
-      patternLines.material.dashSize = preset.dashSize;
-      patternLines.material.gapSize = preset.gapSize;
-      // Matches CANVAS_DASH_STYLES' widthScale so the live trace's stroke
-      // weight already looks like the final captured image, instead of
-      // jumping thicker/thinner the moment it's swapped in.
-      patternLines.material.linewidth = PATTERN_LINE_WIDTH * (preset.widthScale ?? 1);
+      if (patternLines) {
+        patternLines.material.dashSize = preset.dashSize;
+        patternLines.material.gapSize = preset.gapSize;
+        // Matches CANVAS_DASH_STYLES' widthScale so the live trace's stroke
+        // weight already looks like the final captured image, instead of
+        // jumping thicker/thinner the moment it's swapped in.
+        patternLines.material.linewidth = PATTERN_LINE_WIDTH * (preset.widthScale ?? 1);
+      }
+      cosmicSignatureLines.forEach((line) => {
+        line.material.dashSize = preset.dashSize;
+        line.material.gapSize = preset.gapSize;
+      });
     },
     // Live playback-rate multiplier for an already-running pattern reveal
     // (e.g. driven by a "rocket" speed slider) — see baseSimDaysPerRealSecond
