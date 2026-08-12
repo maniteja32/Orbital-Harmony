@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import { ChevronDown } from 'lucide-react';
 import { TopNavigationBar } from '../components/TopNavigationBar.jsx';
 import { PLANETS_BY_KEY } from '../data/planets.js';
 import { createPatternIntelligence } from '../utils/patternIntelligence.js';
@@ -43,30 +42,6 @@ export default function PatternDetailsScreen({ onBack }) {
             <p>{intelligence.cosmicTimescale.body}</p>
           </section>
         </div>
-
-        <details className="pattern-curious">
-          <summary>
-            <span>For Curious Minds</span>
-            <ChevronDown size={18} strokeWidth={2} aria-hidden="true" />
-          </summary>
-
-          <div className="pattern-curious__body">
-            <div className="pattern-insights">
-              {intelligence.curious.insights.map((insight) => (
-                <details className="pattern-insight" key={insight.title}>
-                  <summary>
-                    <span className="pattern-insight__heading">
-                      <strong>{insight.title}</strong>
-                      <small>{insight.value}</small>
-                    </span>
-                    <ChevronDown size={18} strokeWidth={2} aria-hidden="true" />
-                  </summary>
-                  <p>{insight.detail}</p>
-                </details>
-              ))}
-            </div>
-          </div>
-        </details>
       </div>
 
     </div>

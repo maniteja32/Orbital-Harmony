@@ -1,12 +1,13 @@
-import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
+import { forwardRef, useImperativeHandle, useLayoutEffect, useRef } from 'react';
 import { createSolarSystemEngine } from '../engine/solarSystemEngine.js';
 
 /**
  * Thin React wrapper around the framework-agnostic Three.js engine.
  * Exposes an imperative handle ({ getProgress, captureDataURL, setPaused,
- * setLineStyle, setSpeedMultiplier }) so parent screens (Simulation/Reveal/
- * Result) can poll progress, grab a snapshot, and drive play/pause, trace
- * line style, and a live playback-speed multiplier without re-rendering
+ * setLineStyle, setSpeedMultiplier, reset, completeInstant }) so parent
+ * screens (Simulation/Reveal/Result) can poll progress, grab a snapshot,
+ * and drive play/pause, trace line style, a live playback-speed
+ * multiplier, and an instant jump-to-finished state without re-rendering
  * the whole canvas subtree.
  */
 const SolarSystemCanvas = forwardRef(function SolarSystemCanvas(
@@ -47,7 +48,11 @@ const SolarSystemCanvas = forwardRef(function SolarSystemCanvas(
   const canvasRef = useRef(null);
   const engineRef = useRef(null);
 
-  useEffect(() => {
+  // useLayoutEffect (not useEffect) so engineRef.current is guaranteed set
+  // before any PARENT layout effect runs in the same commit — Result
+  // screen's instant line-style regenerate relies on this ordering to
+  // call completeInstant()/captureDataURL() the moment this canvas mounts.
+  useLayoutEffect(() => {
     const engine = createSolarSystemEngine(canvasRef.current, {
       planetKeys,
       interactive,
@@ -92,6 +97,7 @@ const SolarSystemCanvas = forwardRef(function SolarSystemCanvas(
     setLineStyle: (style) => engineRef.current?.setLineStyle(style),
     setSpeedMultiplier: (value) => engineRef.current?.setSpeedMultiplier(value),
     reset: () => engineRef.current?.reset(),
+    completeInstant: () => engineRef.current?.completeInstant(),
   }));
 
   return (

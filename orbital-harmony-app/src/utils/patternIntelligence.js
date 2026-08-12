@@ -1,7 +1,6 @@
 import { PLANETS_BY_KEY } from '../data/planets.js';
 import {
   buildCelestialSnapshot,
-  COSMIC_CONNECTION_COUNT,
   formatCosmicSignatureDate,
 } from './cosmicSignature.js';
 import { computePatternPlan } from './resonance.js';
@@ -113,25 +112,6 @@ function createCosmicIntelligence(cosmicDate) {
       label: 'Cosmic Timescale',
       body: `This exact arrangement happens only once. It's a single frozen instant from ${dateLabel}, not a repeating cycle like the two-planet patterns.`,
     },
-    curious: {
-      insights: [
-        {
-          title: 'Ephemeris basis',
-          value: 'Heliocentric · 12:00 UTC',
-          detail: 'Each anchor uses Astronomy Engine’s ecliptic longitude for the selected calendar date, measured from the Sun rather than from Earth.',
-        },
-        {
-          title: 'Nearest angular pair',
-          value: `${closest.first.name} + ${closest.second.name} · ${separationDeg.toFixed(1)}°`,
-          detail: 'This is the smallest longitude gap among all eight planets in the DOB snapshot; it is a geometric observation, not an astrological claim.',
-        },
-        {
-          title: 'Signature shape',
-          value: `${COSMIC_CONNECTION_COUNT}-segment closed loop`,
-          detail: 'A single straight-edged wireframe connects the Sun to each planet anchor in orbital order, then closes back to the start — the final signature shape.',
-        },
-      ],
-    },
   };
 }
 
@@ -145,7 +125,6 @@ function createPairIntelligence({ planetA, planetB, detailLevel }) {
       shortStory: 'Choose two planets to reveal the story behind their shape.',
       planetaryDance: { label: 'Planetary Dance', body: '' },
       cosmicTimescale: { label: 'Cosmic Timescale', body: '' },
-      curious: { insights: [] },
     };
   }
 
@@ -158,7 +137,6 @@ function createPairIntelligence({ planetA, planetB, detailLevel }) {
   const simulation = computeSimulationPlan({ isCosmic: false, planetA, planetB, detailLevel });
   const inner = first.orbitalPeriodDays <= second.orbitalPeriodDays ? first : second;
   const outer = inner === first ? second : first;
-  const orbitScalePct = (inner.realDistanceAU / outer.realDistanceAU) * 100;
   const metaphor = pickMetaphor(pattern.petals, pattern.closed);
 
   return {
@@ -178,15 +156,6 @@ function createPairIntelligence({ planetA, planetB, detailLevel }) {
     cosmicTimescale: {
       label: 'Cosmic Timescale',
       body: cosmicTimescaleBody(simulation.totalSimYears),
-    },
-    curious: {
-      insights: [
-        {
-          title: 'Physical orbit scale',
-          value: `${inner.name} radius · ${orbitScalePct.toFixed(1)}% of ${outer.name}`,
-          detail: `${inner.name} is ${inner.realDistanceAU} AU from the Sun and ${outer.name} is ${outer.realDistanceAU} AU. The rendered orbit radii preserve that real distance ratio.`,
-        },
-      ],
     },
   };
 }

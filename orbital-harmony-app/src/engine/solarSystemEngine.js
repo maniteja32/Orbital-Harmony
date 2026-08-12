@@ -60,13 +60,13 @@ const LINE_STYLES = {
 const CANVAS_DASH_STYLES = {
   solid: null,
   dashed: { cap: 'butt' },
-  // widthScale boosted well past LINE_STYLES.dots' own 1x: Canvas 2D
-  // anti-aliases a ~1px stroke into a soft, dim smudge (partial pixel
+  // widthScale nudged only slightly past LINE_STYLES.dots' own 1x: Canvas
+  // 2D anti-aliases a ~1px stroke into a soft, dim smudge (partial pixel
   // coverage) where the live WebGL fat-line quad renders the exact same
-  // numeric width as a crisp, fully-opaque mark — so the captured/saved
-  // dots read visibly dimmer than they looked while the pattern was being
-  // traced live unless the canvas-only diameter compensates for that.
-  dots: { cap: 'round', widthScale: 2.2, fixedDashPx: 0.6 },
+  // numeric width as a crisp mark. A small boost keeps the captured dots
+  // from reading dimmer than the live trace WITHOUT overshooting past it
+  // into a bolder, brighter mark than the live view ever showed.
+  dots: { cap: 'round', widthScale: 1.3, fixedDashPx: 0.4 },
 };
 import { loadPlanetTexture, buildPlanetBody } from './planetFactory.js';
 
@@ -1597,6 +1597,30 @@ export function createSolarSystemEngine(canvas, opts) {
       if (!tracePattern) return 0;
       return Math.min(simDaysElapsed / (totalSimYears * DAYS_PER_YEAR), 1);
     },
+    // Jumps a paused, freshly-mounted pattern trace STRAIGHT to its fully
+    // drawn end state in one synchronous step — no per-frame animation, no
+    // sped-up replay. Used when only the line STYLE (solid/dashed/dots)
+    // changed and the shape itself is already known, so replaying the
+    // whole reveal (even at a high speed multiplier) would just be a
+    // pointless, visible flash before the toggle "settles". Requires the
+    // canvas to have been mounted with startPaused so tick() never ran an
+    // animated frame first.
+    completeInstant() {
+      if (!tracePattern) return;
+      simDaysElapsed = totalSimYears * DAYS_PER_YEAR;
+      sampleChordIfDue();
+      planets.forEach((planet) => {
+        planet.pivot.rotation.y = planetAngleAt(planet, simDaysElapsed);
+        planet.tiltAnchor.rotation.y = -planet.pivot.rotation.y;
+      });
+      if (miniBodiesEnabled) {
+        applyMiniBodyScale(1);
+        miniBodiesDone = true;
+      }
+      completed = true;
+      scene.updateMatrixWorld(true);
+      renderScene();
+    },
     onComplete(cb) {
       onCompleteCb = cb;
     },
@@ -1671,13 +1695,11 @@ export function createSolarSystemEngine(canvas, opts) {
       ctx.drawImage(renderer.domElement, 0, 0);
 
       if (patternLines && patternCount > 0) {
-        // Dots are small, sparse marks rather than an overlapping wash of
-        // lines, so they never need `patternOpacity`'s crowd-thinning fade
-        // (that's only there to stop dense chord pairs from saturating
-        // into a flat white blob) — keep them at full brightness like the
-        // live trace shows.
-        const strokeAlpha = currentLineStyle === 'dots' ? 1 : patternOpacity;
-        ctx.strokeStyle = `rgba(255,255,255,${strokeAlpha})`;
+        // Match patternOpacity for every style, dots included — the live
+        // trace never boosts dots past the shared pattern opacity, so
+        // forcing the capture to full brightness here made saved dots
+        // look noticeably bolder than how they looked while being drawn.
+        ctx.strokeStyle = `rgba(255,255,255,${patternOpacity})`;
         ctx.lineJoin = 'round';
         // Apply the CURRENTLY SELECTED line style instead of always
         // stroking solid chords — previously this ignored `currentLineStyle`

@@ -3366,9 +3366,8 @@ button {
 }
 
 /* Two always-visible "story" cards (Planetary Dance / Cosmic Timescale) —
-   these ARE the main explanatory content now, unlike the collapsible
-   .pattern-insight cards below, so they stay permanently expanded with no
-   summary/chevron affordance. */
+   these ARE the entire explanatory content now, so they stay permanently
+   expanded with no summary/chevron affordance. */
 .pattern-stories {
   display: flex;
   flex-direction: column;
@@ -3398,119 +3397,6 @@ button {
   color: var(--text-secondary);
   font-size: 13.5px;
   line-height: 1.55;
-}
-
-/* "For Curious Minds" — the old technical metrics/insights, now tucked
-   behind one optional collapsible section (closed by default) instead of
-   being the first thing a general-audience reader sees. */
-.pattern-curious {
-  border-radius: 16px;
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  overflow: hidden;
-}
-
-.pattern-curious summary {
-  min-height: 56px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  padding: 11px 14px;
-  color: var(--text-primary);
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  list-style: none;
-}
-
-.pattern-curious summary::-webkit-details-marker {
-  display: none;
-}
-
-.pattern-curious summary svg {
-  flex: 0 0 auto;
-  color: var(--text-tertiary);
-  transition: transform 0.2s ease, color 0.2s ease;
-}
-
-.pattern-curious[open] summary svg {
-  transform: rotate(180deg);
-  color: var(--accent);
-}
-
-.pattern-curious__body {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 0 14px 14px;
-}
-
-.pattern-insights {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.pattern-insight {
-  overflow: hidden;
-  border-radius: 16px;
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-}
-
-.pattern-insight summary {
-  min-height: 64px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  padding: 11px 14px;
-  color: var(--text-primary);
-  cursor: pointer;
-  list-style: none;
-}
-
-.pattern-insight summary::-webkit-details-marker {
-  display: none;
-}
-
-.pattern-insight__heading {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.pattern-insight__heading strong {
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1.3;
-}
-
-.pattern-insight__heading small {
-  overflow-wrap: anywhere;
-  color: var(--text-secondary);
-  font-size: 12px;
-  line-height: 1.35;
-}
-
-.pattern-insight summary svg {
-  flex: 0 0 auto;
-  color: var(--text-tertiary);
-  transition: transform 0.2s ease, color 0.2s ease;
-}
-
-.pattern-insight[open] summary svg {
-  transform: rotate(180deg);
-  color: var(--accent);
-}
-
-.pattern-insight > p {
-  padding: 0 14px 14px;
-  color: var(--text-secondary);
-  font-size: 13px;
-  line-height: 1.5;
 }
 
 /* ---- Knowledge Card ------------------------------------------------------- */

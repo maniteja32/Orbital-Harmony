@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ExternalLink, Info, Share2 } from 'lucide-react';
 import { GlassButton } from '../components/ui/glasscn/glass-button.jsx';
 import { LiquidGlass } from '../components/ui/glasscn/liquid-glass.jsx';
@@ -11,11 +11,6 @@ import { createLocalDateStory } from '../utils/dateStory.js';
 import { loadBirthdayTrivia, loadPlanetTrivia } from '../services/triviaService.js';
 import { computeSimulationPlan } from '../utils/simulationPlan.js';
 import { useAppStore, SPEED_PRESETS } from '../store/useAppStore.js';
-
-// Fast enough that regenerating the ALREADY-KNOWN pattern (just to bake in
-// a newly picked line style) finishes in well under the original reveal's
-// duration, instead of replaying the full multi-second first reveal.
-const REGENERATE_SPEED_MULTIPLIER = 60;
 
 // Same specular-rim look as every other glass card in the app (see
 // SimulationScreen's TUNE_RIM / SolarSystemScreen's MODE_RIM) so the
@@ -327,15 +322,24 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails }) {
     setRegenerating(true);
   }, [setLineStyle, canRegenerate]);
 
-  useEffect(() => {
-    if (regenerating) canvasRef.current?.setLineStyle(lineStyle);
-  }, [regenerating, regenKey, lineStyle]);
-
-  const handleRegenerateComplete = useCallback(() => {
-    const dataUrl = canvasRef.current?.captureDataURL();
+  // The pattern's SHAPE never changes when only the line style does, so
+  // rather than replaying the whole reveal (even at a high speed
+  // multiplier — still a visible flash of motion), this mounts a paused
+  // canvas, jumps it straight to the fully-drawn end state in one
+  // synchronous step (completeInstant), and immediately re-captures —
+  // an instant switch with no animation in between. useLayoutEffect (not
+  // useEffect) so this runs before the browser paints the freshly
+  // mounted-but-not-yet-completed paused frame.
+  useLayoutEffect(() => {
+    if (!regenerating) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    canvas.setLineStyle(lineStyle);
+    canvas.completeInstant();
+    const dataUrl = canvas.captureDataURL();
     if (dataUrl) setSnapshot(dataUrl);
     setRegenerating(false);
-  }, [setSnapshot]);
+  }, [regenerating, regenKey, lineStyle, setSnapshot]);
 
   function handleGenerateNew() {
     resetForNewPattern();
@@ -392,12 +396,7 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails }) {
             tracePattern
             physicalPattern={plan.physicalPattern}
             connectAllPlanets={false}
-            startPaused={false}
-            miniBodiesIntro
-            miniSunScale={0.5}
-            miniPlanetScale={1.5}
-            miniIntroDurationSec={1}
-            miniMotionRampSec={2.6}
+            startPaused
             initialSunScale={0.5}
             initialPlanetScale={1.5}
             speedDurationSec={speedCfg.durationSec}
@@ -405,9 +404,7 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails }) {
             traceIntervalDays={plan.traceIntervalDays}
             patternOpacity={plan.patternOpacity}
             patternRates={plan.patternRates}
-            initialSpeedMultiplier={REGENERATE_SPEED_MULTIPLIER}
             patternStartDate={cosmicDate ?? undefined}
-            onComplete={handleRegenerateComplete}
             className="screen__canvas"
           />
         ) : snapshot ? (
