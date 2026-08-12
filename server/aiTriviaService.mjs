@@ -1,6 +1,51 @@
 const WIKIMEDIA_ON_THIS_DAY = 'https://api.wikimedia.org/feed/v1/wikipedia/en/onthisday';
+// Second, independently-curated "on this day" source, mixed in alongside
+// Wikimedia so birthday trivia isn't drawn from a single feed. No API key
+// required.
+const MUFFIN_LABS_HISTORY = 'https://history.muffinlabs.com/date';
 const WIKIPEDIA_API = 'https://en.wikipedia.org/w/api.php';
 const POLLINATIONS_TEXT = 'https://text.pollinations.ai/';
+
+// Local, non-Wikipedia numeric fact source (see the matching client copy in
+// src/utils/planetPhysicalFacts.js): hand-curated real physical constants
+// turned into short template sentences, mixed into the Wikipedia-sentence
+// candidate pool below so grounded planet trivia draws from two
+// differently-sourced pools instead of Wikipedia extraction alone. Moon
+// counts use "at least N" phrasing so they stay true as new moons are found.
+const PLANET_PHYSICAL_DATA = {
+  mercury: { meanRadiusKm: 2440, gravityG: 0.38, dayHours: 4222.6, moons: 0, trait: 'has no rings and no known moons' },
+  venus: { meanRadiusKm: 6052, gravityG: 0.9, dayHours: 2802, moons: 0, trait: 'has a surface hot enough to melt lead' },
+  earth: { meanRadiusKm: 6371, gravityG: 1, dayHours: 24, moons: 1, trait: 'is the only known planet with liquid-water oceans on its surface' },
+  mars: { meanRadiusKm: 3390, gravityG: 0.38, dayHours: 24.7, moons: 2, trait: 'hosts Olympus Mons, the tallest known volcano in the solar system' },
+  jupiter: { meanRadiusKm: 71492, gravityG: 2.53, dayHours: 9.9, moons: 95, trait: 'spins faster than any other planet' },
+  saturn: { meanRadiusKm: 60268, gravityG: 1.06, dayHours: 10.7, moons: 146, trait: 'is the only planet less dense than water' },
+  uranus: { meanRadiusKm: 25559, gravityG: 0.89, dayHours: 17.2, moons: 27, trait: 'rotates on its side with a roughly 98° axial tilt' },
+  neptune: { meanRadiusKm: 24622, gravityG: 1.14, dayHours: 16.1, moons: 14, trait: 'has the fastest winds of any planet, over 2,000 km/h' },
+};
+
+function formatDayLength(hours) {
+  if (hours >= 48) return `${(hours / 24).toFixed(1)} Earth days`;
+  return `${hours.toFixed(1)} hours`;
+}
+
+function moonPhrase(moons) {
+  if (moons === 0) return 'no known moons';
+  if (moons === 1) return 'one known moon';
+  if (moons === 2) return 'two known moons';
+  return `at least ${moons} known moons`;
+}
+
+function generatePhysicalFacts(planetKey, planetName) {
+  const data = PLANET_PHYSICAL_DATA[planetKey];
+  if (!data) return [];
+  return [
+    `${planetName}'s surface gravity is about ${data.gravityG.toFixed(2)}× Earth's.`,
+    `A day on ${planetName} lasts about ${formatDayLength(data.dayHours)}.`,
+    `${planetName} has ${moonPhrase(data.moons)}.`,
+    `${planetName}'s mean radius is about ${Math.round(data.meanRadiusKm).toLocaleString()} km.`,
+    `${planetName} ${data.trait}.`,
+  ];
+}
 
 const PLANET_ARTICLES = {
   mercury: 'Mercury (planet)',
@@ -56,14 +101,34 @@ function rankBirthdayEntry(entry) {
   return score;
 }
 
+function toWikimediaLikeEntry(muffinEntry) {
+  const primaryLink = muffinEntry?.links?.[0];
+  return {
+    year: muffinEntry?.year,
+    text: muffinEntry?.text,
+    pages: primaryLink
+      ? [{ titles: { normalized: primaryLink.title }, content_urls: { desktop: { page: primaryLink.link } } }]
+      : [],
+  };
+}
+
+async function fetchMuffinLabsBirthdayEntries({ month, day }, fetchImpl) {
+  const response = await fetchImpl(`${MUFFIN_LABS_HISTORY}/${month}/${day}`, { headers: { Accept: 'application/json' } });
+  if (!response.ok) return [];
+  const data = await response.json();
+  return (data?.data?.Births ?? []).map(toWikimediaLikeEntry);
+}
+
 function toBirthdayCandidate(entry) {
   const page = firstPage(entry);
   const fallbackTitle = String(entry?.text ?? '').split(',')[0];
   const title = pageTitle(page, fallbackTitle);
+  // Muffin Labs entries carry no `page.extract`, so fall back to their own
+  // (already concise) one-line `text` description instead of an empty string.
   const extract = splitSentences(page?.extract)
     .filter((s) => s.length >= 30 && s.length <= 300)
     .slice(0, 1)
-    .join(' ');
+    .join(' ') || normalizeText(entry?.text, 300);
   
   return {
     id: `${entry?.year}:${pageTitle(page, title).toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
@@ -84,13 +149,25 @@ function scorePlanetSentence(sentence, planetName) {
 async function fetchBirthdayCandidates({ month, day }, fetchImpl) {
   const monthPart = String(month).padStart(2, '0');
   const dayPart = String(day).padStart(2, '0');
-  const response = await fetchImpl(
-    `${WIKIMEDIA_ON_THIS_DAY}/births/${monthPart}/${dayPart}`,
-    { headers: { Accept: 'application/json', 'Api-User-Agent': 'OrbitalHarmony/1.0' } }
-  );
-  if (!response.ok) throw new AiTriviaError('SOURCE_UNAVAILABLE', `Wikimedia returned ${response.status}`, 502);
-  const data = await response.json();
-  const candidates = (data?.births ?? [])
+  const [wikimediaResult, muffinResult] = await Promise.allSettled([
+    (async () => {
+      const response = await fetchImpl(
+        `${WIKIMEDIA_ON_THIS_DAY}/births/${monthPart}/${dayPart}`,
+        { headers: { Accept: 'application/json', 'Api-User-Agent': 'OrbitalHarmony/1.0' } }
+      );
+      if (!response.ok) throw new Error(`Wikimedia returned ${response.status}`);
+      return ((await response.json())?.births ?? []);
+    })(),
+    fetchMuffinLabsBirthdayEntries({ month, day }, fetchImpl),
+  ]);
+  if (wikimediaResult.status === 'rejected' && (muffinResult.status === 'rejected' || muffinResult.value.length === 0)) {
+    throw new AiTriviaError('SOURCE_UNAVAILABLE', 'Wikimedia and Muffin Labs both returned no births', 502);
+  }
+  const entries = [
+    ...(wikimediaResult.status === 'fulfilled' ? wikimediaResult.value : []),
+    ...(muffinResult.status === 'fulfilled' ? muffinResult.value : []),
+  ];
+  const candidates = entries
     .map((entry) => ({ entry, score: rankBirthdayEntry(entry) }))
     .filter(({ score }) => Number.isFinite(score) && score > 0)
     .sort((first, second) => second.score - first.score)
@@ -139,6 +216,17 @@ async function fetchPlanetCandidates({ planetKeys }, fetchImpl) {
       }))
       .sort((first, second) => second.score - first.score)
       .slice(0, 8);
+    // Mix in the local, non-Wikipedia physical-fact sentences (see
+    // PLANET_PHYSICAL_DATA above) so the pool draws from two differently-
+    // sourced pools instead of Wikipedia extraction alone.
+    const physicalCandidates = generatePhysicalFacts(planetKey, planetName).map((sentence, index) => ({
+      id: `${planetKey}:physical:${index}`,
+      planetKey,
+      headline: planetName,
+      fact: sentence,
+      href,
+    }));
+    candidates.push(...physicalCandidates);
     
     if (candidates.length === 0) {
       throw new AiTriviaError('SOURCE_UNAVAILABLE', `No suitable facts were found for ${planetName}`, 502);

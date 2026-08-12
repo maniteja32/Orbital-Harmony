@@ -241,30 +241,75 @@ async function fetchCategory(category, date, signal) {
   return payload[category] ?? [];
 }
 
+// Second, independent "on this day" source (Muffin Labs' History API,
+// itself Wikipedia-derived but a different curated dataset/selection than
+// Wikimedia's on-this-day feed — see MUFFIN_LABS_HISTORY). Its entries
+// don't carry a `pages`/`extract` payload like Wikimedia's, so they're
+// adapted into the SAME shape `firstPage()`/birthScore/eventScore/
+// toPersonSection/toHistorySection already expect (a `pages` array with a
+// `titles`/`content_urls`/`extract`), letting them fold into the existing
+// scoring and selection pipeline with no changes there.
+const MUFFIN_LABS_HISTORY = 'https://history.muffinlabs.com/date';
+
+function toWikimediaLikeEntry(muffinEntry) {
+  const primaryLink = muffinEntry?.links?.[0];
+  return {
+    year: muffinEntry?.year,
+    text: muffinEntry?.text,
+    pages: primaryLink
+      ? [{
+          titles: { normalized: primaryLink.title },
+          normalizedtitle: primaryLink.title,
+          content_urls: { desktop: { page: primaryLink.link } },
+        }]
+      : [],
+  };
+}
+
+async function fetchMuffinLabsCategory(category, date, signal) {
+  const { month, day } = dateParts(date);
+  const response = await fetch(`${MUFFIN_LABS_HISTORY}/${month}/${day}`, {
+    signal,
+    headers: { Accept: 'application/json' },
+  });
+  if (!response.ok) throw new Error(`Muffin Labs ${category} request failed: ${response.status}`);
+  const payload = await response.json();
+  return (payload?.data?.[category] ?? []).map(toWikimediaLikeEntry);
+}
+
 export async function loadDateStory(date, { signal } = {}) {
   if (!isValidDate(date)) return createLocalDateStory(date);
   const key = dateKey(date);
   let insights = storyCache.get(key);
 
   if (!insights) {
-    const [birthsResult, eventsResult] = await Promise.allSettled([
+    const [
+      wikimediaBirths, wikimediaEvents, muffinBirths, muffinEvents,
+    ] = await Promise.allSettled([
       fetchCategory('births', date, signal),
       fetchCategory('events', date, signal),
+      fetchMuffinLabsCategory('Births', date, signal),
+      fetchMuffinLabsCategory('Events', date, signal),
     ]);
     if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
-    if (birthsResult.status === 'rejected' && eventsResult.status === 'rejected') {
+    if ([wikimediaBirths, wikimediaEvents, muffinBirths, muffinEvents].every((r) => r.status === 'rejected')) {
       throw new Error('Date history is unavailable');
     }
 
+    const births = [
+      ...(wikimediaBirths.status === 'fulfilled' ? wikimediaBirths.value : []),
+      ...(muffinBirths.status === 'fulfilled' ? muffinBirths.value : []),
+    ];
+    const events = [
+      ...(wikimediaEvents.status === 'fulfilled' ? wikimediaEvents.value : []),
+      ...(muffinEvents.status === 'fulfilled' ? muffinEvents.value : []),
+    ];
+
     const birthYear = date.getUTCFullYear();
-    const people = birthsResult.status === 'fulfilled'
-      ? selectTop(birthsResult.value, (entry) => birthScore(entry, birthYear))
-        .map((entry) => toPersonSection(entry, date))
-      : [];
-    const history = eventsResult.status === 'fulfilled'
-      ? selectTop(eventsResult.value, (entry) => eventScore(entry, birthYear))
-        .map((entry) => toHistorySection(entry, date))
-      : [];
+    const people = selectTop(births, (entry) => birthScore(entry, birthYear))
+      .map((entry) => toPersonSection(entry, date));
+    const history = selectTop(events, (entry) => eventScore(entry, birthYear))
+      .map((entry) => toHistorySection(entry, date));
     insights = [...people, ...history].filter(Boolean);
     if (insights.length === 0) throw new Error('No suitable date insights are available');
     storyCache.set(key, insights);

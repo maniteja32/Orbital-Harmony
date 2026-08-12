@@ -1,4 +1,5 @@
 import { PLANETS_BY_KEY } from '../data/planets.js';
+import { generatePhysicalFacts } from './planetPhysicalFacts.js';
 
 const WIKIPEDIA_API = 'https://en.wikipedia.org/w/api.php';
 const STORAGE_PREFIX = 'space-harmony:wikipedia-facts:';
@@ -119,8 +120,11 @@ async function loadArticle(planetKey, signal) {
   const response = await fetch(url, { signal, headers: { Accept: 'application/json' } });
   if (!response.ok) throw new Error(`Wikipedia request failed: ${response.status}`);
   const page = (await response.json()).query?.pages?.[0];
-  const facts = extractPlanetFacts(page?.extract, planet.name);
-  if (facts.length === 0) throw new Error(`No suitable Wikipedia facts found for ${planet.name}`);
+  // Mix in the local, non-Wikipedia physical-fact sentences (see
+  // planetPhysicalFacts.js) alongside the extracted prose so the rotation
+  // draws from two differently-sourced pools instead of Wikipedia alone.
+  const facts = [...extractPlanetFacts(page?.extract, planet.name), ...generatePhysicalFacts(planetKey, planet.name)];
+  if (facts.length === 0) throw new Error(`No suitable facts found for ${planet.name}`);
 
   const article = {
     facts,
