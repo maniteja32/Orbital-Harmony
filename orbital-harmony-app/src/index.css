@@ -1904,9 +1904,14 @@ button {
 /* Compact override of the shared .screen-intro subtitle (48px top margin,
    16px text) — this screen is already tight on vertical space (see the
    knowledge-card brevity notes below), so the Cosmic Signature subtitle
-   sits close under the topbar instead of pushing the frame/actions down. */
+   sits close under the topbar instead of pushing the frame/actions down.
+   Negative top margin cancels most of `.screen`'s own 18px flex gap PLUS
+   the empty space left below the topbar's vertically-centered title text
+   within its fixed 48px height — without it the subtitle read as floating
+   far from the title instead of directly under it (compare .system-header
+   h1/p's tight 12px gap on the landing screen). */
 .screen--result--cosmic .screen-intro {
-  margin: 0 0 14px;
+  margin: -14px 0 14px;
   padding: 0;
   font-size: 13px;
 }
