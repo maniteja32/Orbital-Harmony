@@ -3684,13 +3684,12 @@ button {
 }
 
 .knowledge-card__entry {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+  display: block;
 }
 
 .knowledge-card__entry-title {
-  display: flex;
+  display: inline-flex;
+  vertical-align: text-bottom;
   align-items: center;
   gap: 6px;
   color: var(--text-primary);
