@@ -60,7 +60,13 @@ const LINE_STYLES = {
 const CANVAS_DASH_STYLES = {
   solid: null,
   dashed: { cap: 'butt' },
-  dots: { cap: 'round', widthScale: 1, fixedDashPx: 0.3 },
+  // widthScale boosted well past LINE_STYLES.dots' own 1x: Canvas 2D
+  // anti-aliases a ~1px stroke into a soft, dim smudge (partial pixel
+  // coverage) where the live WebGL fat-line quad renders the exact same
+  // numeric width as a crisp, fully-opaque mark — so the captured/saved
+  // dots read visibly dimmer than they looked while the pattern was being
+  // traced live unless the canvas-only diameter compensates for that.
+  dots: { cap: 'round', widthScale: 2.2, fixedDashPx: 0.6 },
 };
 import { loadPlanetTexture, buildPlanetBody } from './planetFactory.js';
 
@@ -1646,7 +1652,13 @@ export function createSolarSystemEngine(canvas, opts) {
       ctx.drawImage(renderer.domElement, 0, 0);
 
       if (patternLines && patternCount > 0) {
-        ctx.strokeStyle = `rgba(255,255,255,${patternOpacity})`;
+        // Dots are small, sparse marks rather than an overlapping wash of
+        // lines, so they never need `patternOpacity`'s crowd-thinning fade
+        // (that's only there to stop dense chord pairs from saturating
+        // into a flat white blob) — keep them at full brightness like the
+        // live trace shows.
+        const strokeAlpha = currentLineStyle === 'dots' ? 1 : patternOpacity;
+        ctx.strokeStyle = `rgba(255,255,255,${strokeAlpha})`;
         ctx.lineJoin = 'round';
         // Apply the CURRENTLY SELECTED line style instead of always
         // stroking solid chords — previously this ignored `currentLineStyle`
