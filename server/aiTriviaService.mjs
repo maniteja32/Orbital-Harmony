@@ -78,7 +78,7 @@ function scorePlanetSentence(sentence, planetName) {
   let score = sentence.includes(planetName) ? 5 : 0;
   if (/\d/.test(sentence)) score += 2;
   if (/(only|first|largest|smallest|fastest|longest|strongest|atmosphere|moon|orbit|ring|rotation|surface|temperature|water|wind|system|gas|rock|ice)/i.test(sentence)) score += 6;
-  return score - Math.max(0, sentence.length - 170) * 0.1;
+  return score - Math.max(0, sentence.length - 120) * 0.1;
 }
 
 async function fetchBirthdayCandidates({ month, day }, fetchImpl) {
@@ -123,15 +123,17 @@ async function fetchPlanetCandidates({ planetKeys }, fetchImpl) {
     if (!response.ok) throw new AiTriviaError('SOURCE_UNAVAILABLE', `Wikipedia returned ${response.status}`, 502);
     const page = (await response.json())?.query?.pages?.[0];
     const href = pageUrl(page) ?? `https://en.wikipedia.org/wiki/${encodeURIComponent(articleTitle.replaceAll(' ', '_'))}`;
+    // Kept short (<=140 chars) so the Result screen's knowledge card never
+    // grows tall enough to push the action buttons below the fold.
     const candidates = splitSentences(page?.extract)
-      .filter((sentence) => sentence.length >= 50 && sentence.length <= 250)
+      .filter((sentence) => sentence.length >= 40 && sentence.length <= 140)
       .filter((sentence) => new RegExp(`\\b${planetName}(?:'s)?\\b`, 'i').test(sentence))
       .filter((sentence) => !UNSUITABLE_PLANET_FACT.test(sentence))
       .map((sentence, index) => ({
         id: `${planetKey}:${index}`,
         planetKey,
         headline: planetName,
-        fact: normalizeText(sentence, 250),
+        fact: normalizeText(sentence, 140),
         href,
         score: scorePlanetSentence(sentence, planetName),
       }))
@@ -163,7 +165,7 @@ async function rephraseFact(sourceFact, fetchImpl, timeoutMs = 8000) {
     if (!response.ok) return null;
     const data = await response.json();
     const text = typeof data === 'string' ? data : data?.text || '';
-    return normalizeText(text, 200).length > 15 ? normalizeText(text, 200) : null;
+    return normalizeText(text, 140).length > 15 ? normalizeText(text, 140) : null;
   } catch (error) {
     return null;
   } finally {

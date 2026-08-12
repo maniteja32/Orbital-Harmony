@@ -69,7 +69,7 @@ function scoreFact(sentence, planetName) {
   if (/\d/.test(sentence)) score += 3;
   if (/(only|first|largest|smallest|fastest|longest|strongest|more than|less than)/i.test(sentence)) score += 5;
   if (INTERESTING_FACT.test(sentence)) score += 4;
-  if (sentence.length >= 80 && sentence.length <= 180) score += 2;
+  if (sentence.length >= 60 && sentence.length <= 120) score += 2;
   if (/(may|might|possibly|probably|suggests?)/i.test(sentence)) score -= 2;
   return score;
 }
@@ -84,7 +84,9 @@ export function extractPlanetFacts(extract, planetName) {
   return [...new Set(normalized
     .split(/(?<=[.!?])\s+(?=[A-Z0-9])/)
     .map((sentence) => sentence.trim())
-    .filter((sentence) => sentence.length >= 60 && sentence.length <= 220)
+    // Kept short (<=140 chars) so the Result screen's knowledge card never
+    // grows tall enough to push the action buttons below the fold.
+    .filter((sentence) => sentence.length >= 50 && sentence.length <= 140)
     .filter((sentence) => planetPattern.test(sentence))
     .filter((sentence) => !/^(it|this|these|they|there|however|therefore|consequently|although|because|while|such|the (?:former|latter)|a related|(?:both|one|either|neither) of (?:these|those)|after this|later that|(?:on|at) the (?:other|opposite)|\w+ years? later)\b/i.test(sentence))
     .filter((sentence) => !UNSUITABLE_FACT.test(sentence))
