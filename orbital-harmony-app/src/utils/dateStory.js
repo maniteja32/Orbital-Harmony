@@ -132,10 +132,19 @@ function selectTop(entries, scorer, limit = 12) {
     .map(({ entry }) => entry);
 }
 
+// Wikipedia disambiguates same-named people via a trailing parenthetical
+// on the ARTICLE TITLE itself (e.g. "Bernard Rose (director)", "John Smith
+// (footballer)") — that's metadata for finding the right article, not part
+// of the person's actual name, so it's stripped before ever being shown.
+function stripDisambiguation(name) {
+  return String(name ?? '').replace(/\s*\([^)]*\)\s*$/, '').trim();
+}
+
 function toArchetypePerson(entry) {
   if (!entry) return null;
   const page = firstPage(entry);
-  const name = page?.titles?.normalized ?? page?.normalizedtitle ?? String(entry.text).split(',')[0];
+  const rawName = page?.titles?.normalized ?? page?.normalizedtitle ?? String(entry.text).split(',')[0];
+  const name = stripDisambiguation(rawName);
   const rawOccupation = String(entry.text ?? '').split(',').slice(1).join(',').trim();
   const occupation = occupationSentence(rawOccupation);
 
