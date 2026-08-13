@@ -3660,12 +3660,12 @@ button {
 }
 
 .archetype-card__section {
-  margin-top: 8px;
+  margin-top: 6px;
 }
 
 .archetype-card__section-label {
   display: block;
-  margin-bottom: 4px;
+  margin-bottom: 3px;
   color: var(--accent);
   font-size: 10px;
   font-weight: 700;
@@ -3682,7 +3682,7 @@ button {
 .archetype-card__tribe {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
   list-style: none;
 }
 
@@ -3712,11 +3712,11 @@ button {
 }
 
 .archetype-card__disclaimer {
-  margin-top: 8px;
+  margin-top: 5px;
   color: var(--text-tertiary);
-  font-size: 10.5px;
+  font-size: 10px;
   font-style: italic;
-  line-height: 1.4;
+  line-height: 1.35;
 }
 
 

@@ -224,6 +224,6 @@ export function deriveBirthdayArchetype(people) {
     archetypeKey: archetype.key,
     summary: archetype.summary,
     tribe,
-    disclaimer: 'Based on real people who share this calendar birthday — not astrology, horoscopes, or predictions.',
+    disclaimer: 'Based on real people, not astrology or predictions.',
   };
 }
