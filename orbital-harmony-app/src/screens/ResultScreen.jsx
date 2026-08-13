@@ -261,8 +261,13 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails }) {
 
     loadBirthdayArchetype(cosmicDate, { signal: controller.signal })
       .then(setArchetype)
-      .catch(() => {
-        // No card is shown when remote birthday-archetype data is unavailable.
+      .catch((error) => {
+        // No card is shown when remote birthday-archetype data is unavailable,
+        // but log why (network/CORS/parse failure) so it's diagnosable from
+        // Safari Web Inspector when this silently doesn't appear on iOS.
+        if (error?.name !== 'AbortError') {
+          console.error('[BirthdayArchetype] failed to load:', error);
+        }
       });
 
     return () => controller.abort();
