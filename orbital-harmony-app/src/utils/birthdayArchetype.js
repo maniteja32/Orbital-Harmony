@@ -7,11 +7,9 @@
 // specific group of people, never as a claim about the user.
 //
 // Card structure is intentionally minimal and non-repetitive: Archetype
-// Name, a tailored one-sentence Summary (what the theme IS), "The
-// Pattern" (a DIFFERENT observation — how the group's real, varied fields
-// still share a common thread), and a short "Birthday Tribe" bullet list
-// (name + one-word/short role) as concrete evidence. No section restates
-// another's wording.
+// Name, a tailored one-sentence Summary (what the theme IS), and a short
+// "Birthday Tribe" bullet list (name + one-word/short role) as concrete
+// evidence — no section restates another's wording.
 const ARCHETYPES = [
   {
     key: 'explorer',
@@ -165,23 +163,10 @@ function dropLeadingDemonym(words) {
   return words;
 }
 
-// A short (2-6 word) field label for the "from X, Y, Z" list in "The
-// Pattern" — cleanOccupation()'s full phrase (e.g. "Canadian-American
-// businessman and audio pioneer responsible for the first hi-fi stereo
-// receiver.") reads as a run-on sentence once several are joined together,
-// so this keeps only the lead noun phrase, dropping anything past the
-// first comma/semicolon/"also"/"responsible"/"who" clause.
-function shortOccupation(occupation) {
-  const cleaned = cleanOccupation(occupation)
-    .split(/,|;| also\b| responsible for\b| who\b/i)[0]
-    .trim();
-  const words = dropLeadingDemonym(cleaned.split(/\s+/).filter(Boolean));
-  return words.slice(0, 6).join(' ').replace(/\.$/, '').toLowerCase();
-}
-
 // A ONE-TO-THREE-WORD role label for a "Birthday Tribe" bullet (e.g.
-// "Businessman", "Computer Scientist") — shorter and Title Cased, unlike
-// shortOccupation()'s longer lowercase phrase used in "The Pattern".
+// "Businessman", "Computer Scientist") — drops a leading nationality/
+// demonym word and anything past the first comma/"and", so it reads as a
+// role, not a run-on descriptive phrase.
 function shortRole(occupation) {
   const cleaned = cleanOccupation(occupation)
     .split(/,|;| also\b| responsible for\b| who\b/i)[0]
@@ -204,13 +189,6 @@ export function deriveBirthdayArchetype(people) {
   if (validPeople.length === 0) return null;
 
   const archetype = pickArchetype(validPeople);
-  const occupationSamples = [...new Set(
-    validPeople.map((person) => shortOccupation(person.occupation)).filter(Boolean),
-  )].slice(0, 3);
-
-  const pattern = occupationSamples.length > 0
-    ? `Their work spans very different fields — ${occupationSamples.join(', ')} — but each one pushed past what already existed instead of just following it.`
-    : 'Their work spans very different fields and eras, but each one pushed past what already existed instead of just following it.';
 
   const tribe = validPeople.map((person) => ({
     name: person.name,
@@ -222,7 +200,6 @@ export function deriveBirthdayArchetype(people) {
     archetypeName: archetype.name,
     archetypeKey: archetype.key,
     summary: archetype.summary,
-    pattern,
     tribe,
     disclaimer: 'Based on real people who share this calendar birthday — not astrology, horoscopes, or predictions.',
   };

@@ -210,11 +210,6 @@ function BirthdayArchetypeCard({ archetype }) {
         <span className="archetype-card__name">{archetype.archetypeName}</span>
         <p className="knowledge-card__fact archetype-card__summary">{archetype.summary}</p>
 
-        <section className="archetype-card__section">
-          <span className="archetype-card__section-label">The Pattern</span>
-          <p>{archetype.pattern}</p>
-        </section>
-
         {archetype.tribe?.length > 0 && (
           <section className="archetype-card__section">
             <span className="archetype-card__section-label">Birthday Tribe</span>
