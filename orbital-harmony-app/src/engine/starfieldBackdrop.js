@@ -18,6 +18,10 @@ function makeStarSprite() {
   const canvas = document.createElement('canvas');
   canvas.width = canvas.height = size;
   const ctx = canvas.getContext('2d');
+  if (!ctx) {
+    starSpriteCache = new THREE.CanvasTexture(canvas);
+    return starSpriteCache;
+  }
   const cx = size / 2;
   const cy = size / 2;
 
@@ -196,6 +200,10 @@ function makeNebulaTexture() {
   const canvas = document.createElement('canvas');
   canvas.width = canvas.height = size;
   const ctx = canvas.getContext('2d');
+  if (!ctx) {
+    nebulaTextureCache = new THREE.CanvasTexture(canvas);
+    return nebulaTextureCache;
+  }
   // Three overlapping soft blobs at fixed offsets so the silhouette reads
   // as a wispy, irregular cloud rather than a perfect circle.
   const blobs = [
@@ -222,6 +230,10 @@ function makeGalaxyTexture() {
   const canvas = document.createElement('canvas');
   canvas.width = canvas.height = size;
   const ctx = canvas.getContext('2d');
+  if (!ctx) {
+    galaxyTextureCache = new THREE.CanvasTexture(canvas);
+    return galaxyTextureCache;
+  }
   const cx = size / 2;
   const cy = size / 2;
   const outer = ctx.createRadialGradient(cx, cy, 0, cx, cy, size * 0.5);

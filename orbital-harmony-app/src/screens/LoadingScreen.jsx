@@ -61,7 +61,15 @@ export default function LoadingScreen({ onDone, onExited }) {
 
   useEffect(() => {
     const canvas = canvasRef.current;
+    if (!canvas) return undefined;
     const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      const quickDone = setTimeout(() => {
+        onDoneRef.current?.();
+        onExitedRef.current?.();
+      }, 50);
+      return () => clearTimeout(quickDone);
+    }
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     // The starfield is the EXACT same Three.js skybox the Solar System screen
@@ -69,7 +77,12 @@ export default function LoadingScreen({ onDone, onExited }) {
     // BEHIND this 2D orrery canvas — so the loading -> system transition shows
     // literally identical stars. The orrery (Sun + planet dots + trails) is
     // still drawn on the transparent 2D canvas on top.
-    const backdrop = starCanvasRef.current ? createStarfieldBackdrop(starCanvasRef.current) : null;
+    let backdrop = null;
+    try {
+      backdrop = starCanvasRef.current ? createStarfieldBackdrop(starCanvasRef.current) : null;
+    } catch (error) {
+      console.error('Loading starfield init failed:', error);
+    }
 
     // The moon is now a plain static <img> (see JSX below) anchored to the
     // bottom of the screen — replaced the earlier procedural Three.js
@@ -332,7 +345,11 @@ export default function LoadingScreen({ onDone, onExited }) {
       clearTimeout(transitionTimer);
       clearTimeout(doneTimer);
       window.removeEventListener('resize', handleResize);
-      backdrop?.dispose();
+      try {
+        backdrop?.dispose();
+      } catch (error) {
+        console.error('Loading starfield dispose failed:', error);
+      }
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 

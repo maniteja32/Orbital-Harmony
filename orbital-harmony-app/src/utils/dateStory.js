@@ -162,12 +162,12 @@ function toArchetypePerson(entry) {
 // rather than a half-built card.
 export function createLocalBirthdayArchetype(date) {
   if (!isValidDate(date)) {
-    return { id: 'birthday-archetype:unavailable', kind: 'birthday-archetype', title: 'Birthday Personality Archetype', archetypeName: null };
+    return { id: 'birthday-archetype:unavailable', kind: 'birthday-archetype', title: 'Personality Archetype', archetypeName: null };
   }
   return {
     id: `birthday-archetype:${dateKey(date)}`,
     kind: 'birthday-archetype',
-    title: 'Birthday Personality Archetype',
+    title: 'Personality Archetype',
     archetypeName: null,
   };
 }
@@ -241,7 +241,13 @@ function delay(ms, signal) {
   });
 }
 
-async function fetchBirthsWithRetry(date, signal) {
+// Fetches AND scores/dedupes candidates inside the retry loop (not just the
+// raw fetch) — a fetch attempt where only ONE of the two sources succeeds
+// can still yield fewer than 3 usable people after scoring/dedup, and that
+// case used to fall out of the retry loop as an immediate, unretried
+// failure even though a retry frequently succeeds (e.g. the other source's
+// own flakiness clears up moments later).
+async function fetchArchetypeCandidates(date, referenceYear, signal) {
   let lastError = new Error('Birthday archetype data is unavailable');
   for (let attempt = 1; attempt <= MAX_BIRTHS_FETCH_ATTEMPTS; attempt += 1) {
     if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
@@ -250,13 +256,21 @@ async function fetchBirthsWithRetry(date, signal) {
       fetchMuffinLabsCategory('Births', date, signal),
     ]);
     if (wikimediaBirths.status === 'fulfilled' || muffinBirths.status === 'fulfilled') {
-      return [
+      const births = [
         ...(wikimediaBirths.status === 'fulfilled' ? wikimediaBirths.value : []),
         ...(muffinBirths.status === 'fulfilled' ? muffinBirths.value : []),
       ];
+      const people = selectTop(births, (entry) => birthScore(entry, referenceYear), 10)
+        .map((entry) => toArchetypePerson(entry))
+        .filter((person) => person?.name);
+      // Wikimedia and Muffin Labs sometimes both surface the same person.
+      const uniquePeople = [...new Map(people.map((person) => [person.name, person])).values()].slice(0, 8);
+      if (uniquePeople.length >= 3) return uniquePeople;
+      lastError = new Error('Not enough notable people to build a birthday archetype');
+    } else {
+      lastError = wikimediaBirths.reason ?? muffinBirths.reason ?? lastError;
+      if (lastError?.name === 'AbortError') throw lastError;
     }
-    lastError = wikimediaBirths.reason ?? muffinBirths.reason ?? lastError;
-    if (lastError?.name === 'AbortError') throw lastError;
     if (attempt < MAX_BIRTHS_FETCH_ATTEMPTS) await delay(BIRTHS_FETCH_RETRY_DELAY_MS * attempt, signal);
   }
   throw lastError;
@@ -275,19 +289,12 @@ export async function loadBirthdayArchetype(date, { signal } = {}) {
   let uniquePeople = archetypeCache.get(key);
 
   if (!uniquePeople) {
-    const births = await fetchBirthsWithRetry(date, signal);
-    if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
-
     // Reference year only breaks scoring ties (existedByReference) — the
     // whole point of this feature is people born on the same calendar day
     // across ANY year, not just before/after the viewer's own birth year.
     const referenceYear = date.getUTCFullYear();
-    const people = selectTop(births, (entry) => birthScore(entry, referenceYear), 10)
-      .map((entry) => toArchetypePerson(entry))
-      .filter((person) => person?.name);
-    // Wikimedia and Muffin Labs sometimes both surface the same person.
-    uniquePeople = [...new Map(people.map((person) => [person.name, person])).values()].slice(0, 8);
-    if (uniquePeople.length < 3) throw new Error('Not enough notable people to build a birthday archetype');
+    uniquePeople = await fetchArchetypeCandidates(date, referenceYear, signal);
+    if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
     archetypeCache.set(key, uniquePeople);
   }
 
@@ -296,7 +303,7 @@ export async function loadBirthdayArchetype(date, { signal } = {}) {
   return {
     id: `birthday-archetype:${key}`,
     kind: 'birthday-archetype',
-    title: 'Birthday Personality Archetype',
+    title: 'Personality Archetype',
     ...archetype,
   };
 }

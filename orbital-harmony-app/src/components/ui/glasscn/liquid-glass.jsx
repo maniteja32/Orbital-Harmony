@@ -1,9 +1,10 @@
-"use client";;
+"use client";
 import { forwardRef, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
 
 const MAX_TEXTURE_SIZE = 480;
+const MAX_CACHE_ENTRIES = 48;
 const EDGE_TAPER_PX = 1.25;
 
 const displacementMapCache = new Map();
@@ -13,10 +14,26 @@ const displacementMapCache = new Map();
 // filters through backdrop-filter. UA sniffing is the only reliable approach.
 // When WebKit ships support (track WebKit bug 245510), loosen this function.
 function supportsSvgBackdropFilter() {
-  if (typeof navigator === "undefined") return false;
+  if (typeof navigator === "undefined" || typeof window === "undefined") return false;
+
+  const touchLike =
+    navigator.maxTouchPoints > 0 ||
+    (typeof window.matchMedia === "function" && window.matchMedia("(pointer: coarse)").matches);
+  if (touchLike) return false;
+
+  const lowMemoryDevice =
+    (typeof navigator.deviceMemory === "number" && navigator.deviceMemory <= 4) ||
+    (typeof navigator.hardwareConcurrency === "number" && navigator.hardwareConcurrency <= 4);
+  if (lowMemoryDevice) return false;
+
+  if (typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    return false;
+  }
+
   const ua = navigator.userAgent;
   const isChromium = /Chrom(e|ium)/.test(ua) || /Edg\//.test(ua);
-  return isChromium && !/Firefox/.test(ua);
+  const isMobileUa = /Android|iPhone|iPad|iPod/i.test(ua);
+  return isChromium && !/Firefox/.test(ua) && !isMobileUa;
 }
 
 // NOTE: Per-corner radii and percentage radii are NOT supported. The map
@@ -103,6 +120,10 @@ function createDisplacementMap({
   ctx.putImageData(image, 0, 0);
   const mapUrl = canvas.toDataURL("image/png");
   displacementMapCache.set(cacheKey, mapUrl);
+  if (displacementMapCache.size > MAX_CACHE_ENTRIES) {
+    const oldestKey = displacementMapCache.keys().next().value;
+    if (oldestKey) displacementMapCache.delete(oldestKey);
+  }
   return mapUrl;
 }
 

@@ -54,7 +54,11 @@ export default function App() {
   // and planets popping in untextured on mobile/iPad. Doing it here means the
   // landing appears already fully textured and the handoff stays smooth.
   useEffect(() => {
-    preloadPlanetTextures();
+    try {
+      preloadPlanetTextures();
+    } catch (error) {
+      console.error('Texture preload failed:', error);
+    }
   }, []);
   // Kept mounted independently of `screen` (not one of the ScreenTransition
   // branches below) so it can sit on top of the Solar System screen and
@@ -77,16 +81,25 @@ export default function App() {
   // unconditionally causes no visible change there.
   const ambientRef = useRef(null);
   useEffect(() => {
-    const backdrop = ambientRef.current ? createStarfieldBackdrop(ambientRef.current) : null;
+    let backdrop = null;
+    try {
+      backdrop = ambientRef.current ? createStarfieldBackdrop(ambientRef.current) : null;
+    } catch (error) {
+      console.error('Ambient starfield init failed:', error);
+    }
     return () => {
-      backdrop?.dispose();
+      try {
+        backdrop?.dispose();
+      } catch (error) {
+        console.error('Ambient starfield dispose failed:', error);
+      }
     };
   }, []);
 
   return (
     <div className={`app-shell${showLoading ? ' is-loading' : ''}`} data-screen={screen}>
       <canvas ref={ambientRef} className="ambient-stars" aria-hidden="true" />
-      <GlobalMusicToggle />
+      {screen !== 'loading' && screen !== 'system' && <GlobalMusicToggle />}
       <BackgroundMusicPlayer enabled={backgroundMusicEnabled} />
       <ScreenTransition key={screen} screen={screen}>
         <Suspense fallback={<ScreenFallback />}>

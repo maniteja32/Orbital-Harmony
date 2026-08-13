@@ -15,6 +15,21 @@ window.addEventListener('vite:preloadError', (event) => {
   }
 })
 
+// Returning from the native share sheet (or camera/file picker) can leave
+// mobile Safari's compositor showing a stale, partially-painted frame —
+// text left mid-fade/low-opacity while the WebGL canvas and buttons look
+// fine — until something forces a full repaint. Toggling `display` on the
+// next frame after the tab becomes visible again forces exactly that.
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible') return
+  requestAnimationFrame(() => {
+    const { body } = document
+    body.style.display = 'none'
+    void body.offsetHeight
+    body.style.display = ''
+  })
+})
+
 class AppErrorBoundary extends Component {
   constructor(props) {
     super(props)

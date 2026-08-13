@@ -322,7 +322,7 @@ button {
 }
 
 .screen--cosmic {
-  padding-top: calc(76px + var(--safe-top));
+  padding-top: calc(88px + var(--safe-top));
   scrollbar-width: none;
 }
 
@@ -343,13 +343,14 @@ button {
   margin-top: 0;
 }
 
-/* Back button floats as a top-left chrome pill at the SAME 16px corner
-   inset the landing chrome uses, instead of sitting in flow and pushing
-   the centered header down. */
+/* Back button floats as a top-left chrome pill at the SAME 28px top inset
+   every other screen's topbar uses (.screen's own padding-top, Simulation's
+   absolute override, and the fixed GlobalMusicToggle), instead of sitting
+   in flow and pushing the centered header down. */
 .screen--select .mode-topbar,
 .screen--cosmic .mode-topbar {
   position: absolute;
-  top: calc(16px + var(--safe-top));
+  top: calc(28px + var(--safe-top));
   left: 0;
   right: 0;
   width: auto;
@@ -365,7 +366,7 @@ button {
    every viewport (same as the Back/Continue pair on every other screen)
    instead of shifting position with a height-based breakpoint. */
 .screen--select {
-  padding-top: calc(76px + var(--safe-top));
+  padding-top: calc(88px + var(--safe-top));
 }
 
 .eyebrow {
@@ -422,6 +423,40 @@ button {
   height: 100%;
   display: block;
   touch-action: none;
+}
+
+.canvas-fatal {
+  position: absolute;
+  left: 50%;
+  bottom: calc(24px + var(--safe-bottom));
+  transform: translateX(-50%);
+  width: min(92vw, 420px);
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(8, 8, 14, 0.82);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: var(--text-primary);
+  text-align: center;
+  z-index: 7;
+}
+
+.canvas-fatal p {
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--text-secondary);
+}
+
+.canvas-fatal button {
+  margin-top: 10px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  background: rgba(255, 255, 255, 0.09);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .reveal-overlay {
@@ -3016,6 +3051,21 @@ button {
     gap: 3px;
   }
 
+  .gdp__cell {
+    font-size: 12px;
+  }
+
+  .gdp__footer {
+    margin-top: 8px;
+    padding-top: 8px;
+  }
+
+  .gdp__footbtn {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+}
+
 
 @media (max-width: 340px) {
   .screen--cosmic {
@@ -3034,20 +3084,6 @@ button {
 
   .gdp__navGroup {
     gap: 1px;
-  }
-}
-  .gdp__cell {
-    font-size: 12px;
-  }
-
-  .gdp__footer {
-    margin-top: 8px;
-    padding-top: 8px;
-  }
-
-  .gdp__footbtn {
-    padding: 6px 10px;
-    font-size: 12px;
   }
 }
 
@@ -3357,7 +3393,7 @@ button {
   /* Restore enough top clearance for the absolute topbar even though the
      general .screen padding-top above was just shrunk for short viewports. */
   .screen--select {
-    padding-top: calc(64px + var(--safe-top));
+    padding-top: calc(76px + var(--safe-top));
   }
 
   .screen__header h1 {

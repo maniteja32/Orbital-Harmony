@@ -88,6 +88,7 @@ function boostTextureSaturation(texture, amount = 1.85) {
   canvas.width = img.width;
   canvas.height = img.height;
   const ctx = canvas.getContext('2d');
+  if (!ctx) return;
   ctx.drawImage(img, 0, 0);
   try {
     const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);

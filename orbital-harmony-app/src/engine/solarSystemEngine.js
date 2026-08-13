@@ -93,6 +93,7 @@ function makeGlowTexture() {
   const canvas = document.createElement('canvas');
   canvas.width = canvas.height = size;
   const ctx = canvas.getContext('2d');
+  if (!ctx) return new THREE.CanvasTexture(canvas);
   const gradient = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
   gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
   gradient.addColorStop(0.25, 'rgba(255, 200, 120, 0.6)');
@@ -1692,6 +1693,25 @@ export function createSolarSystemEngine(canvas, opts) {
       outCanvas.width = physicalWidth;
       outCanvas.height = physicalHeight;
       const ctx = outCanvas.getContext('2d');
+      if (!ctx) {
+        const fallbackDataUrl = renderer.domElement.toDataURL('image/png');
+        sunMesh.visible = wasSunVisible;
+        sunGlowSprites.forEach((sprite) => {
+          sprite.visible = true;
+        });
+        planets.forEach((planet) => {
+          planet.pivot.visible = true;
+        });
+        if (centerCapture) {
+          camera.position.copy(restoreCameraPosition);
+          camera.quaternion.copy(restoreCameraQuaternion);
+          camera.updateMatrixWorld(true);
+        }
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+        renderer.setSize(width, height, false);
+        renderScene();
+        return fallbackDataUrl;
+      }
       ctx.drawImage(renderer.domElement, 0, 0);
 
       if (patternLines && patternCount > 0) {
