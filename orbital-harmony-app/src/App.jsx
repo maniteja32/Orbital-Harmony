@@ -36,6 +36,7 @@ export default function App() {
   const setCosmicDate = useAppStore((s) => s.setCosmicDate);
   const setLineStyle = useAppStore((s) => s.setLineStyle);
   const backgroundMusicEnabled = useAppStore((s) => s.backgroundMusicEnabled);
+  const showGlobalMusicToggle = screen === 'settings' || screen === 'result' || screen === 'details';
 
   useEffect(() => {
     try {
@@ -99,7 +100,7 @@ export default function App() {
   return (
     <div className={`app-shell${showLoading ? ' is-loading' : ''}`} data-screen={screen}>
       <canvas ref={ambientRef} className="ambient-stars" aria-hidden="true" />
-      {screen !== 'loading' && <GlobalMusicToggle />}
+      {showGlobalMusicToggle && <GlobalMusicToggle />}
       <BackgroundMusicPlayer enabled={backgroundMusicEnabled} />
       <ScreenTransition key={screen} screen={screen}>
         <Suspense fallback={<ScreenFallback />}>
