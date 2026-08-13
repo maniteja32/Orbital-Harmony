@@ -178,40 +178,31 @@ function takeUnusedInsight(key, insights) {
   return insight;
 }
 
-function toPersonSection(entry, birthDate) {
+function toPersonSection(entry) {
   if (!entry) return null;
   const page = firstPage(entry);
   const name = page?.titles?.normalized ?? page?.normalizedtitle ?? String(entry.text).split(',')[0];
   const occupation = String(entry.text ?? '').split(',').slice(1).join(',').trim();
-  const yearGap = Math.abs(birthDate.getUTCFullYear() - Number(entry.year));
-  const relation = yearGap === 0
-    ? 'Born in the same year as you'
-    : `${yearGap} year${yearGap === 1 ? '' : 's'} ${Number(entry.year) < birthDate.getUTCFullYear() ? 'before' : 'after'} you`;
 
   return {
     id: `person:${entry.year}:${page?.pageid ?? name}`,
     kicker: 'Birthday twin trivia',
     headline: name,
-    meta: `Born ${entry.year} · ${relation}`,
+    meta: `Born ${entry.year}`,
     fact: achievementSentence(page, occupationSentence(occupation) || entry.text),
     href: normalizeUrl(page?.content_urls?.desktop?.page),
     source: 'Wikipedia · CC BY-SA',
   };
 }
 
-function toHistorySection(entry, birthDate) {
+function toHistorySection(entry) {
   if (!entry) return null;
   const page = firstPage(entry);
-  const yearGap = Math.abs(birthDate.getUTCFullYear() - Number(entry.year));
-  const relation = yearGap === 0
-    ? 'On the day you were born'
-    : `${yearGap} year${yearGap === 1 ? '' : 's'} ${Number(entry.year) < birthDate.getUTCFullYear() ? 'before' : 'after'} your birth`;
 
   return {
     id: `history:${entry.year}:${page?.pageid ?? entry.text}`,
     kicker: 'On this date',
     headline: `${entry.year} · ${page?.titles?.normalized ?? page?.normalizedtitle ?? 'On this day'}`,
-    meta: relation,
     fact: triviaSentence(entry.text),
     href: normalizeUrl(page?.content_urls?.desktop?.page),
     source: 'Wikipedia · CC BY-SA',
@@ -307,9 +298,9 @@ export async function loadDateStory(date, { signal } = {}) {
 
     const birthYear = date.getUTCFullYear();
     const people = selectTop(births, (entry) => birthScore(entry, birthYear))
-      .map((entry) => toPersonSection(entry, date));
+      .map((entry) => toPersonSection(entry));
     const history = selectTop(events, (entry) => eventScore(entry, birthYear))
-      .map((entry) => toHistorySection(entry, date));
+      .map((entry) => toHistorySection(entry));
     insights = [...people, ...history].filter(Boolean);
     if (insights.length === 0) throw new Error('No suitable date insights are available');
     storyCache.set(key, insights);
