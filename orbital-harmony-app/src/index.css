@@ -2326,6 +2326,35 @@ button {
 .icon-button:active { scale: 0.94; }
 .icon-button:hover { color: var(--text-primary); }
 
+.icon-button.is-active {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.global-music-toggle {
+  position: fixed;
+  top: calc(28px + var(--safe-top));
+  right: 22px;
+  z-index: 12;
+}
+
+/* Keep an audio element mounted for background playback without visual chrome. */
+.bg-music-player {
+  position: fixed;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+  overflow: hidden;
+  top: 0;
+  left: 0;
+}
+
+.bg-music-player audio {
+  width: 1px;
+  height: 1px;
+}
+
 .screen__header--mode {
   text-align: center;
   margin-top: 0;

@@ -37,6 +37,7 @@ export const useAppStore = create((set) => ({
   snapshot: null,
   resultFactoid: null,
   lineStyle: 'solid',
+  backgroundMusicEnabled: false,
   systemIntroPlayed: false,
 
   goTo: (screen) => set({ screen }),
@@ -50,6 +51,7 @@ export const useAppStore = create((set) => ({
   setPatternMode: (patternMode) => set({ patternMode }),
   setCosmicDate: (cosmicDate) => set({ cosmicDate }),
   setLineStyle: (lineStyle) => set({ lineStyle }),
+  setBackgroundMusicEnabled: (backgroundMusicEnabled) => set({ backgroundMusicEnabled }),
   markSystemIntroPlayed: () => set({ systemIntroPlayed: true }),
 
   resetForNewPattern: () => set({

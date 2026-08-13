@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect, lazy, Suspense } from 'react';
 import ScreenTransition from './components/ScreenTransition.jsx';
 import LoadingScreen from './screens/LoadingScreen.jsx';
+import { GlobalMusicToggle } from './components/GlobalMusicToggle.jsx';
+import { BackgroundMusicPlayer } from './components/BackgroundMusicPlayer.jsx';
 // Eagerly imported (not lazy) — it's the very first screen shown right after
 // the loading screen's crossfade, so its JS must already be loaded/parsed by
 // the time that handoff happens. Lazy-loading it left a window where the
@@ -33,6 +35,7 @@ export default function App() {
   const setPatternMode = useAppStore((s) => s.setPatternMode);
   const setCosmicDate = useAppStore((s) => s.setCosmicDate);
   const setLineStyle = useAppStore((s) => s.setLineStyle);
+  const backgroundMusicEnabled = useAppStore((s) => s.backgroundMusicEnabled);
 
   useEffect(() => {
     try {
@@ -83,6 +86,8 @@ export default function App() {
   return (
     <div className={`app-shell${showLoading ? ' is-loading' : ''}`} data-screen={screen}>
       <canvas ref={ambientRef} className="ambient-stars" aria-hidden="true" />
+      <GlobalMusicToggle />
+      <BackgroundMusicPlayer enabled={backgroundMusicEnabled} />
       <ScreenTransition key={screen} screen={screen}>
         <Suspense fallback={<ScreenFallback />}>
           {screen === 'system' && (
