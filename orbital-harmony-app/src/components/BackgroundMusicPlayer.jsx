@@ -7,15 +7,26 @@ export function BackgroundMusicPlayer({ enabled }) {
 
   useEffect(() => {
     const audio = audioRef.current;
-    if (!audio) return;
+    if (!audio) return undefined;
 
-    if (enabled) {
-      // Play attempts can fail until the user has interacted with the page.
-      audio.play().catch(() => {});
-      return;
+    if (!enabled) {
+      audio.pause();
+      return undefined;
     }
 
-    audio.pause();
+    // Browsers block real autoplay until the page has had at least one user
+    // interaction, so the very first play() call here (fired the moment the
+    // home screen mounts) is expected to reject silently — retrying on the
+    // first tap/key anywhere is what actually starts the music as early as
+    // possible instead of waiting for the user to find the mute button.
+    const tryPlay = () => audio.play().catch(() => {});
+    tryPlay();
+
+    const events = ['pointerdown', 'keydown'];
+    events.forEach((event) => document.addEventListener(event, tryPlay, { once: true }));
+    return () => {
+      events.forEach((event) => document.removeEventListener(event, tryPlay));
+    };
   }, [enabled]);
 
   return (

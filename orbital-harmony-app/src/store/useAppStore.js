@@ -37,7 +37,7 @@ export const useAppStore = create((set) => ({
   snapshot: null,
   resultFactoid: null,
   lineStyle: 'solid',
-  backgroundMusicEnabled: false,
+  backgroundMusicEnabled: true,
   systemIntroPlayed: false,
 
   goTo: (screen) => set({ screen }),

@@ -99,7 +99,7 @@ export default function App() {
   return (
     <div className={`app-shell${showLoading ? ' is-loading' : ''}`} data-screen={screen}>
       <canvas ref={ambientRef} className="ambient-stars" aria-hidden="true" />
-      {screen !== 'loading' && screen !== 'system' && <GlobalMusicToggle />}
+      {screen !== 'loading' && <GlobalMusicToggle />}
       <BackgroundMusicPlayer enabled={backgroundMusicEnabled} />
       <ScreenTransition key={screen} screen={screen}>
         <Suspense fallback={<ScreenFallback />}>
