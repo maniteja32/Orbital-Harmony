@@ -2160,7 +2160,11 @@ button {
     margin-bottom: 0;
   }
 
-  .screen--result--cosmic .result-frame,
+  /* Pattern square deliberately NOT width-clamped/centered here (unlike
+     .knowledge-card--date-story below) — its left/right edges must match
+     the full-width button row's screen-edge padding on both sides; any
+     height-driven shrink stays on aspect-ratio alone, with the screen's
+     existing overflow-y:auto absorbing extra height on short viewports. */
   .screen--result--cosmic .knowledge-card--date-story {
     width: min(100%, clamp(280px, 36dvh, 331px));
     align-self: center;
@@ -2191,7 +2195,9 @@ button {
     margin: 0 -18px;
   }
 
-  .screen--result .result-frame,
+  /* Same reasoning as the (max-width: 560px) block above — .result-frame
+     is intentionally excluded so it keeps matching the button row's
+     left/right edges instead of shrinking narrower and centering. */
   .screen--result--cosmic .knowledge-card--date-story {
     width: clamp(200px, calc(38dvh - 12px), 260px);
     max-width: 100%;
