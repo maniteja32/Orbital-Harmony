@@ -219,6 +219,49 @@ async function fetchMuffinLabsCategory(category, date, signal) {
   return (payload?.data?.[category] ?? []).map(toWikimediaLikeEntry);
 }
 
+// Both Wikimedia's onthisday feed and Muffin Labs' history API have been
+// observed to intermittently abort/fail on a first attempt (both in local
+// dev and in the packaged iOS app's WKWebView) even though the SAME
+// request reliably succeeds moments later on retry — a real-world
+// flakiness pattern, not a CORS/ATS/config issue (both domains verified to
+// send permissive `Access-Control-Allow-Origin: *` and pass default App
+// Transport Security). Retrying the combined fetch a few times with a
+// short backoff, rather than giving up after one failed attempt, is what
+// actually fixes the "the archetype card doesn't show up" symptom.
+const MAX_BIRTHS_FETCH_ATTEMPTS = 3;
+const BIRTHS_FETCH_RETRY_DELAY_MS = 600;
+
+function delay(ms, signal) {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(resolve, ms);
+    signal?.addEventListener('abort', () => {
+      clearTimeout(timer);
+      reject(new DOMException('Aborted', 'AbortError'));
+    }, { once: true });
+  });
+}
+
+async function fetchBirthsWithRetry(date, signal) {
+  let lastError = new Error('Birthday archetype data is unavailable');
+  for (let attempt = 1; attempt <= MAX_BIRTHS_FETCH_ATTEMPTS; attempt += 1) {
+    if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+    const [wikimediaBirths, muffinBirths] = await Promise.allSettled([
+      fetchCategory('births', date, signal),
+      fetchMuffinLabsCategory('Births', date, signal),
+    ]);
+    if (wikimediaBirths.status === 'fulfilled' || muffinBirths.status === 'fulfilled') {
+      return [
+        ...(wikimediaBirths.status === 'fulfilled' ? wikimediaBirths.value : []),
+        ...(muffinBirths.status === 'fulfilled' ? muffinBirths.value : []),
+      ];
+    }
+    lastError = wikimediaBirths.reason ?? muffinBirths.reason ?? lastError;
+    if (lastError?.name === 'AbortError') throw lastError;
+    if (attempt < MAX_BIRTHS_FETCH_ATTEMPTS) await delay(BIRTHS_FETCH_RETRY_DELAY_MS * attempt, signal);
+  }
+  throw lastError;
+}
+
 // Builds the whole "Your Birthday Personality Archetype" card for a given
 // calendar day. The ARCHETYPE itself is stable per date (scored from every
 // candidate), but the displayed "Birthday Tribe" is a random 3-of-N sample
@@ -232,19 +275,8 @@ export async function loadBirthdayArchetype(date, { signal } = {}) {
   let uniquePeople = archetypeCache.get(key);
 
   if (!uniquePeople) {
-    const [wikimediaBirths, muffinBirths] = await Promise.allSettled([
-      fetchCategory('births', date, signal),
-      fetchMuffinLabsCategory('Births', date, signal),
-    ]);
+    const births = await fetchBirthsWithRetry(date, signal);
     if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
-    if ([wikimediaBirths, muffinBirths].every((r) => r.status === 'rejected')) {
-      throw new Error('Birthday archetype data is unavailable');
-    }
-
-    const births = [
-      ...(wikimediaBirths.status === 'fulfilled' ? wikimediaBirths.value : []),
-      ...(muffinBirths.status === 'fulfilled' ? muffinBirths.value : []),
-    ];
 
     // Reference year only breaks scoring ties (existedByReference) — the
     // whole point of this feature is people born on the same calendar day
