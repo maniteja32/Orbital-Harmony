@@ -3545,7 +3545,7 @@ button {
 .knowledge-card__sources {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   flex-wrap: wrap;
   gap: 3px 8px;
   padding-top: 2px;

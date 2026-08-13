@@ -266,6 +266,7 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails }) {
   const fallbackFactoid = useMemo(() => {
     return {
       title: 'Fun facts',
+      sourceLabel: 'Space Harmony · Curated facts',
       entries: [planetAData, planetBData]
         .filter(Boolean)
         .map((planet) => ({ name: planet.name, emoji: '🪐', fact: planet.fact })),
@@ -433,10 +434,10 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails }) {
               </div>
             ))}
           </div>
-          {displayedFactoid.sources?.length > 0 && (
+          {(displayedFactoid.sourceLabel || displayedFactoid.sources?.length > 0) && (
             <div className="knowledge-card__sources" aria-label="Fact sources">
               <span>{displayedFactoid.sourceLabel ?? 'Wikipedia · CC BY-SA'}</span>
-              {displayedFactoid.sources.map((source) => (
+              {displayedFactoid.sources?.map((source) => (
                 <a href={source.href} target="_blank" rel="noreferrer" key={source.name}>
                   {source.name}
                   <ExternalLink size={10} strokeWidth={2} aria-hidden="true" />

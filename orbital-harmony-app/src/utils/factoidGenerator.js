@@ -85,6 +85,11 @@ const FACTS_BY_PLANET = {
 };
 
 const PAIR_TITLES = ['Cosmic curiosity', 'Orbit surprise', 'Space spark', 'Planet plot twist'];
+// These facts are hand-curated, not extracted from any single external
+// article, so there is no per-fact link to attribute — just a plain label
+// (no anchor) so the knowledge card still shows attribution when the
+// live Wikipedia/AI fetch (see triviaService.js) hasn't replaced it yet.
+const LOCAL_SOURCE_LABEL = 'Space Harmony · Curated facts';
 
 const historyByScope = new Map();
 
@@ -139,6 +144,7 @@ export function createPatternFactoid({ planetA, planetB, isCosmic = false, cosmi
     return {
       id: `${scope}:${index}`,
       title: PAIR_TITLES[index % PAIR_TITLES.length],
+      sourceLabel: LOCAL_SOURCE_LABEL,
       entries: [toEntry(planet, index)],
     };
   }
@@ -159,6 +165,7 @@ export function createPatternFactoid({ planetA, planetB, isCosmic = false, cosmi
   return {
     id: `${scope}:${index}`,
     title: PAIR_TITLES[index % PAIR_TITLES.length],
+    sourceLabel: LOCAL_SOURCE_LABEL,
     entries: selectedPlanets.map((planet) => entriesByPlanet.get(planet.key)),
   };
 }
