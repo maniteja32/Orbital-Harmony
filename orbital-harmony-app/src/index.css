@@ -3643,14 +3643,14 @@ button {
 }
 
 /* "Your Birthday Personality Archetype" — reuses the date-story kicker
-   look for its label, then a bigger accent headline for the archetype
+   look for its label and a matching-size headline for the archetype
    name (e.g. "The Explorer"). Always fully visible (no collapsible
-   toggle) since the redesigned content — one-sentence summary, one-
-   sentence pattern, short tribe bullets — is already short enough to
-   fit without pushing the Result screen's action buttons off-screen. */
+   toggle) since the redesigned content — one-sentence summary, short
+   tribe bullets — is already short enough to fit without pushing the
+   Result screen's action buttons off-screen. */
 .archetype-card__name {
   color: var(--text-primary);
-  font-size: 17px;
+  font-size: 14px;
   font-weight: 700;
   line-height: 1.25;
 }
