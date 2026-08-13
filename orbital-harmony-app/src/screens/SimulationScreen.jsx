@@ -120,6 +120,9 @@ export default function SimulationScreen({ onComplete, onBack }) {
   return (
     <div className="screen screen--simulation">
       <TopNavigationBar title={pairTitle} onBack={onBack} />
+      {isCosmic && (
+        <p className="screen-intro">Planets are aligning to your date of birth</p>
+      )}
       <div className="sim-canvas-wrap">
         <SolarSystemCanvas
           key={`${planetKeys.join(',')}:${detailLevel}`}

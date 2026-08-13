@@ -1316,6 +1316,23 @@ button {
   padding: 0 22px;
 }
 
+/* Cosmic Signature's "Planets are aligning..." subtitle — same font size/
+   color as the Result screen's post-generation "Planets aligned..."
+   (.screen--result--cosmic .screen-intro), but absolutely positioned (not
+   normal flow) since this screen overlays its topbar on a full-bleed
+   canvas rather than pushing content down; placed just under the fixed
+   48px-tall topbar (see .screen--simulation .mode-topbar above). */
+.screen--simulation .screen-intro {
+  position: absolute;
+  top: calc(28px + 48px + 6px + var(--safe-top));
+  left: 0;
+  right: 0;
+  z-index: 10;
+  margin: 0;
+  padding: 0 22px;
+  font-size: 13px;
+}
+
 /* Back button + header used to stack vertically (button above the
    title); now placed in the SAME row via a single-cell CSS grid — both
    children share `grid-area: 1 / 1` so they overlap, with the button
