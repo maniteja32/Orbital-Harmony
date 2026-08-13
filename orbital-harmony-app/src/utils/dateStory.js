@@ -211,46 +211,51 @@ async function fetchMuffinLabsCategory(category, date, signal) {
 }
 
 // Builds the whole "Your Birthday Personality Archetype" card for a given
-// calendar day — unlike the old single-insight rotation, this result is
-// STABLE per date (the tribe/theme doesn't change on repeat visits), so
-// it's cached indefinitely per day rather than rotated.
+// calendar day. The ARCHETYPE itself is stable per date (scored from every
+// candidate), but the displayed "Birthday Tribe" is a random 3-of-N sample
+// re-rolled on every call — so `archetypeCache` stores just the fetched
+// candidate POOL (never re-fetched for the same day), and
+// `deriveBirthdayArchetype` (which does the random sampling) is re-run
+// fresh each time instead of caching its output.
 export async function loadBirthdayArchetype(date, { signal } = {}) {
   if (!isValidDate(date)) return createLocalBirthdayArchetype(date);
   const key = dateKey(date);
-  if (archetypeCache.has(key)) return archetypeCache.get(key);
+  let uniquePeople = archetypeCache.get(key);
 
-  const [wikimediaBirths, muffinBirths] = await Promise.allSettled([
-    fetchCategory('births', date, signal),
-    fetchMuffinLabsCategory('Births', date, signal),
-  ]);
-  if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
-  if ([wikimediaBirths, muffinBirths].every((r) => r.status === 'rejected')) {
-    throw new Error('Birthday archetype data is unavailable');
+  if (!uniquePeople) {
+    const [wikimediaBirths, muffinBirths] = await Promise.allSettled([
+      fetchCategory('births', date, signal),
+      fetchMuffinLabsCategory('Births', date, signal),
+    ]);
+    if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+    if ([wikimediaBirths, muffinBirths].every((r) => r.status === 'rejected')) {
+      throw new Error('Birthday archetype data is unavailable');
+    }
+
+    const births = [
+      ...(wikimediaBirths.status === 'fulfilled' ? wikimediaBirths.value : []),
+      ...(muffinBirths.status === 'fulfilled' ? muffinBirths.value : []),
+    ];
+
+    // Reference year only breaks scoring ties (existedByReference) — the
+    // whole point of this feature is people born on the same calendar day
+    // across ANY year, not just before/after the viewer's own birth year.
+    const referenceYear = date.getUTCFullYear();
+    const people = selectTop(births, (entry) => birthScore(entry, referenceYear), 10)
+      .map((entry) => toArchetypePerson(entry))
+      .filter((person) => person?.name);
+    // Wikimedia and Muffin Labs sometimes both surface the same person.
+    uniquePeople = [...new Map(people.map((person) => [person.name, person])).values()].slice(0, 8);
+    if (uniquePeople.length < 3) throw new Error('Not enough notable people to build a birthday archetype');
+    archetypeCache.set(key, uniquePeople);
   }
 
-  const births = [
-    ...(wikimediaBirths.status === 'fulfilled' ? wikimediaBirths.value : []),
-    ...(muffinBirths.status === 'fulfilled' ? muffinBirths.value : []),
-  ];
-
-  // Reference year only breaks scoring ties (existedByReference) — the
-  // whole point of this feature is people born on the same calendar day
-  // across ANY year, not just before/after the viewer's own birth year.
-  const referenceYear = date.getUTCFullYear();
-  const people = selectTop(births, (entry) => birthScore(entry, referenceYear), 10)
-    .map((entry) => toArchetypePerson(entry))
-    .filter((person) => person?.name);
-  // Wikimedia and Muffin Labs sometimes both surface the same person.
-  const uniquePeople = [...new Map(people.map((person) => [person.name, person])).values()].slice(0, 6);
-  if (uniquePeople.length < 3) throw new Error('Not enough notable people to build a birthday archetype');
-
+  if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
   const archetype = deriveBirthdayArchetype(uniquePeople);
-  const result = {
+  return {
     id: `birthday-archetype:${key}`,
     kind: 'birthday-archetype',
     title: 'Birthday Personality Archetype',
     ...archetype,
   };
-  archetypeCache.set(key, result);
-  return result;
 }

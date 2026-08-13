@@ -3695,7 +3695,7 @@ button {
 }
 
 .archetype-card__person a {
-  color: var(--accent);
+  color: var(--text-primary);
   font-weight: 600;
   text-decoration: none;
 }

@@ -135,6 +135,29 @@ function pickArchetype(people) {
   return best;
 }
 
+const TRIBE_SIZE = 3;
+
+function randomIndex(count) {
+  if (globalThis.crypto?.getRandomValues) {
+    const value = new Uint32Array(1);
+    globalThis.crypto.getRandomValues(value);
+    return value[0] % count;
+  }
+  return Math.floor(Math.random() * count);
+}
+
+// Random (not top-scored) sample so the "Birthday Tribe" bullets can vary
+// between visits instead of always showing the exact same names — keeps
+// the card feeling fresh on repeat views of the same birthday.
+function pickRandomSample(people, count) {
+  const pool = [...people];
+  const sample = [];
+  while (pool.length > 0 && sample.length < count) {
+    sample.push(pool.splice(randomIndex(pool.length), 1)[0]);
+  }
+  return sample;
+}
+
 function cleanOccupation(occupation) {
   return String(occupation ?? '')
     .replace(/\.$/, '')
@@ -190,7 +213,7 @@ export function deriveBirthdayArchetype(people) {
 
   const archetype = pickArchetype(validPeople);
 
-  const tribe = validPeople.map((person) => ({
+  const tribe = pickRandomSample(validPeople, TRIBE_SIZE).map((person) => ({
     name: person.name,
     role: shortRole(person.occupation),
     href: person.href ?? null,
