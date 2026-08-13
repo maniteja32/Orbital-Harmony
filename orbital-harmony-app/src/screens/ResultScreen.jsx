@@ -212,7 +212,7 @@ function BirthdayArchetypeCard({ archetype }) {
 
         <details className="archetype-card__details">
           <summary>
-            <span>See the pattern &amp; birthday tribe</span>
+            <span>See the pattern</span>
             <ChevronDown size={16} strokeWidth={2} aria-hidden="true" />
           </summary>
 
@@ -220,26 +220,6 @@ function BirthdayArchetypeCard({ archetype }) {
             <section className="archetype-card__section">
               <span className="archetype-card__section-label">The Pattern</span>
               <p>{archetype.pattern}</p>
-            </section>
-
-            <section className="archetype-card__section">
-              <span className="archetype-card__section-label">Birthday Tribe</span>
-              <ul className="archetype-card__tribe">
-                {archetype.tribe?.map((person) => (
-                  <li className="archetype-card__person" key={person.name}>
-                    {person.href ? (
-                      <a className="archetype-card__person-name" href={person.href} target="_blank" rel="noreferrer">
-                        {person.name}
-                        <ExternalLink size={10} strokeWidth={2} aria-hidden="true" />
-                      </a>
-                    ) : (
-                      <span className="archetype-card__person-name">{person.name}</span>
-                    )}
-                    <span className="archetype-card__person-contribution">{person.contribution}</span>
-                    <p className="archetype-card__person-reason">{person.reason}</p>
-                  </li>
-                ))}
-              </ul>
             </section>
 
             <section className="archetype-card__section">

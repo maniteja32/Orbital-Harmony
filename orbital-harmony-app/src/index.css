@@ -3713,46 +3713,6 @@ button {
   line-height: 1.5;
 }
 
-.archetype-card__tribe {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  list-style: none;
-}
-
-.archetype-card__person {
-  padding-left: 10px;
-  border-left: 2px solid var(--glass-border);
-}
-
-.archetype-card__person-name {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  color: var(--text-primary);
-  font-size: 13px;
-  font-weight: 650;
-  text-decoration: none;
-}
-
-a.archetype-card__person-name {
-  color: var(--accent);
-}
-
-.archetype-card__person-contribution {
-  display: block;
-  margin-top: 1px;
-  color: var(--text-tertiary);
-  font-size: 11px;
-}
-
-.archetype-card__person-reason {
-  margin-top: 3px;
-  color: var(--text-secondary);
-  font-size: 12px;
-  line-height: 1.45;
-}
-
 .archetype-card__disclaimer {
   color: var(--text-tertiary);
   font-size: 10.5px;

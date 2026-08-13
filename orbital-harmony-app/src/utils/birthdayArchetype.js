@@ -103,16 +103,6 @@ const ARCHETYPES = [
 // description ("bringing people and ideas together"), never an empty card.
 const DEFAULT_ARCHETYPE = ARCHETYPES.find((archetype) => archetype.key === 'connector');
 
-// Rotated across the "Birthday Tribe" list so every person's reason line
-// doesn't start with the exact same words — every lead-in is one of the
-// project's approved, non-deterministic phrasings (never "you are/will").
-const REASON_LEAD_INS = [
-  'A recurring theme among people born on this day is',
-  'Many notable individuals sharing this birthday show',
-  'An interesting pattern that appears here is',
-  'A common thread is',
-];
-
 function normalizedText(person) {
   return `${person.occupation ?? ''} ${person.fact ?? ''}`.toLowerCase();
 }
@@ -140,11 +130,6 @@ function pickArchetype(people) {
   return best;
 }
 
-function matchedKeyword(archetype, person) {
-  const text = normalizedText(person);
-  return archetype.keywords.find((keyword) => text.includes(keyword)) ?? null;
-}
-
 function cleanOccupation(occupation) {
   return String(occupation ?? '')
     .replace(/\.$/, '')
@@ -163,7 +148,7 @@ function shortOccupation(occupation) {
     .split(/,|;| also\b| responsible for\b| who\b/i)[0]
     .trim();
   const words = cleaned.split(/\s+/).filter(Boolean);
-  return words.slice(0, 6).join(' ').toLowerCase();
+  return words.slice(0, 6).join(' ').replace(/\.$/, '').toLowerCase();
 }
 
 /** Builds the whole "Birthday Personality Archetype" card content from a
@@ -185,21 +170,6 @@ export function deriveBirthdayArchetype(people) {
     ? `An interesting pattern that appears across this birthday tribe is a shared pull toward ${archetype.theme}. Their fields differ — from ${occupationSamples.join(', ')} — yet a common thread connects how they approached ideas, problems, and the people around them.`
     : `An interesting pattern that appears across this birthday tribe is a shared pull toward ${archetype.theme}, showing up again and again across very different fields and eras.`;
 
-  const tribe = validPeople.map((person, index) => {
-    const keyword = matchedKeyword(archetype, person);
-    const leadIn = REASON_LEAD_INS[index % REASON_LEAD_INS.length];
-    const occupation = cleanOccupation(person.occupation) || 'their own field';
-    const reason = keyword
-      ? `${leadIn} ${archetype.theme} — ${person.name}’s work as ${occupation} reflects that same drive.`
-      : `${leadIn} ${archetype.theme}, and ${person.name}’s path as ${occupation} echoes it in its own way.`;
-    return {
-      name: person.name,
-      contribution: occupation,
-      reason,
-      href: person.href ?? null,
-    };
-  });
-
   const reflection = `People born on this day often seem drawn toward ${archetype.theme}. Their paths span very different fields and eras, yet a common thread emerges among the real people who share this birthday. This isn’t a prediction of who you are — it’s an invitation to notice a pattern, and maybe feel part of a small, real tribe.`;
 
   return {
@@ -207,7 +177,6 @@ export function deriveBirthdayArchetype(people) {
     archetypeKey: archetype.key,
     summary,
     pattern,
-    tribe,
     reflection,
     disclaimer: 'Based on real people who share this calendar birthday — not astrology, horoscopes, or predictions.',
   };
