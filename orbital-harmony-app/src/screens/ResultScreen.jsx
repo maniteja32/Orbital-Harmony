@@ -21,6 +21,8 @@ const RESULT_FRAME_RIM = {
   '--liquid-glass-rim-light': 'rgba(255, 255, 255, 0.4)',
 };
 
+const SITE_URL = 'https://spaceharmony.vercel.app/';
+
 function downloadDataUrl(dataUrl, filename) {
   if (!dataUrl) return;
   const link = document.createElement('a');
@@ -196,7 +198,30 @@ function sanitizeFileName(input) {
 }
 
 function BirthdayArchetypeCard({ archetype }) {
-  if (!archetype?.archetypeName) return null;
+  if (!archetype) return null;
+
+  if (!archetype.archetypeName) {
+    const message = archetype.status === 'error'
+      ? 'The birthday archetype could not load on this connection. Try generating again in a moment.'
+      : archetype.status === 'loading'
+        ? 'Finding notable people who share this birthday...'
+        : null;
+    if (!message) return null;
+
+    return (
+      <section
+        className="knowledge-card knowledge-card--compact knowledge-card--date-story archetype-card"
+        key={archetype.id}
+        aria-label={archetype.title}
+      >
+        <div className="date-story__panel">
+          <span className="date-story__kicker">{archetype.title}</span>
+          <p className="knowledge-card__fact archetype-card__summary">{message}</p>
+          <p className="archetype-card__disclaimer">Based on real people, not astrology or predictions.</p>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section
@@ -267,6 +292,10 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails }) {
         // Safari Web Inspector when this silently doesn't appear on iOS.
         if (error?.name !== 'AbortError') {
           console.error('[BirthdayArchetype] failed to load:', error);
+          setArchetype({
+            ...localArchetype,
+            status: 'error',
+          });
         }
       });
 
@@ -357,11 +386,13 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails }) {
     onGenerateNew();
   }
 
-  const shareTitle = isCosmic
-    ? `Space Harmony — Cosmic Signature${cosmicDateLabel ? ` · ${cosmicDateLabel}` : ''}`
-    : `Space Harmony — ${title}`;
-
   const imageFilename = `${sanitizeFileName(title || 'cosmic-signature')}.png`;
+
+  // The URL sits on its own line so WhatsApp/iMessage/etc. detect it and
+  // render their own rich link preview card — everything else is one short
+  // caption line plus a credit, deliberately NOT repeating "Space Harmony"
+  // since the generated preview card already shows the site title.
+  const shareText = `✨ Explore your ${isCosmic ? 'cosmic' : 'orbital'} pattern\n${SITE_URL}\n\nDesigned by Mani Teja`;
 
   const nativeShare = useCallback(async () => {
     if (!snapshot) return;
@@ -379,14 +410,14 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails }) {
     try {
       const file = await dataUrlToFile(shareImage, imageFilename);
       if (navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ title: shareTitle, text: shareTitle, files: [file] });
+        await navigator.share({ text: shareText, files: [file] });
         return;
       }
       downloadDataUrl(shareImage, imageFilename);
     } catch (error) {
       if (error?.name !== 'AbortError') downloadDataUrl(shareImage, imageFilename);
     }
-  }, [snapshot, title, isCosmic, cosmicDateLabel, imageFilename, shareTitle]);
+  }, [snapshot, title, isCosmic, cosmicDateLabel, imageFilename, shareText]);
 
   return (
     <div className={`screen screen--result${isCosmic ? ' screen--result--cosmic' : ''}`}>

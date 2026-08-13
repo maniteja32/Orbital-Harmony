@@ -162,13 +162,20 @@ function toArchetypePerson(entry) {
 // rather than a half-built card.
 export function createLocalBirthdayArchetype(date) {
   if (!isValidDate(date)) {
-    return { id: 'birthday-archetype:unavailable', kind: 'birthday-archetype', title: 'Personality Archetype', archetypeName: null };
+    return {
+      id: 'birthday-archetype:unavailable',
+      kind: 'birthday-archetype',
+      title: 'Personality Archetype',
+      archetypeName: null,
+      status: 'unavailable',
+    };
   }
   return {
     id: `birthday-archetype:${dateKey(date)}`,
     kind: 'birthday-archetype',
     title: 'Personality Archetype',
     archetypeName: null,
+    status: 'loading',
   };
 }
 
@@ -249,6 +256,7 @@ function delay(ms, signal) {
 // own flakiness clears up moments later).
 async function fetchArchetypeCandidates(date, referenceYear, signal) {
   let lastError = new Error('Birthday archetype data is unavailable');
+  let bestPartialPeople = [];
   for (let attempt = 1; attempt <= MAX_BIRTHS_FETCH_ATTEMPTS; attempt += 1) {
     if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
     const [wikimediaBirths, muffinBirths] = await Promise.allSettled([
@@ -266,6 +274,7 @@ async function fetchArchetypeCandidates(date, referenceYear, signal) {
       // Wikimedia and Muffin Labs sometimes both surface the same person.
       const uniquePeople = [...new Map(people.map((person) => [person.name, person])).values()].slice(0, 8);
       if (uniquePeople.length >= 3) return uniquePeople;
+      if (uniquePeople.length > bestPartialPeople.length) bestPartialPeople = uniquePeople;
       lastError = new Error('Not enough notable people to build a birthday archetype');
     } else {
       lastError = wikimediaBirths.reason ?? muffinBirths.reason ?? lastError;
@@ -273,6 +282,10 @@ async function fetchArchetypeCandidates(date, referenceYear, signal) {
     }
     if (attempt < MAX_BIRTHS_FETCH_ATTEMPTS) await delay(BIRTHS_FETCH_RETRY_DELAY_MS * attempt, signal);
   }
+  // On flaky mobile networks it's better to show a smaller, still-grounded
+  // card from the best real-people sample we managed to fetch than to drop
+  // the archetype card entirely.
+  if (bestPartialPeople.length > 0) return bestPartialPeople;
   throw lastError;
 }
 
@@ -304,6 +317,7 @@ export async function loadBirthdayArchetype(date, { signal } = {}) {
     id: `birthday-archetype:${key}`,
     kind: 'birthday-archetype',
     title: 'Personality Archetype',
+    status: 'ready',
     ...archetype,
   };
 }
