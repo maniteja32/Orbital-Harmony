@@ -3644,10 +3644,10 @@ button {
 
 /* "Your Birthday Personality Archetype" — reuses the date-story kicker
    look for its label, then a bigger accent headline for the archetype
-   name (e.g. "The Explorer"). Everything past the 1-2 sentence summary
-   sits behind a <details> toggle (same collapsible convention as the old
-   Pattern Details "For Curious Minds" section) so the always-visible
-   part of the card stays as short as every other Result-screen card. */
+   name (e.g. "The Explorer"). Always fully visible (no collapsible
+   toggle) since the redesigned content — one-sentence summary, one-
+   sentence pattern, short tribe bullets — is already short enough to
+   fit without pushing the Result screen's action buttons off-screen. */
 .archetype-card__name {
   color: var(--text-primary);
   font-size: 17px;
@@ -3659,42 +3659,8 @@ button {
   margin-top: 3px;
 }
 
-.archetype-card__details {
-  margin-top: 6px;
-}
-
-.archetype-card__details summary {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 8px 0 2px;
-  color: var(--accent);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-  cursor: pointer;
-  list-style: none;
-}
-
-.archetype-card__details summary::-webkit-details-marker {
-  display: none;
-}
-
-.archetype-card__details summary svg {
-  flex: 0 0 auto;
-  transition: transform 0.2s ease;
-}
-
-.archetype-card__details[open] summary svg {
-  transform: rotate(180deg);
-}
-
-.archetype-card__body {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 4px 0 2px;
+.archetype-card__section {
+  margin-top: 8px;
 }
 
 .archetype-card__section-label {
@@ -3713,12 +3679,46 @@ button {
   line-height: 1.5;
 }
 
+.archetype-card__tribe {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  list-style: none;
+}
+
+.archetype-card__person {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12.5px;
+}
+
+.archetype-card__person a {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.archetype-card__person span:first-child {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.archetype-card__person-role {
+  flex: 0 0 auto;
+  color: var(--text-tertiary);
+  font-size: 11px;
+}
+
 .archetype-card__disclaimer {
+  margin-top: 8px;
   color: var(--text-tertiary);
   font-size: 10.5px;
   font-style: italic;
   line-height: 1.4;
 }
+
 
 .knowledge-card__entry {
   display: block;

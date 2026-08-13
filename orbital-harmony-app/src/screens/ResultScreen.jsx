@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { ChevronDown, ExternalLink, Info, Share2 } from 'lucide-react';
+import { ExternalLink, Info, Share2 } from 'lucide-react';
 import { GlassButton } from '../components/ui/glasscn/glass-button.jsx';
 import { LiquidGlass } from '../components/ui/glasscn/liquid-glass.jsx';
 import { TopNavigationBar } from '../components/TopNavigationBar.jsx';
@@ -210,26 +210,30 @@ function BirthdayArchetypeCard({ archetype }) {
         <span className="archetype-card__name">{archetype.archetypeName}</span>
         <p className="knowledge-card__fact archetype-card__summary">{archetype.summary}</p>
 
-        <details className="archetype-card__details">
-          <summary>
-            <span>See the pattern</span>
-            <ChevronDown size={16} strokeWidth={2} aria-hidden="true" />
-          </summary>
+        <section className="archetype-card__section">
+          <span className="archetype-card__section-label">The Pattern</span>
+          <p>{archetype.pattern}</p>
+        </section>
 
-          <div className="archetype-card__body">
-            <section className="archetype-card__section">
-              <span className="archetype-card__section-label">The Pattern</span>
-              <p>{archetype.pattern}</p>
-            </section>
+        {archetype.tribe?.length > 0 && (
+          <section className="archetype-card__section">
+            <span className="archetype-card__section-label">Birthday Tribe</span>
+            <ul className="archetype-card__tribe">
+              {archetype.tribe.map((person) => (
+                <li className="archetype-card__person" key={person.name}>
+                  {person.href ? (
+                    <a href={person.href} target="_blank" rel="noreferrer">{person.name}</a>
+                  ) : (
+                    <span>{person.name}</span>
+                  )}
+                  <span className="archetype-card__person-role">{person.role}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
-            <section className="archetype-card__section">
-              <span className="archetype-card__section-label">Cosmic Reflection</span>
-              <p>{archetype.reflection}</p>
-            </section>
-
-            <p className="archetype-card__disclaimer">{archetype.disclaimer}</p>
-          </div>
-        </details>
+        <p className="archetype-card__disclaimer">{archetype.disclaimer}</p>
       </div>
     </section>
   );

@@ -1,106 +1,113 @@
 // "Your Birthday Personality Archetype" — explicitly NOT astrology, NOT
 // zodiac-based, and NOT predictive. The archetype is derived purely from
 // recurring occupations/achievements among REAL notable people who share
-// the user's calendar birthday (see birthdayArchetypeService below in
-// dateStory.js, which supplies `people`), never from the date itself or
-// any star sign. Every generated sentence is phrased as an observation
-// about that specific group of people, never as a claim about the user.
+// the user's calendar birthday (see loadBirthdayArchetype in dateStory.js,
+// which supplies `people`), never from the date itself or any star sign.
+// Every generated sentence is phrased as an observation about that
+// specific group of people, never as a claim about the user.
+//
+// Card structure is intentionally minimal and non-repetitive: Archetype
+// Name, a tailored one-sentence Summary (what the theme IS), "The
+// Pattern" (a DIFFERENT observation — how the group's real, varied fields
+// still share a common thread), and a short "Birthday Tribe" bullet list
+// (name + one-word/short role) as concrete evidence. No section restates
+// another's wording.
 const ARCHETYPES = [
   {
     key: 'explorer',
     name: 'The Explorer',
-    theme: 'exploration and discovery',
+    summary: 'People born on this day often stand out for seeking the unknown — new places, new questions, new ground to cover.',
     keywords: ['explor', 'adventur', 'astronaut', 'cosmonaut', 'aviat', 'pilot', 'mountaineer', 'navigat', 'expedition', 'voyage', 'cartograph', 'sail'],
   },
   {
     key: 'builder',
     name: 'The Builder',
-    theme: 'building lasting things',
+    summary: 'People born on this day often stand out for turning ideas into lasting, tangible things that outlast them.',
     keywords: ['engineer', 'architect', 'entrepreneur', 'founder', 'industrialist', 'contractor', 'construct', 'developer'],
   },
   {
     key: 'visionary',
     name: 'The Visionary',
-    theme: 'envisioning what does not yet exist',
+    summary: 'People born on this day often stand out for imagining what doesn’t exist yet, then working to make it real.',
     keywords: ['invent', 'physicist', 'theorist', 'futurist', 'visionary'],
   },
   {
     key: 'storyteller',
     name: 'The Storyteller',
-    theme: 'turning ideas into stories',
+    summary: 'People born on this day often stand out for shaping ideas into stories, through writing, film, or the spoken word.',
     keywords: ['writer', 'author', 'novelist', 'poet', 'playwright', 'screenwriter', 'filmmaker', 'director', 'journalist', 'storytel'],
   },
   {
     key: 'innovator',
     name: 'The Innovator',
-    theme: 'inventing new ways to solve problems',
+    summary: 'People born on this day often stand out for inventing new ways to solve old problems.',
     keywords: ['invent', 'entrepreneur', 'technolog', 'innovat', 'startup'],
   },
   {
     key: 'teacher',
     name: 'The Teacher',
-    theme: 'sharing knowledge and shaping minds',
+    summary: 'People born on this day often stand out for passing knowledge on — teaching, mentoring, and shaping how others think.',
     keywords: ['educat', 'professor', 'philosoph', 'teacher', 'scholar', 'academic', 'lectur'],
   },
   {
     key: 'pathfinder',
     name: 'The Pathfinder',
-    theme: 'blazing a trail others could follow',
+    summary: 'People born on this day often stand out for going first, blazing a trail that others later followed.',
     keywords: ['activist', 'pioneer', 'first woman', 'first person', 'trailblaz', 'reform'],
   },
   {
     key: 'connector',
     name: 'The Connector',
-    theme: 'bringing people and ideas together',
+    summary: 'People born on this day often stand out for bringing people and ideas together across divides.',
     keywords: ['diplomat', 'politician', 'humanitarian', 'organiz', 'negotiat', 'ambassador', 'statesman', 'stateswoman'],
   },
   {
     key: 'creator',
     name: 'The Creator',
-    theme: 'turning imagination into something real',
+    summary: 'People born on this day often stand out for turning imagination into something real, in art, music, or design.',
     keywords: ['artist', 'musician', 'composer', 'singer', 'designer', 'painter', 'sculpt', 'choreograph'],
   },
   {
     key: 'observer',
     name: 'The Observer',
-    theme: 'studying the world closely before acting',
+    summary: 'People born on this day often stand out for studying the world closely, favoring careful attention over quick judgment.',
     keywords: ['scientist', 'journalist', 'natural', 'philosoph', 'research', 'astronomer', 'biolog'],
   },
   {
     key: 'pioneer',
     name: 'The Pioneer',
-    theme: 'being first where no one had gone before',
+    summary: 'People born on this day often stand out for exploring new territory, introducing new ideas, or challenging established norms.',
     keywords: ['first ', 'pioneer', 'breakthrough', 'groundbreaking'],
   },
   {
     key: 'dreamer',
     name: 'The Dreamer',
-    theme: 'imagining bold possibilities',
+    summary: 'People born on this day often stand out for imagining bold possibilities others hadn’t yet considered.',
     keywords: ['poet', 'visionary', 'idealist', 'dream'],
   },
   {
     key: 'synthesizer',
     name: 'The Synthesizer',
-    theme: 'connecting ideas across different fields',
+    summary: 'People born on this day often stand out for connecting ideas across very different fields.',
     keywords: ['polymath', 'interdisciplinary', 'generalist'],
   },
   {
     key: 'challenger',
     name: 'The Challenger',
-    theme: 'questioning the status quo',
+    summary: 'People born on this day often stand out for questioning the status quo and pushing for change.',
     keywords: ['activist', 'revolution', 'reform', 'dissident', 'campaign', 'rebel'],
   },
   {
     key: 'architect',
     name: 'The Architect',
-    theme: 'designing systems and structures with intention',
+    summary: 'People born on this day often stand out for designing systems and structures with clear intention.',
     keywords: ['architect', 'engineer', 'system', 'designer', 'planner', 'structural'],
   },
 ];
 
 // Safe, generic fallback for the rare case where none of the fetched
-// people match any theme's keywords strongly enough — still an honest
-// description ("bringing people and ideas together"), never an empty card.
+// people match any archetype's keywords strongly enough — still an
+// honest description, never an empty card.
 const DEFAULT_ARCHETYPE = ARCHETYPES.find((archetype) => archetype.key === 'connector');
 
 function normalizedText(person) {
@@ -137,6 +144,27 @@ function cleanOccupation(occupation) {
     .trim();
 }
 
+// Common demonyms Wikipedia occupation strings are prefixed with (e.g.
+// "Canadian-American businessman", "German zoologist") — stripped so the
+// short field/role labels below read as a PROFESSION, not a nationality.
+const DEMONYMS = new Set([
+  'american', 'british', 'english', 'scottish', 'welsh', 'irish', 'german', 'french', 'italian',
+  'spanish', 'portuguese', 'dutch', 'belgian', 'swiss', 'austrian', 'russian', 'ukrainian', 'polish',
+  'czech', 'slovak', 'hungarian', 'romanian', 'bulgarian', 'greek', 'turkish', 'norwegian', 'swedish',
+  'danish', 'finnish', 'icelandic', 'canadian', 'mexican', 'brazilian', 'argentine', 'chilean',
+  'colombian', 'peruvian', 'venezuelan', 'cuban', 'jamaican', 'chinese', 'japanese', 'korean',
+  'indian', 'pakistani', 'bangladeshi', 'indonesian', 'filipino', 'vietnamese', 'thai', 'malaysian',
+  'singaporean', 'australian', 'egyptian', 'moroccan', 'algerian', 'tunisian', 'nigerian', 'kenyan',
+  'ethiopian', 'ghanaian', 'israeli', 'iranian', 'iraqi', 'saudi', 'emirati',
+]);
+
+function dropLeadingDemonym(words) {
+  const [first] = words;
+  if (!first) return words;
+  if (first.includes('-') || DEMONYMS.has(first.toLowerCase())) return words.slice(1);
+  return words;
+}
+
 // A short (2-6 word) field label for the "from X, Y, Z" list in "The
 // Pattern" — cleanOccupation()'s full phrase (e.g. "Canadian-American
 // businessman and audio pioneer responsible for the first hi-fi stereo
@@ -147,8 +175,24 @@ function shortOccupation(occupation) {
   const cleaned = cleanOccupation(occupation)
     .split(/,|;| also\b| responsible for\b| who\b/i)[0]
     .trim();
-  const words = cleaned.split(/\s+/).filter(Boolean);
+  const words = dropLeadingDemonym(cleaned.split(/\s+/).filter(Boolean));
   return words.slice(0, 6).join(' ').replace(/\.$/, '').toLowerCase();
+}
+
+// A ONE-TO-THREE-WORD role label for a "Birthday Tribe" bullet (e.g.
+// "Businessman", "Computer Scientist") — shorter and Title Cased, unlike
+// shortOccupation()'s longer lowercase phrase used in "The Pattern".
+function shortRole(occupation) {
+  const cleaned = cleanOccupation(occupation)
+    .split(/,|;| also\b| responsible for\b| who\b/i)[0]
+    .trim();
+  const afterDemonym = dropLeadingDemonym(cleaned.split(/\s+/).filter(Boolean));
+  const andIndex = afterDemonym.findIndex((word) => word.toLowerCase() === 'and');
+  const roleWords = (andIndex === -1 ? afterDemonym : afterDemonym.slice(0, andIndex)).slice(0, 3);
+  if (roleWords.length === 0) return 'Notable figure';
+  return roleWords
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
 }
 
 /** Builds the whole "Birthday Personality Archetype" card content from a
@@ -164,20 +208,22 @@ export function deriveBirthdayArchetype(people) {
     validPeople.map((person) => shortOccupation(person.occupation)).filter(Boolean),
   )].slice(0, 3);
 
-  const summary = `"${archetype.name}" names a recurring theme among people born on this day: ${archetype.theme}. Many notable individuals sharing this birthday have shaped their lives around that same pull.`;
-
   const pattern = occupationSamples.length > 0
-    ? `An interesting pattern that appears across this birthday tribe is a shared pull toward ${archetype.theme}. Their fields differ — from ${occupationSamples.join(', ')} — yet a common thread connects how they approached ideas, problems, and the people around them.`
-    : `An interesting pattern that appears across this birthday tribe is a shared pull toward ${archetype.theme}, showing up again and again across very different fields and eras.`;
+    ? `Their work spans very different fields — ${occupationSamples.join(', ')} — but each one pushed past what already existed instead of just following it.`
+    : 'Their work spans very different fields and eras, but each one pushed past what already existed instead of just following it.';
 
-  const reflection = `People born on this day often seem drawn toward ${archetype.theme}. Their paths span very different fields and eras, yet a common thread emerges among the real people who share this birthday. This isn’t a prediction of who you are — it’s an invitation to notice a pattern, and maybe feel part of a small, real tribe.`;
+  const tribe = validPeople.map((person) => ({
+    name: person.name,
+    role: shortRole(person.occupation),
+    href: person.href ?? null,
+  }));
 
   return {
     archetypeName: archetype.name,
     archetypeKey: archetype.key,
-    summary,
+    summary: archetype.summary,
     pattern,
-    reflection,
+    tribe,
     disclaimer: 'Based on real people who share this calendar birthday — not astrology, horoscopes, or predictions.',
   };
 }
