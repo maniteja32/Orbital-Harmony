@@ -3642,6 +3642,124 @@ button {
   }
 }
 
+/* "Your Birthday Personality Archetype" — reuses the date-story kicker
+   look for its label, then a bigger accent headline for the archetype
+   name (e.g. "The Explorer"). Everything past the 1-2 sentence summary
+   sits behind a <details> toggle (same collapsible convention as the old
+   Pattern Details "For Curious Minds" section) so the always-visible
+   part of the card stays as short as every other Result-screen card. */
+.archetype-card__name {
+  color: var(--text-primary);
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.archetype-card__summary {
+  margin-top: 3px;
+}
+
+.archetype-card__details {
+  margin-top: 6px;
+}
+
+.archetype-card__details summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 0 2px;
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  list-style: none;
+}
+
+.archetype-card__details summary::-webkit-details-marker {
+  display: none;
+}
+
+.archetype-card__details summary svg {
+  flex: 0 0 auto;
+  transition: transform 0.2s ease;
+}
+
+.archetype-card__details[open] summary svg {
+  transform: rotate(180deg);
+}
+
+.archetype-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 4px 0 2px;
+}
+
+.archetype-card__section-label {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.archetype-card__section p {
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.archetype-card__tribe {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  list-style: none;
+}
+
+.archetype-card__person {
+  padding-left: 10px;
+  border-left: 2px solid var(--glass-border);
+}
+
+.archetype-card__person-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+a.archetype-card__person-name {
+  color: var(--accent);
+}
+
+.archetype-card__person-contribution {
+  display: block;
+  margin-top: 1px;
+  color: var(--text-tertiary);
+  font-size: 11px;
+}
+
+.archetype-card__person-reason {
+  margin-top: 3px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.archetype-card__disclaimer {
+  color: var(--text-tertiary);
+  font-size: 10.5px;
+  font-style: italic;
+  line-height: 1.4;
+}
+
 .knowledge-card__entry {
   display: block;
 }

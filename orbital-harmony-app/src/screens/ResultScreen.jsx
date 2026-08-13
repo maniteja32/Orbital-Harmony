@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { ExternalLink, Info, Share2 } from 'lucide-react';
+import { ChevronDown, ExternalLink, Info, Share2 } from 'lucide-react';
 import { GlassButton } from '../components/ui/glasscn/glass-button.jsx';
 import { LiquidGlass } from '../components/ui/glasscn/liquid-glass.jsx';
 import { TopNavigationBar } from '../components/TopNavigationBar.jsx';
@@ -7,8 +7,8 @@ import { LineStyleToggleButton } from '../components/LineStyleToggle.jsx';
 import SolarSystemCanvas from '../components/SolarSystemCanvas.jsx';
 import { PLANETS_BY_KEY } from '../data/planets.js';
 import { formatCosmicSignatureDate } from '../utils/cosmicSignature.js';
-import { createLocalDateStory } from '../utils/dateStory.js';
-import { loadBirthdayTrivia, loadPlanetTrivia } from '../services/triviaService.js';
+import { createLocalBirthdayArchetype, loadBirthdayArchetype } from '../utils/dateStory.js';
+import { loadPlanetTrivia } from '../services/triviaService.js';
 import { computeSimulationPlan } from '../utils/simulationPlan.js';
 import { useAppStore, SPEED_PRESETS } from '../store/useAppStore.js';
 
@@ -195,35 +195,61 @@ function sanitizeFileName(input) {
   return input.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 }
 
-function DateStoryCard({ story }) {
-  const insight = story?.insight;
-  if (!insight) return null;
+function BirthdayArchetypeCard({ archetype }) {
+  if (!archetype?.archetypeName) return null;
 
   return (
     <section
-      className="knowledge-card knowledge-card--compact knowledge-card--date-story"
-      key={story.id}
-      aria-label={story.title}
+      className="knowledge-card knowledge-card--compact knowledge-card--date-story archetype-card"
+      key={archetype.id}
+      aria-label={archetype.title}
     >
-      <span className="sr-only" role="status" aria-live="polite">New date insight loaded.</span>
+      <span className="sr-only" role="status" aria-live="polite">Birthday archetype loaded.</span>
       <div className="date-story__panel">
-        <span className="date-story__kicker">{insight.kicker}</span>
-        <span className="date-story__headline">{insight.headline}</span>
-        {insight.meta && <span className="date-story__meta">{insight.meta}</span>}
-        <p className="knowledge-card__fact date-story__fact">{insight.fact}</p>
-        {insight.href ? (
-          <a
-            className="date-story__source"
-            href={insight.href}
-            target="_blank"
-            rel="noreferrer"
-          >
-            {insight.source}
-            <ExternalLink size={11} strokeWidth={2} aria-hidden="true" />
-          </a>
-        ) : (
-          <span className="date-story__source date-story__source--local">{insight.source}</span>
-        )}
+        <span className="date-story__kicker">{archetype.title}</span>
+        <span className="archetype-card__name">{archetype.archetypeName}</span>
+        <p className="knowledge-card__fact archetype-card__summary">{archetype.summary}</p>
+
+        <details className="archetype-card__details">
+          <summary>
+            <span>See the pattern &amp; birthday tribe</span>
+            <ChevronDown size={16} strokeWidth={2} aria-hidden="true" />
+          </summary>
+
+          <div className="archetype-card__body">
+            <section className="archetype-card__section">
+              <span className="archetype-card__section-label">The Pattern</span>
+              <p>{archetype.pattern}</p>
+            </section>
+
+            <section className="archetype-card__section">
+              <span className="archetype-card__section-label">Birthday Tribe</span>
+              <ul className="archetype-card__tribe">
+                {archetype.tribe?.map((person) => (
+                  <li className="archetype-card__person" key={person.name}>
+                    {person.href ? (
+                      <a className="archetype-card__person-name" href={person.href} target="_blank" rel="noreferrer">
+                        {person.name}
+                        <ExternalLink size={10} strokeWidth={2} aria-hidden="true" />
+                      </a>
+                    ) : (
+                      <span className="archetype-card__person-name">{person.name}</span>
+                    )}
+                    <span className="archetype-card__person-contribution">{person.contribution}</span>
+                    <p className="archetype-card__person-reason">{person.reason}</p>
+                  </li>
+                ))}
+              </ul>
+            </section>
+
+            <section className="archetype-card__section">
+              <span className="archetype-card__section-label">Cosmic Reflection</span>
+              <p>{archetype.reflection}</p>
+            </section>
+
+            <p className="archetype-card__disclaimer">{archetype.disclaimer}</p>
+          </div>
+        </details>
       </div>
     </section>
   );
@@ -246,22 +272,22 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails }) {
       : 'Orbital Pattern';
   const cosmicDateLabel = formatCosmicSignatureDate(cosmicDate);
   const speedCfg = SPEED_PRESETS[speed];
-  const localDateStory = useMemo(() => createLocalDateStory(cosmicDate), [cosmicDate]);
-  const [dateStory, setDateStory] = useState(localDateStory);
+  const localArchetype = useMemo(() => createLocalBirthdayArchetype(cosmicDate), [cosmicDate]);
+  const [archetype, setArchetype] = useState(localArchetype);
 
   useEffect(() => {
     if (!isCosmic) return undefined;
     const controller = new AbortController();
-    setDateStory(localDateStory);
+    setArchetype(localArchetype);
 
-    loadBirthdayTrivia(cosmicDate, { signal: controller.signal })
-      .then(setDateStory)
+    loadBirthdayArchetype(cosmicDate, { signal: controller.signal })
+      .then(setArchetype)
       .catch(() => {
-        // No card is shown when remote date history is unavailable.
+        // No card is shown when remote birthday-archetype data is unavailable.
       });
 
     return () => controller.abort();
-  }, [cosmicDate, isCosmic, localDateStory]);
+  }, [cosmicDate, isCosmic, localArchetype]);
 
   const fallbackFactoid = useMemo(() => {
     return {
@@ -416,7 +442,7 @@ export default function ResultScreen({ onGenerateNew, onBack, onViewDetails }) {
       </LiquidGlass>
 
       {isCosmic ? (
-        <DateStoryCard story={dateStory} />
+        <BirthdayArchetypeCard archetype={archetype} />
       ) : factEntries.length > 0 && (
         <div className="knowledge-card knowledge-card--compact" key={displayedFactoid.id}>
           <span className="knowledge-card__title">

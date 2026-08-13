@@ -1,7 +1,8 @@
+import { deriveBirthdayArchetype } from './birthdayArchetype.js';
+
 const WIKIMEDIA_ON_THIS_DAY = 'https://api.wikimedia.org/feed/v1/wikipedia/en/onthisday';
 
-const storyCache = new Map();
-const usedInsightsByDate = new Map();
+const archetypeCache = new Map();
 
 const ACHIEVEMENT_WEIGHTS = [
   [/(nobel prize laureate|nobel laureate|pulitzer prize winner|booker prize winner|olympic gold|medal of freedom)/i, 32],
@@ -14,16 +15,7 @@ const ACHIEVEMENT_WEIGHTS = [
   [/(\bwon\b|awarded|recipient|champion|influential|acclaimed|renowned|regarded)/i, 8],
 ];
 
-const EVENT_WEIGHTS = [
-  [/(spacecraft|space shuttle|satellite|spaceflight|moon|nasa)/i, 32],
-  [/(discovered|invented|first |opened|launched|completed)/i, 26],
-  [/(science|scientific|medical|technology|engineering)/i, 20],
-  [/(published|premiered|released|founded|established)/i, 16],
-  [/(rights|independence|peace|treaty|record|championship)/i, 12],
-];
-
 const HARMFUL_PERSON = /(dictator|serial killer|murderer|nazi|warlord|slave trader|terrorist|sexual (?:assault|abuse|misconduct)|convicted|supremacist|fraudster|cult leader|extremist)/i;
-const TRAGIC_EVENT = /(annex|armed|army|assassinat|attack|battle|bomb|casualt|collision|conquest|coup|crash|death|defeat|derail|disaster|earthquake|executed|explosion|fire kills|flood|forces led|genocide|hostage|hurricane|injured|invasion|kidnap|killed|massacre|military|murdered|occupation|rebel|revolt|riot|shooting|siege|sank|sinking|tornado|troops|typhoon|uprising|war begins|war:|wounded)/i;
 
 function isValidDate(date) {
   return date instanceof Date && !Number.isNaN(date.getTime());
@@ -41,18 +33,13 @@ function pad2(value) {
   return String(value).padStart(2, '0');
 }
 
+// Calendar day only (no year) — the archetype is about people born on this
+// MONTH/DAY across any year, so two different birth years sharing the
+// same calendar day should hit the same cache entry instead of each
+// re-fetching/re-deriving the same underlying data.
 function dateKey(date) {
-  const { year, month, day } = dateParts(date);
-  return `${year}-${pad2(month)}-${pad2(day)}`;
-}
-
-function randomIndex(count) {
-  if (globalThis.crypto?.getRandomValues) {
-    const value = new Uint32Array(1);
-    globalThis.crypto.getRandomValues(value);
-    return value[0] % count;
-  }
-  return Math.floor(Math.random() * count);
+  const { month, day } = dateParts(date);
+  return `${pad2(month)}-${pad2(day)}`;
 }
 
 function normalizeUrl(url) {
@@ -126,30 +113,14 @@ function occupationSentence(occupation) {
     : `${article} ${description}.`;
 }
 
-function birthScore(entry, birthYear) {
+function birthScore(entry, referenceYear) {
   const page = firstPage(entry);
   const text = `${entry?.text ?? ''} ${page?.description ?? ''} ${page?.extract ?? ''}`;
   if (HARMFUL_PERSON.test(text)) return Number.NEGATIVE_INFINITY;
-  const existedByBirth = Number(entry?.year) <= birthYear;
+  const existedByReference = Number(entry?.year) <= referenceYear;
   return weightedScore(text, ACHIEVEMENT_WEIGHTS)
     + (page?.thumbnail ? 3 : 0)
-    + (existedByBirth ? 5 : 0);
-}
-
-function eventScore(entry, birthYear) {
-  const page = firstPage(entry);
-  const fullText = `${entry?.text ?? ''} ${page?.description ?? ''} ${page?.extract ?? ''}`;
-  if (TRAGIC_EVENT.test(fullText)) return Number.NEGATIVE_INFINITY;
-  const relevance = weightedScore(`${entry?.text ?? ''} ${page?.description ?? ''}`, EVENT_WEIGHTS);
-  if (relevance < 8) return Number.NEGATIVE_INFINITY;
-  const happenedByBirth = Number(entry?.year) <= birthYear;
-  const yearDistance = Math.abs(birthYear - Number(entry?.year));
-  const exactYearBonus = Number(entry?.year) === birthYear && relevance >= 8 ? 40 : 0;
-  return relevance
-    + (page?.thumbnail ? 2 : 0)
-    + (happenedByBirth ? 5 : 0)
-    + Math.max(0, 5 - Math.log10(Math.max(1, yearDistance)))
-    + exactYearBonus;
+    + (existedByReference ? 5 : 0);
 }
 
 function selectTop(entries, scorer, limit = 12) {
@@ -161,63 +132,34 @@ function selectTop(entries, scorer, limit = 12) {
     .map(({ entry }) => entry);
 }
 
-function takeUnusedInsight(key, insights) {
-  const used = usedInsightsByDate.get(key) ?? new Set();
-  let available = insights.filter((insight) => !used.has(insight.id));
-
-  if (available.length === 0) {
-    const lastUsed = [...used].at(-1);
-    used.clear();
-    if (lastUsed) used.add(lastUsed);
-    available = insights.filter((insight) => !used.has(insight.id));
-  }
-
-  const insight = available[randomIndex(available.length)] ?? insights[0];
-  used.add(insight.id);
-  usedInsightsByDate.set(key, used);
-  return insight;
-}
-
-function toPersonSection(entry) {
+function toArchetypePerson(entry) {
   if (!entry) return null;
   const page = firstPage(entry);
   const name = page?.titles?.normalized ?? page?.normalizedtitle ?? String(entry.text).split(',')[0];
-  const occupation = String(entry.text ?? '').split(',').slice(1).join(',').trim();
+  const rawOccupation = String(entry.text ?? '').split(',').slice(1).join(',').trim();
+  const occupation = occupationSentence(rawOccupation);
 
   return {
-    id: `person:${entry.year}:${page?.pageid ?? name}`,
-    kicker: 'Birthday twin trivia',
-    headline: name,
-    meta: `Born ${entry.year}`,
-    fact: achievementSentence(page, occupationSentence(occupation) || entry.text),
+    name,
+    occupation,
+    fact: achievementSentence(page, occupation || entry.text),
     href: normalizeUrl(page?.content_urls?.desktop?.page),
-    source: 'Wikipedia · CC BY-SA',
   };
 }
 
-function toHistorySection(entry) {
-  if (!entry) return null;
-  const page = firstPage(entry);
-
-  return {
-    id: `history:${entry.year}:${page?.pageid ?? entry.text}`,
-    kicker: 'On this date',
-    headline: `${entry.year} · ${page?.titles?.normalized ?? page?.normalizedtitle ?? 'On this day'}`,
-    fact: triviaSentence(entry.text),
-    href: normalizeUrl(page?.content_urls?.desktop?.page),
-    source: 'Wikipedia · CC BY-SA',
-  };
-}
-
-export function createLocalDateStory(date) {
+// The instant, offline placeholder shown the moment a Cosmic Signature
+// pattern completes, before `loadBirthdayArchetype` below has resolved —
+// `archetypeName: null` tells BirthdayArchetypeCard to render nothing
+// rather than a half-built card.
+export function createLocalBirthdayArchetype(date) {
   if (!isValidDate(date)) {
-    return { id: 'date-story:unavailable', title: 'Birthday trivia', insight: null };
+    return { id: 'birthday-archetype:unavailable', kind: 'birthday-archetype', title: 'Birthday Personality Archetype', archetypeName: null };
   }
   return {
-    id: `date-story:${dateKey(date)}`,
-    kind: 'date-story',
-    title: 'Birthday trivia',
-    insight: null,
+    id: `birthday-archetype:${dateKey(date)}`,
+    kind: 'birthday-archetype',
+    title: 'Birthday Personality Archetype',
+    archetypeName: null,
   };
 }
 
@@ -236,10 +178,10 @@ async function fetchCategory(category, date, signal) {
 // itself Wikipedia-derived but a different curated dataset/selection than
 // Wikimedia's on-this-day feed — see MUFFIN_LABS_HISTORY). Its entries
 // don't carry a `pages`/`extract` payload like Wikimedia's, so they're
-// adapted into the SAME shape `firstPage()`/birthScore/eventScore/
-// toPersonSection/toHistorySection already expect (a `pages` array with a
-// `titles`/`content_urls`/`extract`), letting them fold into the existing
-// scoring and selection pipeline with no changes there.
+// adapted into the SAME shape `firstPage()`/birthScore/toArchetypePerson
+// already expect (a `pages` array with a `titles`/`content_urls`/
+// `extract`), letting them fold into the existing scoring/selection
+// pipeline with no changes there.
 const MUFFIN_LABS_HISTORY = 'https://history.muffinlabs.com/date';
 
 function toWikimediaLikeEntry(muffinEntry) {
@@ -268,50 +210,47 @@ async function fetchMuffinLabsCategory(category, date, signal) {
   return (payload?.data?.[category] ?? []).map(toWikimediaLikeEntry);
 }
 
-export async function loadDateStory(date, { signal } = {}) {
-  if (!isValidDate(date)) return createLocalDateStory(date);
+// Builds the whole "Your Birthday Personality Archetype" card for a given
+// calendar day — unlike the old single-insight rotation, this result is
+// STABLE per date (the tribe/theme doesn't change on repeat visits), so
+// it's cached indefinitely per day rather than rotated.
+export async function loadBirthdayArchetype(date, { signal } = {}) {
+  if (!isValidDate(date)) return createLocalBirthdayArchetype(date);
   const key = dateKey(date);
-  let insights = storyCache.get(key);
+  if (archetypeCache.has(key)) return archetypeCache.get(key);
 
-  if (!insights) {
-    const [
-      wikimediaBirths, wikimediaEvents, muffinBirths, muffinEvents,
-    ] = await Promise.allSettled([
-      fetchCategory('births', date, signal),
-      fetchCategory('events', date, signal),
-      fetchMuffinLabsCategory('Births', date, signal),
-      fetchMuffinLabsCategory('Events', date, signal),
-    ]);
-    if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
-    if ([wikimediaBirths, wikimediaEvents, muffinBirths, muffinEvents].every((r) => r.status === 'rejected')) {
-      throw new Error('Date history is unavailable');
-    }
-
-    const births = [
-      ...(wikimediaBirths.status === 'fulfilled' ? wikimediaBirths.value : []),
-      ...(muffinBirths.status === 'fulfilled' ? muffinBirths.value : []),
-    ];
-    const events = [
-      ...(wikimediaEvents.status === 'fulfilled' ? wikimediaEvents.value : []),
-      ...(muffinEvents.status === 'fulfilled' ? muffinEvents.value : []),
-    ];
-
-    const birthYear = date.getUTCFullYear();
-    const people = selectTop(births, (entry) => birthScore(entry, birthYear))
-      .map((entry) => toPersonSection(entry));
-    const history = selectTop(events, (entry) => eventScore(entry, birthYear))
-      .map((entry) => toHistorySection(entry));
-    insights = [...people, ...history].filter(Boolean);
-    if (insights.length === 0) throw new Error('No suitable date insights are available');
-    storyCache.set(key, insights);
+  const [wikimediaBirths, muffinBirths] = await Promise.allSettled([
+    fetchCategory('births', date, signal),
+    fetchMuffinLabsCategory('Births', date, signal),
+  ]);
+  if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+  if ([wikimediaBirths, muffinBirths].every((r) => r.status === 'rejected')) {
+    throw new Error('Birthday archetype data is unavailable');
   }
 
-  if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
-  const insight = takeUnusedInsight(key, insights);
-  return {
-    id: `date-story:${key}:${insight.id}`,
-    kind: 'date-story',
-    title: 'Birthday trivia',
-    insight,
+  const births = [
+    ...(wikimediaBirths.status === 'fulfilled' ? wikimediaBirths.value : []),
+    ...(muffinBirths.status === 'fulfilled' ? muffinBirths.value : []),
+  ];
+
+  // Reference year only breaks scoring ties (existedByReference) — the
+  // whole point of this feature is people born on the same calendar day
+  // across ANY year, not just before/after the viewer's own birth year.
+  const referenceYear = date.getUTCFullYear();
+  const people = selectTop(births, (entry) => birthScore(entry, referenceYear), 10)
+    .map((entry) => toArchetypePerson(entry))
+    .filter((person) => person?.name);
+  // Wikimedia and Muffin Labs sometimes both surface the same person.
+  const uniquePeople = [...new Map(people.map((person) => [person.name, person])).values()].slice(0, 6);
+  if (uniquePeople.length < 3) throw new Error('Not enough notable people to build a birthday archetype');
+
+  const archetype = deriveBirthdayArchetype(uniquePeople);
+  const result = {
+    id: `birthday-archetype:${key}`,
+    kind: 'birthday-archetype',
+    title: 'Birthday Personality Archetype',
+    ...archetype,
   };
+  archetypeCache.set(key, result);
+  return result;
 }

@@ -1,5 +1,5 @@
 import { PLANETS_BY_KEY } from '../data/planets.js';
-import { createLocalDateStory } from './dateStory.js';
+import { createLocalBirthdayArchetype } from './dateStory.js';
 
 const FACTS_BY_PLANET = {
   mercury: [
@@ -128,7 +128,7 @@ function toEntry(planet, factIndex) {
 }
 
 export function createPatternFactoid({ planetA, planetB, isCosmic = false, cosmicDate = null }) {
-  if (isCosmic) return createLocalDateStory(cosmicDate);
+  if (isCosmic) return createLocalBirthdayArchetype(cosmicDate);
 
   const selectedPlanets = [...new Set([planetA, planetB])]
     .map((key) => PLANETS_BY_KEY[key])

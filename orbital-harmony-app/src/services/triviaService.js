@@ -1,5 +1,4 @@
 import { PLANETS_BY_KEY } from '../data/planets.js';
-import { loadDateStory } from '../utils/dateStory.js';
 import { loadFreshPatternFactoid } from '../utils/planetFactService.js';
 
 const usedAiIdsByScope = new Map();
@@ -41,67 +40,6 @@ async function postTrivia(body, { signal, fetchImpl = globalThis.fetch, endpoint
     throw new Error('AI trivia service returned an invalid response');
   }
   return payload;
-}
-
-function dateScope(date) {
-  return `birthday:${date.getUTCMonth() + 1}:${date.getUTCDate()}`;
-}
-
-function yearRelation(date, year, noun) {
-  const selectedYear = date.getUTCFullYear();
-  const gap = Math.abs(selectedYear - year);
-  if (gap === 0) return noun === 'Born' ? 'Born in the same year as you' : 'On the day you were born';
-  const direction = year < selectedYear ? 'before' : 'after';
-  return `${gap} year${gap === 1 ? '' : 's'} ${direction} ${noun === 'Born' ? 'you' : 'your birth'}`;
-}
-
-function toDateStory(payload, date) {
-  if (payload.kind !== 'birthday'
-    || !['birth', 'event'].includes(payload.category)
-    || !Number.isInteger(payload.year)
-    || typeof payload.id !== 'string'
-    || typeof payload.fact !== 'string'
-    || typeof payload.headline !== 'string'
-    || typeof payload.href !== 'string') {
-    throw new Error('AI birthday trivia is incomplete');
-  }
-  const isBirth = payload.category === 'birth';
-  return {
-    id: `ai:${payload.id}`,
-    kind: 'date-story',
-    title: 'Birthday trivia',
-    generatedBy: payload.generatedBy,
-    insight: {
-      id: payload.id,
-      kicker: isBirth ? 'Birthday twin trivia' : 'On this date',
-      headline: isBirth ? payload.headline : `${payload.year} · ${payload.headline}`,
-      meta: isBirth
-        ? `Born ${payload.year} · ${yearRelation(date, payload.year, 'Born')}`
-        : yearRelation(date, payload.year, 'Happened'),
-      fact: payload.fact,
-      href: payload.href,
-      source: payload.source || 'Wikipedia · CC BY-SA',
-    },
-  };
-}
-
-export async function loadBirthdayTrivia(date, options = {}) {
-  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return loadDateStory(date, options);
-  const scope = dateScope(date);
-  try {
-    const payload = await postTrivia({
-      kind: 'birthday',
-      month: date.getUTCMonth() + 1,
-      day: date.getUTCDate(),
-      excludeIds: [...usedIds(scope)],
-    }, options);
-    const story = toDateStory(payload, date);
-    rememberId(scope, story.insight.id);
-    return story;
-  } catch (error) {
-    if (error?.name === 'AbortError') throw error;
-    return loadDateStory(date, options);
-  }
 }
 
 function toPlanetFactoid(payload, planetKeys, fallbackFactoid) {
