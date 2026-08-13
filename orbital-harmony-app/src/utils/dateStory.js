@@ -1,6 +1,7 @@
 import { deriveBirthdayArchetype } from './birthdayArchetype.js';
 
 const WIKIMEDIA_ON_THIS_DAY = 'https://api.wikimedia.org/feed/v1/wikipedia/en/onthisday';
+const TRIVIA_API_FALLBACK_URL = 'https://spaceharmony.vercel.app/api/trivia';
 
 const archetypeCache = new Map();
 
@@ -44,6 +45,14 @@ function dateKey(date) {
 
 function normalizeUrl(url) {
   return typeof url === 'string' ? url.replace(/^http:/, 'https:') : null;
+}
+
+function triviaApiEndpoint() {
+  const configured = String(import.meta.env?.VITE_TRIVIA_API_URL ?? '').trim();
+  if (configured) return configured;
+  const protocol = globalThis.location?.protocol;
+  if (protocol === 'http:' || protocol === 'https:') return '/api/trivia';
+  return TRIVIA_API_FALLBACK_URL;
 }
 
 function firstPage(entry) {
@@ -226,6 +235,32 @@ async function fetchMuffinLabsCategory(category, date, signal) {
   return (payload?.data?.[category] ?? []).map(toWikimediaLikeEntry);
 }
 
+async function fetchArchetypeFromTriviaApi(date, signal) {
+  const { month, day } = dateParts(date);
+  const response = await fetch(triviaApiEndpoint(), {
+    method: 'POST',
+    signal,
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ kind: 'birthday', month, day }),
+  });
+  if (!response.ok) throw new Error(`Birthday trivia API request failed: ${response.status}`);
+  const payload = await response.json();
+  if (payload?.kind !== 'birthday') throw new Error('Birthday trivia API returned an invalid response');
+
+  const name = stripDisambiguation(payload.headline);
+  if (!name) return [];
+
+  return [{
+    name,
+    occupation: '',
+    fact: triviaSentence(payload.fact || ''),
+    href: normalizeUrl(payload.href),
+  }];
+}
+
 // Both Wikimedia's onthisday feed and Muffin Labs' history API have been
 // observed to intermittently abort/fail on a first attempt (both in local
 // dev and in the packaged iOS app's WKWebView) even though the SAME
@@ -286,6 +321,18 @@ async function fetchArchetypeCandidates(date, referenceYear, signal) {
   // card from the best real-people sample we managed to fetch than to drop
   // the archetype card entirely.
   if (bestPartialPeople.length > 0) return bestPartialPeople;
+
+  // Some WKWebView/custom-scheme environments intermittently fail direct
+  // third-party browser fetches for BOTH birthday sources. As a final fallback,
+  // ask our own trivia API for one grounded birthday person so the card can
+  // still render meaningful content instead of a permanent error panel.
+  try {
+    const apiPeople = await fetchArchetypeFromTriviaApi(date, signal);
+    if (apiPeople.length > 0) return apiPeople;
+  } catch (error) {
+    if (error?.name === 'AbortError') throw error;
+  }
+
   throw lastError;
 }
 
