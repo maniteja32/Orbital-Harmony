@@ -16,20 +16,29 @@ window.addEventListener('vite:preloadError', (event) => {
   }
 })
 
+function isIOSWebKit() {
+  const ua = navigator.userAgent || ''
+  const iOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+  const webkit = /WebKit/i.test(ua)
+  const notChromium = !/CriOS|EdgiOS|FxiOS|OPiOS|DuckDuckGo/i.test(ua)
+  return iOS && webkit && notChromium
+}
+
 // Returning from the native share sheet (or camera/file picker) can leave
-// mobile Safari's compositor showing a stale, partially-painted frame —
-// text left mid-fade/low-opacity while the WebGL canvas and buttons look
-// fine — until something forces a full repaint. Toggling `display` on the
-// next frame after the tab becomes visible again forces exactly that.
-document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState !== 'visible') return
-  requestAnimationFrame(() => {
-    const { body } = document
-    body.style.display = 'none'
-    void body.offsetHeight
-    body.style.display = ''
+// iOS Safari/WKWebView's compositor showing a stale, partially-painted frame
+// (text stuck mid-fade/low-opacity). Force a repaint only there. Applying
+// this globally can itself cause white/washed frames on some Android browsers.
+if (isIOSWebKit()) {
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'visible') return
+    requestAnimationFrame(() => {
+      const { body } = document
+      body.style.display = 'none'
+      void body.offsetHeight
+      body.style.display = ''
+    })
   })
-})
+}
 
 class AppErrorBoundary extends Component {
   constructor(props) {
